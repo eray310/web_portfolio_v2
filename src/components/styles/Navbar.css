@@ -81,3 +81,35 @@
     font-size: 18px;
   }
 }
+
+/* ── Phones: one compact row that does not cover the content ── */
+@media only screen and (max-width: 499px) {
+  .header {
+    align-items: center;
+    padding: 4px 0;
+  }
+  .header ul {
+    flex-direction: row;
+    align-items: center;
+    column-gap: 6px;
+    font-size: 11.5px;
+  }
+  .header ul li {
+    letter-spacing: 0.8px;
+    color: #eae5ec;
+  }
+  /* 44px tall touch targets */
+  .header ul a,
+  .navbar-title {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 5px;
+  }
+  .navbar-title {
+    padding-left: 0;
+  }
+  .header ul li:last-child a {
+    padding-right: 0;
+  }
+}

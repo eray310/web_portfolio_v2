@@ -32,10 +32,14 @@ function getWhatIDoFit() {
   // .what-box-in is display:none until the animation reveals it, so derive its
   // position from the layout: it is centred in the right half, margin included.
   const boxRect = box.getBoundingClientRect();
-  const cardWidth = parseFloat(getComputedStyle(card).width);
+  // The card group has a fixed CSS width (a single card or the 2x2 grid), which
+  // is still readable while it is display:none.
+  const groupWidth =
+    parseFloat(getComputedStyle(inner).width) ||
+    parseFloat(getComputedStyle(card).width);
   const marginLeft = parseFloat(getComputedStyle(inner).marginLeft) || 0;
   const cardsLeft =
-    boxRect.left + (boxRect.width - (cardWidth + marginLeft)) / 2 + marginLeft;
+    boxRect.left + (boxRect.width - (groupWidth + marginLeft)) / 2 + marginLeft;
 
   const canvasW = canvas.offsetWidth || window.innerWidth;
   const canvasH = canvas.offsetHeight || window.innerHeight;

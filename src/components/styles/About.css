@@ -1,5 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400..700;1,400..700&display=swap");
 
+/* Montserrat is kept only because the tech-stack canvas labels use it. */
+
 .about-section {
   display: flex;
   align-items: center;
@@ -11,35 +13,60 @@
   width: var(--cWidth);
   margin: auto;
 }
+
 .about-me {
-  padding: 50px 0px;
-  padding-bottom: 0;
+  padding: 56px 0px 8px;
   width: 500px;
   max-width: calc(100% - 15px);
 }
+
+/* Section label */
 .about-me h3 {
-  font-family: "Montserrat", sans-serif;
-  font-size: 25px;
+  margin: 0 0 20px;
+  font-family: "Geist", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
   text-transform: uppercase;
-  letter-spacing: 7px;
-  font-weight: 400;
+  letter-spacing: 4px;
   color: var(--accentColor);
 }
 
-.about-me p {
-  font-family: "Montserrat", sans-serif;
-  font-size: 33px;
-  font-weight: 500;
-  line-height: 36px;
-  letter-spacing: 1px;
+/* Main heading: heavy Geist with a faint, static off-white → light teal fade. */
+.about-me h2.about-heading {
+  margin: 0 0 28px;
+  font-family: "Geist", sans-serif;
+  font-size: clamp(30px, 8.6vw, 36px);
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  color: #eae5ec;
+  background-image: linear-gradient(100deg, #f1ecf3 0%, #e0f0ee 50%, #a6efe2 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* Accent font: swap in Hagrid Italic here once its font file is added to the project. */
-.about-me .about-accent {
-  font-family: "Montserrat", sans-serif;
-  font-style: italic;
+/* Intro and description: plain colour, no italics. */
+.about-me p {
+  margin: 0;
+  font-family: "Geist", sans-serif;
+  font-size: clamp(16px, 4.4vw, 18px);
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0;
+  text-wrap: pretty;
+}
+
+.about-me p.about-intro {
+  margin-bottom: 16px;
+  color: #eae5ec;
   font-weight: 500;
-  white-space: nowrap;
+}
+
+.about-me p.about-text {
+  color: rgba(234, 229, 236, 0.78);
 }
 
 @media only screen and (min-width: 600px) {
@@ -47,16 +74,31 @@
     justify-content: center;
   }
 }
+
 @media only screen and (min-width: 768px) {
   .about-me {
     width: 500px;
     max-width: calc(100% - 70px);
     transform: translateY(0%);
   }
+
+  .about-me h3 {
+    font-size: 14px;
+  }
+
+  .about-me h2.about-heading {
+    font-size: 40px;
+  }
+
+  .about-me p {
+    font-size: 18px;
+  }
+
   .about-section {
     opacity: 1;
   }
 }
+
 @media only screen and (min-width: 1025px) {
   .about-section {
     width: var(--cWidth);
@@ -66,18 +108,32 @@
     padding: 0px;
     opacity: 1;
   }
+
   .about-me {
     padding: 0px;
     width: 50%;
   }
+
+  .about-me h3 {
+    font-size: clamp(14px, 1vw, 20px);
+    margin-bottom: 24px;
+  }
+
+  .about-me h2.about-heading {
+    font-size: clamp(40px, 3.4vw, 68px);
+    margin-bottom: 32px;
+  }
+
   .about-me p {
-    font-size: 1.9vw;
-    line-height: 2.3vw;
+    font-size: clamp(17px, 1.3vw, 26px);
+  }
+
+  .about-me p.about-intro {
+    margin-bottom: 18px;
   }
 }
-@media only screen and (min-width: 1950px) {
-  .about-me p {
-    font-size: 2.5rem;
-    line-height: 2.7rem;
-  }
+
+/* Each sentence stays whole; a line break can only fall between the two. */
+.about-me p.about-intro span {
+  display: inline-block;
 }

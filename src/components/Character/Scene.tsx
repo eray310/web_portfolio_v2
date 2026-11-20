@@ -37,7 +37,7 @@ const Scene = () => {
       } catch (error) {
         // No usable WebGL: carry on with the page without the 3D character.
         console.error("Could not create WebGL context:", error);
-        startWithout3D(setLoading);
+        startWithout3D(setLoading, undefined, "webgl");
         return;
       }
       renderer.setSize(container.width, container.height);

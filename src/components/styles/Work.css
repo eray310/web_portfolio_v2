@@ -424,3 +424,37 @@
 .video-modal-close:focus-visible {
   background: rgba(255, 255, 255, 0.25);
 }
+
+/* ── Phones ── */
+@media only screen and (max-width: 600px) {
+  .carousel-info {
+    gap: 16px;
+  }
+
+  .carousel-number h3 {
+    font-size: 28px;
+  }
+
+  .carousel-details h4 {
+    font-size: 19px;
+    line-height: 1.3;
+  }
+
+  /* Bigger touch area around the small dots. */
+  .carousel-dots {
+    gap: 4px;
+  }
+
+  .carousel-dot {
+    position: relative;
+    width: 12px;
+    height: 12px;
+    margin: 0 8px;
+  }
+
+  .carousel-dot::before {
+    content: "";
+    position: absolute;
+    inset: -14px -10px;
+  }
+}

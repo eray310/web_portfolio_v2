@@ -3,7 +3,7 @@ import "./styles/SocialIcons.css";
 import { TbNotes } from "react-icons/tb";
 import { useEffect } from "react";
 import HoverLinks from "./HoverLinks";
-import { smoother } from "./Navbar";
+import { scrollToSection } from "./utils/scrollToSection";
 
 const SocialIcons = () => {
   useEffect(() => {
@@ -71,7 +71,7 @@ const SocialIcons = () => {
         href="#experience"
         onClick={(e) => {
           e.preventDefault();
-          smoother.scrollTo("#experience", true, "top top");
+          scrollToSection("#experience");
         }}
       >
         <HoverLinks text="Deneyimimi Gör" />

@@ -22,7 +22,7 @@ const App = () => {
                 </Suspense>
               </ErrorBoundary>
             ) : (
-              <NoWebGLBoot />
+              <NoWebGLBoot cause="webgl" />
             )}
           </MainContainer>
         </Suspense>

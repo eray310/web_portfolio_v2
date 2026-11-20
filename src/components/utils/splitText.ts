@@ -48,6 +48,27 @@ export default function setSplitText() {
       }
     );
   });
+  // The About heading carries a text gradient (background-clip: text), which
+  // does not survive per-character transforms, so it is revealed as one block
+  // with the same trigger and timing as the other text.
+  document.querySelectorAll<ParaElement>(".about-heading").forEach((heading) => {
+    heading.anim?.progress(1).kill();
+    heading.anim = gsap.fromTo(
+      heading,
+      { autoAlpha: 0, y: 40 },
+      {
+        autoAlpha: 1,
+        y: 0,
+        scrollTrigger: {
+          trigger: heading.parentElement?.parentElement,
+          toggleActions: ToggleAction,
+          start: TriggerStart,
+        },
+        duration: 1,
+        ease: "power3.out",
+      }
+    );
+  });
   titles.forEach((title: ParaElement) => {
     if (title.anim) {
       title.anim.progress(1).kill();

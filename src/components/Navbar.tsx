@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import HoverLinks from "./HoverLinks";
+import { scrollToSection } from "./utils/scrollToSection";
 import { gsap } from "gsap";
 import { ScrollSmoother } from "gsap/ScrollSmoother";
 import "./styles/Navbar.css";
@@ -30,7 +31,7 @@ const Navbar = () => {
         e.preventDefault();
         let elem = e.currentTarget as HTMLAnchorElement;
         let section = elem.getAttribute("data-href");
-        smoother.scrollTo(section, true, "top top");
+        if (section) scrollToSection(section);
       });
     });
     window.addEventListener("resize", () => {

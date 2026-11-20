@@ -242,3 +242,49 @@
     justify-content: left;
   }
 }
+/* ── Phones: role and company first, the date on its own line below ── */
+@media only screen and (max-width: 600px) {
+  .career-section {
+    padding-bottom: 40px;
+  }
+
+  .career-section h2 {
+    margin-bottom: 56px;
+  }
+
+  .career-info-box {
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+
+  .career-info-in {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .career-info h4 {
+    width: auto;
+    font-size: 21px;
+    line-height: 1.2;
+  }
+
+  .career-info h5 {
+    margin: 4px 0 0;
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  .career-info h3 {
+    font-size: 14px;
+    line-height: 1.4;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    white-space: nowrap;
+    color: rgba(234, 229, 236, 0.65);
+  }
+
+  .career-info-box p {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+}

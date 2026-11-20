@@ -1,4 +1,6 @@
 import { PropsWithChildren } from "react";
+import { TbNotes } from "react-icons/tb";
+import { scrollToSection } from "./utils/scrollToSection";
 import "./styles/Landing.css";
 
 const titles = ["Motion Designer", "Art Director", "Video Editor", "AI Artist"];
@@ -20,6 +22,19 @@ const Landing = ({ children }: PropsWithChildren) => {
                 <li key={title}>{title}</li>
               ))}
             </ul>
+            {/* Phones only: replaces the vertical link at the right edge. */}
+            <a
+              className="landing-cta"
+              href="#experience"
+              data-cursor="disable"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection("#experience");
+              }}
+            >
+              Deneyimimi Gör
+              <TbNotes aria-hidden="true" />
+            </a>
           </div>
         </div>
         {children}

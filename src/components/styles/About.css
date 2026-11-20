@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400..700;1,400..700&display=swap");
+
 .about-section {
   display: flex;
   align-items: center;
@@ -16,6 +18,7 @@
   max-width: calc(100% - 15px);
 }
 .about-me h3 {
+  font-family: "Montserrat", sans-serif;
   font-size: 25px;
   text-transform: uppercase;
   letter-spacing: 7px;
@@ -24,10 +27,19 @@
 }
 
 .about-me p {
+  font-family: "Montserrat", sans-serif;
   font-size: 33px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 36px;
   letter-spacing: 1px;
+}
+
+/* Accent font: swap in Hagrid Italic here once its font file is added to the project. */
+.about-me .about-accent {
+  font-family: "Montserrat", sans-serif;
+  font-style: italic;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 @media only screen and (min-width: 600px) {

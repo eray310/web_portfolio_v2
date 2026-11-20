@@ -1,12 +1,9 @@
-import {
-  FaGithub,
-  FaLinkedinIn,
-  FaEnvelope,
-} from "react-icons/fa6";
+import { FaBehance } from "react-icons/fa6";
 import "./styles/SocialIcons.css";
 import { TbNotes } from "react-icons/tb";
 import { useEffect } from "react";
 import HoverLinks from "./HoverLinks";
+import { smoother } from "./Navbar";
 
 const SocialIcons = () => {
   useEffect(() => {
@@ -60,39 +57,24 @@ const SocialIcons = () => {
       <div className="social-icons" data-cursor="icons" id="social">
         <span>
           <a
-            href="https://github.com/Vansh281999"
+            href="https://www.behance.net/erayomeroglu"
             target="_blank"
             rel="noreferrer"
+            aria-label="Behance"
           >
-            <FaGithub />
-          </a>
-        </span>
-        <span>
-          <a
-            href="https://www.linkedin.com/in/vansh-m/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <FaLinkedinIn />
-          </a>
-        </span>
-        <span>
-          <a
-            href="mailto:vansh281999@gmail.com"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <FaEnvelope />
+            <FaBehance />
           </a>
         </span>
       </div>
       <a
         className="resume-button"
-        href="/Vansh_Mahajan_Resume.pdf"
-        target="_blank"
-        rel="noreferrer"
+        href="#experience"
+        onClick={(e) => {
+          e.preventDefault();
+          smoother.scrollTo("#experience", true, "top top");
+        }}
       >
-        <HoverLinks text="RESUME" />
+        <HoverLinks text="Deneyimimi Gör" />
         <span>
           <TbNotes />
         </span>

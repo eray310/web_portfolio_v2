@@ -1,36 +1,36 @@
 <div align="center">
 
-<h1>3D Portfolio</h1>
+<h1>Eray Ömeroğlu — Portfolyo</h1>
 
-<p><strong>Interactive 3D portfolio with physics, scroll animations, and an encrypted character model.</strong></p>
+<p><strong>Motion designer ve video editörü Eray Ömeroğlu'nun interaktif 3D portfolyosu: fizik tabanlı araç topları, scroll animasyonları ve video galerisi.</strong></p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![React](https://img.shields.io/badge/React-18.3-61dafb?logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178c6?logo=typescript)](https://www.typescriptlang.org)
 [![Three.js](https://img.shields.io/badge/Three.js-r168-000000?logo=three.js)](https://threejs.org)
 [![Vite](https://img.shields.io/badge/Vite-5.4-646cff?logo=vite)](https://vitejs.dev)
-[![Deploy Status](https://img.shields.io/badge/GitHub_Pages-live-brightgreen?logo=github)](https://vansh281999.github.io/web_portfolio_v2/)
+[![Behance](https://img.shields.io/badge/Behance-erayomeroglu-1769ff?logo=behance)](https://www.behance.net/erayomeroglu)
 
 </div>
 
 ---
 
-# Live Demo
+# Links
 
-- 🌐 **Website:** [https://vansh281999.github.io/web_portfolio_v2/](https://vansh281999.github.io/web_portfolio_v2/)
-- 🖥️ **Repository:** [https://github.com/Vansh281999/web_portfolio_v2](https://github.com/Vansh281999/web_portfolio_v2)
+- 🎨 **Behance:** [behance.net/erayomeroglu](https://www.behance.net/erayomeroglu)
+- 🖥️ **Repository:** [github.com/eray310/web_portfolio_v2](https://github.com/eray310/web_portfolio_v2)
 
 ---
 
 # Overview
 
-A **production-grade, interactive portfolio website** built for [Vansh Mahajan](https://github.com/Vansh281999), showcasing projects in Computer Vision, ML, and Full-Stack Development.
+Eray Ömeroğlu için hazırlanmış, motion design, reklam videoları ve sosyal medya içeriklerini sergileyen interaktif bir portfolyo sitesi.
 
 **Design goals:**
 - Immersive 3D presence without sacrificing performance
 - Scroll-driven narrative that feels like a guided tour
 - Zero external API dependencies — ships as a static bundle
-- Recruiter-friendly presentation of skills, experience, and projects
+- Clear presentation of selected work, skills, and experience
 
 ---
 
@@ -40,10 +40,10 @@ A **production-grade, interactive portfolio website** built for [Vansh Mahajan](
 |----------|---------|
 | **3D Character** | Interactive character with mouse-driven head rotation, eyebrow hover, typing animation, and blinking. |
 | **Encrypted Model** | GLB model AES-256 encrypted at rest (`character.enc`), decrypted client-side before rendering. |
-| **Physics TechStack** | 30 spheres with technology textures, collision physics via `@react-three/rapier`, and N8AO post-processing. |
+| **Physics TechStack** | 30 spheres labelled with the design tools used (After Effects, Premiere Pro, Photoshop, Illustrator, InDesign, CapCut), collision physics via `@react-three/rapier`, and N8AO post-processing. |
 | **Scroll Animations** | GSAP `ScrollTrigger` + `SplitText` for character/camera transitions and text reveals. |
 | **Custom Cursor** | Smooth-following cursor with state-aware hover effects. |
-| **Project Carousel** | Drag-to-navigate carousel with velocity threshold and touch support. |
+| **Video Gallery** | Drag-to-navigate carousel of portfolio videos; each card opens a video player dialog with playback controls. |
 | **Loading Screen** | Animated loading sequence with marquee text and progress simulation. |
 | **Career Timeline** | Vertical timeline with scroll-triggered dot indicator. |
 | **Responsive** | Adaptive layouts from 375px mobile to 1950px+ ultrawide. 3D canvas hidden below 1024px. |
@@ -75,8 +75,8 @@ A **production-grade, interactive portfolio website** built for [Vansh Mahajan](
 ```
 .
 ├── public/
-│   ├── Vansh_Mahajan_Resume.pdf
-│   ├── images/                     # Tech logos, project screenshots
+│   ├── portfolio/                  # Portfolio videos (.mp4)
+│   ├── images/                     # Image assets
 │   ├── models/
 │   │   ├── character.enc           # AES-256 encrypted GLB
 │   │   ├── char_enviorment.hdr     # HDR environment map
@@ -99,7 +99,8 @@ A **production-grade, interactive portfolio website** built for [Vansh Mahajan](
 │   │   ├── About.tsx               # Bio
 │   │   ├── WhatIDo.tsx             # Service cards
 │   │   ├── Career.tsx              # Experience timeline
-│   │   ├── Work.tsx                # Project carousel
+│   │   ├── Work.tsx                # Video gallery
+│   │   ├── VideoModal.tsx          # Video player dialog
 │   │   ├── TechStack.tsx           # 3D physics spheres
 │   │   ├── Contact.tsx
 │   │   ├── Navbar.tsx
@@ -141,7 +142,7 @@ A **production-grade, interactive portfolio website** built for [Vansh Mahajan](
 ### Installation
 
 ```bash
-git clone https://github.com/Vansh281999/web_portfolio_v2.git
+git clone https://github.com/eray310/web_portfolio_v2.git
 cd web_portfolio_v2
 npm install
 ```
@@ -203,10 +204,10 @@ npm run preview
 <summary>Edit personal content</summary>
 
 Update text and data directly in component files:
-- `src/components/Landing.tsx` — name, title, tagline
+- `src/components/Landing.tsx` — name and titles
 - `src/components/About.tsx` — bio
 - `src/components/Career.tsx` — experience entries
-- `src/components/Work.tsx` — project cards
+- `src/components/Work.tsx` — video cards (files live in `public/portfolio/`)
 - `src/data/boneData.ts` — animation bone names
 
 </details>
@@ -214,7 +215,8 @@ Update text and data directly in component files:
 <details>
 <summary>Replace images and models</summary>
 
-- Images: swap files in `public/images/` and update refs in `TechStack.tsx` / `Work.tsx`.
+- Videos: add files to `public/portfolio/` and list them in `Work.tsx`.
+- Tool balls: edit the `tools` list in `TechStack.tsx`.
 - 3D Model: replace `public/models/character.enc` (must match decrypt password in `src/components/Character/utils/decrypt.ts`).
 - Environment: replace `public/models/char_enviorment.hdr`.
 
@@ -242,20 +244,14 @@ Edit CSS variables in `src/index.css`:
 
 # Deployment
 
-### GitHub Pages (Automatic)
+### Vercel (primary)
 
-Push to `main` triggers `.github/workflows/deploy.yml` → deploys to:
-
-`https://vansh281999.github.io/web_portfolio_v2/`
-
-### Vercel / Netlify
-
-Import the repository and configure:
+The site is built with `base: "/"`, so it is served from the domain root. Import the repository in Vercel and configure:
 - **Framework:** Vite
 - **Build Command:** `npm run build`
 - **Output Directory:** `dist`
 
-`vercel.json` and `netlify.toml` are included for SPA fallback routing.
+`vercel.json` and `netlify.toml` are included for SPA fallback routing. Videos, the 3D model and images are served from `public/` through `import.meta.env.BASE_URL`.
 
 ---
 
@@ -277,6 +273,12 @@ This is a personal portfolio. Open an issue for bugs or suggestions.
 
 ---
 
+# Credits
+
+Built from the original template [Vansh281999/web_portfolio_v2](https://github.com/Vansh281999/web_portfolio_v2) (MIT License).
+
+---
+
 # License
 
 [MIT](LICENSE)
@@ -287,9 +289,6 @@ This is a personal portfolio. Open an issue for bugs or suggestions.
 
 <div align="center">
 
-[![GitHub](https://img.shields.io/badge/GitHub-Vansh281999-181717?logo=github)](https://github.com/Vansh281999)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0a66c2?logo=linkedin)](https://linkedin.com/in/vansh281999)
-[![Portfolio](https://img.shields.io/badge/Portfolio-Live-5eead4?logo=globe)](https://vansh281999.github.io/web_portfolio_v2/)
-[![Email](https://img.shields.io/badge/Email-Contact-dc382d?logo=gmail)](mailto:your-email@example.com)
+[![Behance](https://img.shields.io/badge/Behance-erayomeroglu-1769ff?logo=behance)](https://www.behance.net/erayomeroglu)
 
 </div>

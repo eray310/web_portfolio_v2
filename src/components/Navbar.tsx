@@ -27,12 +27,10 @@ const Navbar = () => {
     links.forEach((elem) => {
       let element = elem as HTMLAnchorElement;
       element.addEventListener("click", (e) => {
-        if (window.innerWidth > 1024) {
-          e.preventDefault();
-          let elem = e.currentTarget as HTMLAnchorElement;
-          let section = elem.getAttribute("data-href");
-          smoother.scrollTo(section, true, "top top");
-        }
+        e.preventDefault();
+        let elem = e.currentTarget as HTMLAnchorElement;
+        let section = elem.getAttribute("data-href");
+        smoother.scrollTo(section, true, "top top");
       });
     });
     window.addEventListener("resize", () => {
@@ -43,31 +41,31 @@ const Navbar = () => {
     <>
       <div className="header">
         <a href="/#" className="navbar-title" data-cursor="disable">
-          VM
+          EÖ
         </a>
         <a
-          href="https://www.linkedin.com/in/vansh-m/"
+          href="https://www.behance.net/erayomeroglu"
           className="navbar-connect"
           data-cursor="disable"
           target="_blank"
           rel="noreferrer"
         >
-          linkedin.com/in/vansh-m
+          behance.net/erayomeroglu
         </a>
         <ul>
           <li>
-            <a data-href="#about" href="#about">
-              <HoverLinks text="ABOUT" />
+            <a data-href="#work" href="#work">
+              <HoverLinks text="SEÇİLİ İŞLER" />
             </a>
           </li>
           <li>
-            <a data-href="#work" href="#work">
-              <HoverLinks text="WORK" />
+            <a data-href="#about" href="#about">
+              <HoverLinks text="HAKKIMDA" />
             </a>
           </li>
           <li>
             <a data-href="#contact" href="#contact">
-              <HoverLinks text="CONTACT" />
+              <HoverLinks text="İLETİŞİM" />
             </a>
           </li>
         </ul>

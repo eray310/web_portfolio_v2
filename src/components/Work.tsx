@@ -1,43 +1,36 @@
 import { useState, useCallback, useRef } from "react";
 import "./styles/Work.css";
 import WorkImage from "./WorkImage";
+import VideoModal from "./VideoModal";
 import { MdArrowBack, MdArrowForward } from "react-icons/md";
 
-const projects = [
+type Project = {
+  title: string;
+  video: string;
+};
+
+const videoUrl = (file: string) =>
+  `${import.meta.env.BASE_URL}portfolio/${file}`;
+
+const projects: Project[] = [
   {
-    title: "Assistive Vision",
-    category: "Wearable 360° Hazard Detection Headset",
-    tools: "YOLOv12, LiDAR Fusion, DCP Dehazing, Risk Scoring, Audio Feedback",
-    image: `${import.meta.env.BASE_URL}images/placeholder.webp`,
-    link: "https://github.com/Vansh281999",
+    title: "Allesta — Yapay Zekâ Reklam Filmi",
+    video: videoUrl("Allesta_YZReklam.mp4"),
   },
   {
-    title: "Cloud IDS",
-    category: "Intrusion Detection System for Cloud Security",
-    tools: "XGBoost, Random Forest, Neural Networks, AWS S3 & SageMaker",
-    image: `${import.meta.env.BASE_URL}images/placeholder.webp`,
-    link: "https://github.com/Vansh281999",
+    // TODO: geçici başlık
+    title: "Allvex — Reels",
+    video: videoUrl("Allvex_Reels4.mp4"),
   },
   {
-    title: "Resume RAG",
-    category: "LLM Pipeline for Resume Screening",
-    tools: "LangChain, OpenAI, HuggingFace, FAISS, Streamlit",
-    image: `${import.meta.env.BASE_URL}images/placeholder.webp`,
-    link: "https://github.com/Vansh281999",
+    // TODO: geçici başlık
+    title: "Elaris — Reels",
+    video: videoUrl("Elaris_Reels_22.mp4"),
   },
   {
-    title: "Plate Recognition",
-    category: "Automated Vehicle Authorization System",
-    tools: "Python, OpenCV, OCR, SQLite",
-    image: `${import.meta.env.BASE_URL}images/placeholder.webp`,
-    link: "https://github.com/Vansh281999",
-  },
-  {
-    title: "Realtime Chat",
-    category: "Full-Stack Messaging Application",
-    tools: "React, Socket.io, Express, MongoDB, JWT",
-    image: `${import.meta.env.BASE_URL}images/placeholder.webp`,
-    link: "https://github.com/Vansh281999",
+    // TODO: geçici başlık
+    title: "Res 360",
+    video: videoUrl("Res__360.mp4"),
   },
 ];
 
@@ -46,6 +39,8 @@ const Work = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [openVideo, setOpenVideo] = useState<Project | null>(null);
+  const closeVideo = useCallback(() => setOpenVideo(null), []);
 
   const trackContainerRef = useRef<HTMLDivElement>(null);
   const dragStartX = useRef(0);
@@ -150,7 +145,7 @@ const Work = () => {
     <div className="work-section" id="work">
       <div className="work-container section-container">
         <h2>
-          My <span>Work</span>
+          Seçili <span>İşler</span>
         </h2>
 
         <div className="carousel-wrapper">
@@ -195,20 +190,13 @@ const Work = () => {
                       </div>
                       <div className="carousel-details">
                         <h4>{project.title}</h4>
-                        <p className="carousel-category">
-                          {project.category}
-                        </p>
-                        <div className="carousel-tools">
-                          <span className="tools-label">Tools & Features</span>
-                          <p>{project.tools}</p>
-                        </div>
                       </div>
                     </div>
                     <div className="carousel-image-wrapper">
                       <WorkImage
-                        image={project.image}
                         alt={project.title}
-                        link={project.link}
+                        videoSrc={project.video}
+                        onOpen={() => setOpenVideo(project)}
                       />
                     </div>
                   </div>
@@ -232,6 +220,13 @@ const Work = () => {
           </div>
         </div>
       </div>
+      {openVideo?.video && (
+        <VideoModal
+          src={openVideo.video}
+          title={openVideo.title}
+          onClose={closeVideo}
+        />
+      )}
     </div>
   );
 };

@@ -11,19 +11,50 @@ import {
   RapierRigidBody,
 } from "@react-three/rapier";
 
-const textureLoader = new THREE.TextureLoader();
-const imageUrls = [
-  `${import.meta.env.BASE_URL}images/react.webp`,
-  `${import.meta.env.BASE_URL}images/react2.webp`,
-  `${import.meta.env.BASE_URL}images/node.webp`,
-  `${import.meta.env.BASE_URL}images/node2.webp`,
-  `${import.meta.env.BASE_URL}images/express.webp`,
-  `${import.meta.env.BASE_URL}images/mongo.webp`,
-  `${import.meta.env.BASE_URL}images/mysql.webp`,
-  `${import.meta.env.BASE_URL}images/typescript.webp`,
-  `${import.meta.env.BASE_URL}images/javascript.webp`,
+// No icon files exist for these tools, so each ball gets a text label drawn on a canvas.
+const tools = [
+  { name: "After Effects", color: "#1b1146" },
+  { name: "Premiere Pro", color: "#1d1a4d" },
+  { name: "Photoshop", color: "#0b2a4a" },
+  { name: "Illustrator", color: "#4a2a0b" },
+  { name: "InDesign", color: "#4a0b2e" },
+  { name: "CapCut", color: "#10303a" },
 ];
-const textures = imageUrls.map((url) => textureLoader.load(url));
+
+function drawLabel(canvas: HTMLCanvasElement, name: string, color: string) {
+  const ctx = canvas.getContext("2d")!;
+  const { width, height } = canvas;
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "700 76px Montserrat, Arial, sans-serif";
+  const words = name.split(" ");
+  // The sphere wraps the texture around once, so the label is drawn twice
+  // to stay readable from either side.
+  [width * 0.25, width * 0.75].forEach((x) => {
+    words.forEach((word, i) => {
+      const y = height / 2 + (i - (words.length - 1) / 2) * 90;
+      ctx.fillText(word, x, y, width * 0.4);
+    });
+  });
+}
+
+const textures = tools.map(({ name, color }) => {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 512;
+  drawLabel(canvas, name, color);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  // Redraw once the web font is ready so the labels use Montserrat.
+  document.fonts?.ready.then(() => {
+    drawLabel(canvas, name, color);
+    texture.needsUpdate = true;
+  });
+  return texture;
+});
 
 const sphereGeometry = new THREE.SphereGeometry(1, 28, 28);
 
@@ -169,7 +200,7 @@ const TechStack = () => {
 
   return (
     <div className="techstack">
-      <h2> My Techstack</h2>
+      <h2>Kullandığım Araçlar</h2>
 
       <Canvas
         shadows

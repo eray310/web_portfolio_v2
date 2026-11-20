@@ -28,9 +28,10 @@ const WhatIDo = () => {
     <div className="whatIDO">
       <div className="what-box">
         <h2 className="title">
-          W<span className="hat-h2">HAT</span>
+          Neler
           <div>
-            I<span className="do-h2"> DO</span>
+            <span className="hat-h2">Yapıyorum</span>
+            <span className="do-h2">?</span>
           </div>
         </h2>
       </div>
@@ -87,21 +88,18 @@ const WhatIDo = () => {
             <div className="what-corner"></div>
 
             <div className="what-content-in">
-              <h3>COMPUTER VISION & ML</h3>
-              <h4>Detection Systems That Run in Real Time</h4>
+              <h3>MOTION &amp; KURGU</h3>
+              <h4>Hareketli Grafik ve Video Kurgu</h4>
               <p>
-                I build models that don't just classify—they make decisions
-                under real-world constraints: object detection, sensor fusion,
-                and risk scoring for hardware and security systems.
+                Markalar için sosyal medya ve reklam videoları üretiyorum;
+                animasyon, motion graphics ve kurgu süreçlerini birlikte
+                yürütüyorum.
               </p>
-              <h5>Skillset & tools</h5>
+              <h5>Beceriler ve araçlar</h5>
               <div className="what-content-flex">
-                <div className="what-tags">YOLO &amp; CV</div>
-                <div className="what-tags">TensorFlow</div>
-                <div className="what-tags">XGBoost &amp; ensembles</div>
-                <div className="what-tags">RAG &amp; LangChain</div>
-                <div className="what-tags">AWS SageMaker</div>
-                <div className="what-tags">Python / Pandas</div>
+                <div className="what-tags">After Effects</div>
+                <div className="what-tags">Premiere Pro</div>
+                <div className="what-tags">CapCut</div>
               </div>
               <div className="what-arrow"></div>
             </div>
@@ -125,21 +123,17 @@ const WhatIDo = () => {
             </div>
             <div className="what-corner"></div>
             <div className="what-content-in">
-              <h3>FULL-STACK & DATA</h3>
-              <h4>Shipping Web Products End to End</h4>
+              <h3>GRAFİK TASARIM</h3>
+              <h4>Sosyal Medya ve Reklam Görselleri</h4>
               <p>
-                From admin panels to real-time chat apps, I take products from
-                schema to deployment—APIs, dashboards, and the pipelines that
-                feed them.
+                Reels, statik görseller ve reklam kampanyaları için içerikleri
+                konseptten teslimata kadar hazırlıyorum.
               </p>
-              <h5>Skillset & tools</h5>
+              <h5>Beceriler ve araçlar</h5>
               <div className="what-content-flex">
-                <div className="what-tags">React</div>
-                <div className="what-tags">Node.js</div>
-                <div className="what-tags">Express</div>
-                <div className="what-tags">MongoDB</div>
-                <div className="what-tags">SQL</div>
-                <div className="what-tags">Docker &amp; AWS</div>
+                <div className="what-tags">Photoshop</div>
+                <div className="what-tags">Illustrator</div>
+                <div className="what-tags">InDesign</div>
               </div>
               <div className="what-arrow"></div>
             </div>

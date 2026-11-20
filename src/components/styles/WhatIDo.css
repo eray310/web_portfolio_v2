@@ -20,10 +20,17 @@
 }
 .what-box h2 {
   font-size: calc(3.2vw + 18px);
-  line-height: calc(3.2vw + 14px);
+  line-height: 1.25; /* room for descenders (p, y) inside the clipped split lines */
   font-weight: 600;
   margin-right: 10%;
   margin-bottom: 100px;
+}
+
+@media only screen and (min-width: 1025px) {
+  /* Keep the title at the left edge so the character has room in the middle. */
+  .what-box:first-child {
+    justify-content: flex-start;
+  }
 }
 
 .hat-h2 {
@@ -320,7 +327,7 @@
   .what-box h2 {
     margin: 50px 0;
     font-size: 44px;
-    line-height: 46px;
+    line-height: 1.25;
   }
   .what-box:first-child {
     justify-content: left;
@@ -388,6 +395,6 @@
 @media only screen and (min-width: 1950px) {
   .what-box h2 {
     font-size: 5.5rem;
-    line-height: 5.3rem;
+    line-height: 1.25;
   }
 }

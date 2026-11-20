@@ -1,6 +1,65 @@
 import * as THREE from "three";
 import gsap from "gsap";
 
+// Horizontal extent of the seated character (chair to desk edge) measured from
+// the canvas centre, as a fraction of canvas height, at the default camera
+// distance (z = 75) used while the "Neler Yapıyorum?" section is shown.
+const CHAR_LEFT = 0.132;
+const CHAR_RIGHT = 0.471;
+const CHAR_CAMERA_Z = 75;
+const CHAR_GAP = 20;
+
+/**
+ * Works out where the character has to sit (and how far the camera has to pull
+ * back) so it fits between the section title on the left and the cards on the
+ * right. The character scales with the canvas height while the cards use fixed
+ * pixel widths, so on smaller desktop windows the old fixed offset made the
+ * character run over the cards.
+ */
+function getWhatIDoFit() {
+  const canvas = document.querySelector(".character-model") as HTMLElement | null;
+  const title = document.querySelector(".whatIDO h2");
+  const box = document.querySelector(".whatIDO .what-box:last-child") as HTMLElement | null;
+  const inner = document.querySelector(".what-box-in") as HTMLElement | null;
+  const card = document.querySelector(".what-content") as HTMLElement | null;
+  const fallback = { x: "-12%", z: CHAR_CAMERA_Z };
+  if (!canvas || !title || !box || !inner || !card) return fallback;
+
+  const range = document.createRange();
+  range.selectNodeContents(title);
+  const titleRight = range.getBoundingClientRect().right;
+
+  // .what-box-in is display:none until the animation reveals it, so derive its
+  // position from the layout: it is centred in the right half, margin included.
+  const boxRect = box.getBoundingClientRect();
+  const cardWidth = parseFloat(getComputedStyle(card).width);
+  const marginLeft = parseFloat(getComputedStyle(inner).marginLeft) || 0;
+  const cardsLeft =
+    boxRect.left + (boxRect.width - (cardWidth + marginLeft)) / 2 + marginLeft;
+
+  const canvasW = canvas.offsetWidth || window.innerWidth;
+  const canvasH = canvas.offsetHeight || window.innerHeight;
+  const viewportCenter = window.innerWidth / 2;
+
+  const minX = titleRight + CHAR_GAP;
+  const maxX = cardsLeft - CHAR_GAP;
+  const fullWidth = (CHAR_LEFT + CHAR_RIGHT) * canvasH;
+  const scale = Math.max(0.5, Math.min(1, (maxX - minX) / fullWidth));
+
+  const minCenter = minX + CHAR_LEFT * canvasH * scale;
+  const maxCenter = maxX - CHAR_RIGHT * canvasH * scale;
+  const preferred = viewportCenter - 0.12 * canvasW;
+  const center =
+    minCenter > maxCenter
+      ? (minCenter + maxCenter) / 2
+      : Math.min(maxCenter, Math.max(minCenter, preferred));
+
+  return {
+    x: `${(((center - viewportCenter) / canvasW) * 100).toFixed(2)}%`,
+    z: CHAR_CAMERA_Z / scale,
+  };
+}
+
 export function setCharTimeline(
   character: THREE.Object3D<THREE.Object3DEventMap> | null,
   camera: THREE.PerspectiveCamera
@@ -74,7 +133,13 @@ export function setCharTimeline(
       tl2
         .to(
           camera.position,
-          { z: 75, y: 8.4, duration: 6, delay: 2, ease: "power3.inOut" },
+          {
+            z: () => getWhatIDoFit().z,
+            y: 8.4,
+            duration: 6,
+            delay: 2,
+            ease: "power3.inOut",
+          },
           0
         )
         .to(".about-section", { y: "30%", duration: 6 }, 0)
@@ -82,7 +147,12 @@ export function setCharTimeline(
         .fromTo(
           ".character-model",
           { pointerEvents: "inherit" },
-          { pointerEvents: "none", x: "-12%", delay: 2, duration: 5 },
+          {
+            pointerEvents: "none",
+            x: () => getWhatIDoFit().x,
+            delay: 2,
+            duration: 5,
+          },
           0
         )
         .to(character.rotation, { y: 0.92, x: 0.12, delay: 3, duration: 3 }, 0)

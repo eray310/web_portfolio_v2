@@ -18,7 +18,9 @@ export default function handleResize(
   const workTrigger = ScrollTrigger.getById("work");
   ScrollTrigger.getAll().forEach((trigger) => {
     if (trigger != workTrigger) {
-      trigger.kill();
+      // Revert the animated values too, otherwise the rebuilt timelines pick up
+      // the camera/character state left over from the old window size.
+      trigger.kill(true);
     }
   });
   setCharTimeline(character, camera);

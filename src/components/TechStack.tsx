@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { useRef, useMemo, useState, useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useRef, useMemo, useState, useEffect, useLayoutEffect } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
 import { EffectComposer, N8AO } from "@react-three/postprocessing";
 import {
@@ -119,19 +119,26 @@ function SphereGeo({
 type PointerProps = {
   vec?: THREE.Vector3;
   isActive: boolean;
+  /** True while a finger is lifted off / has been taken over by page scrolling. */
+  released: React.MutableRefObject<boolean>;
 };
 
-function Pointer({ vec = new THREE.Vector3(), isActive }: PointerProps) {
+// Where the pointer ball waits when nothing is touching the scene.
+const PARKED = new THREE.Vector3(100, 100, 100);
+
+function Pointer({ vec = new THREE.Vector3(), isActive, released }: PointerProps) {
   const ref = useRef<RapierRigidBody>(null);
 
   useFrame(({ pointer, viewport }) => {
     if (!isActive) return;
     const targetVec = vec.lerp(
-      new THREE.Vector3(
-        (pointer.x * viewport.width) / 2,
-        (pointer.y * viewport.height) / 2,
-        0
-      ),
+      released.current
+        ? PARKED
+        : new THREE.Vector3(
+            (pointer.x * viewport.width) / 2,
+            (pointer.y * viewport.height) / 2,
+            0
+          ),
       0.2
     );
     ref.current?.setNextKinematicTranslation(targetVec);
@@ -149,8 +156,34 @@ function Pointer({ vec = new THREE.Vector3(), isActive }: PointerProps) {
   );
 }
 
+// Width (in scene units) the ball cluster needs, and the visible width at the
+// default camera distance of 20 for a 32.5° field of view with aspect 1.
+const CLUSTER_WIDTH = 13;
+const VISIBLE_HEIGHT_AT_20 = 2 * 20 * Math.tan((32.5 / 2) * (Math.PI / 180));
+
+/** Pulls the camera back on narrow (portrait) canvases so the cluster fits. */
+function FitCamera() {
+  const camera = useThree((state) => state.camera);
+  const size = useThree((state) => state.size);
+  useLayoutEffect(() => {
+    const aspect = size.width / size.height;
+    const factor = Math.max(1, CLUSTER_WIDTH / (VISIBLE_HEIGHT_AT_20 * aspect));
+    camera.position.z = 20 * factor;
+    camera.updateProjectionMatrix();
+  }, [camera, size]);
+  return null;
+}
+
 const TechStack = () => {
   const [isActive, setIsActive] = useState(false);
+  // Touch: the pointer ball only pushes while a finger is on the scene.
+  const released = useRef(false);
+  const onTouchPress = (e: React.PointerEvent) => {
+    if (e.pointerType === "touch") released.current = false;
+  };
+  const onTouchRelease = (e: React.PointerEvent) => {
+    if (e.pointerType === "touch") released.current = true;
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -199,9 +232,16 @@ const TechStack = () => {
         shadows
         gl={{ alpha: true, stencil: false, depth: false, antialias: false }}
         camera={{ position: [0, 0, 20], fov: 32.5, near: 1, far: 100 }}
+        dpr={[1, 1.75]}
         onCreated={(state) => (state.gl.toneMappingExposure = 1.5)}
         className="tech-canvas"
+        onPointerDown={onTouchPress}
+        onPointerMove={onTouchPress}
+        onPointerUp={onTouchRelease}
+        onPointerCancel={onTouchRelease}
+        onPointerLeave={onTouchRelease}
       >
+        <FitCamera />
         <ambientLight intensity={1} />
         <spotLight
           position={[20, 20, 25]}
@@ -213,7 +253,7 @@ const TechStack = () => {
         />
         <directionalLight position={[0, 5, -4]} intensity={2} />
         <Physics gravity={[0, 0, 0]}>
-          <Pointer isActive={isActive} />
+          <Pointer isActive={isActive} released={released} />
           {spheres.map((props, i) => (
             <SphereGeo
               key={i}

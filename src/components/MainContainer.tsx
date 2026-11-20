@@ -46,16 +46,14 @@ const MainContainer = ({ children }: PropsWithChildren) => {
             <WhatIDo />
             <Career />
             <Work />
-            {isDesktopView && (
-              hasWebGL() ? (
-                <ErrorBoundary fallback={<ToolsFallback />}>
-                  <Suspense fallback={<div>Loading....</div>}>
-                    <TechStack />
-                  </Suspense>
-                </ErrorBoundary>
-              ) : (
-                <ToolsFallback />
-              )
+            {hasWebGL() ? (
+              <ErrorBoundary fallback={<ToolsFallback />}>
+                <Suspense fallback={<div className="techstack" aria-hidden="true" />}>
+                  <TechStack />
+                </Suspense>
+              </ErrorBoundary>
+            ) : (
+              <ToolsFallback />
             )}
             <Contact />
           </div>

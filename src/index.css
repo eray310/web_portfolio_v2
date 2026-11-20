@@ -130,8 +130,36 @@ body {
   }
 }
 
+/* The 3D balls take touches without blocking the page: vertical swipes always
+   scroll, taps and sideways moves reach the scene. */
+.tech-canvas,
+.tech-canvas canvas {
+  touch-action: pan-y;
+}
+
 @media screen and (max-width: 900px) {
   .techstack h2 {
     font-size: 40px;
+  }
+}
+
+/* Phones and tablets: a shorter 3D area that fits the screen. */
+@media screen and (max-width: 1024px) {
+  .techstack {
+    height: min(var(--vh), 440px);
+    min-height: 380px;
+    margin-top: 30px;
+    margin-bottom: 0;
+  }
+
+  .techstack h2 {
+    top: 16px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .techstack h2 {
+    font-size: 30px;
+    top: 12px;
   }
 }

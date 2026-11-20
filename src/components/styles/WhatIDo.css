@@ -26,6 +26,11 @@
   margin-bottom: 100px;
 }
 
+/* Without WebGL the scroll animation that reveals the cards never runs. */
+.no-webgl .what-box-in {
+  display: flex;
+}
+
 @media only screen and (min-width: 1025px) {
   /* Keep the title at the left edge so the character has room in the middle. */
   .what-box:first-child {

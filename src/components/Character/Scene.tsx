@@ -12,6 +12,7 @@ import {
 } from "./utils/mouseUtils";
 import setAnimations from "./utils/animationUtils";
 import { setProgress } from "../Loading";
+import { startWithout3D } from "../NoWebGLBoot";
 
 const Scene = () => {
   const canvasDiv = useRef<HTMLDivElement | null>(null);
@@ -27,10 +28,18 @@ const Scene = () => {
       const aspect = container.width / container.height;
       const scene = sceneRef.current;
 
-      const renderer = new THREE.WebGLRenderer({
-        alpha: true,
-        antialias: true,
-      });
+      let renderer: THREE.WebGLRenderer;
+      try {
+        renderer = new THREE.WebGLRenderer({
+          alpha: true,
+          antialias: true,
+        });
+      } catch (error) {
+        // No usable WebGL: carry on with the page without the 3D character.
+        console.error("Could not create WebGL context:", error);
+        startWithout3D(setLoading);
+        return;
+      }
       renderer.setSize(container.width, container.height);
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -53,7 +62,8 @@ const Scene = () => {
       let progress = setProgress((value) => setLoading(value));
       const { loadCharacter } = setCharacter(renderer, scene, camera);
 
-      loadCharacter().then((gltf) => {
+      loadCharacter()
+        .then((gltf) => {
         if (gltf) {
           const animations = setAnimations(gltf);
           hoverDivRef.current && animations.hover(gltf, hoverDivRef.current);
@@ -73,7 +83,12 @@ const Scene = () => {
             handleResize(renderer, camera, canvasDiv, character)
           );
         }
-      });
+        })
+        .catch((error) => {
+          // Model could not be loaded: keep the page usable without it.
+          console.error("3D character could not be loaded:", error);
+          startWithout3D(setLoading, progress);
+        });
 
       let mouse = { x: 0, y: 0 },
         interpolation = { x: 0.1, y: 0.2 };

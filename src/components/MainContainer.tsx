@@ -9,6 +9,9 @@ import SocialIcons from "./SocialIcons";
 import WhatIDo from "./WhatIDo";
 import Work from "./Work";
 import setSplitText from "./utils/splitText";
+import ErrorBoundary from "./ErrorBoundary";
+import ToolsFallback from "./ToolsFallback";
+import { hasWebGL } from "../utils/webgl";
 
 const TechStack = lazy(() => import("./TechStack"));
 
@@ -44,9 +47,15 @@ const MainContainer = ({ children }: PropsWithChildren) => {
             <Career />
             <Work />
             {isDesktopView && (
-              <Suspense fallback={<div>Loading....</div>}>
-                <TechStack />
-              </Suspense>
+              hasWebGL() ? (
+                <ErrorBoundary fallback={<ToolsFallback />}>
+                  <Suspense fallback={<div>Loading....</div>}>
+                    <TechStack />
+                  </Suspense>
+                </ErrorBoundary>
+              ) : (
+                <ToolsFallback />
+              )
             )}
             <Contact />
           </div>

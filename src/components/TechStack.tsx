@@ -10,16 +10,9 @@ import {
   CylinderCollider,
   RapierRigidBody,
 } from "@react-three/rapier";
+import { tools } from "../data/tools";
 
 // No icon files exist for these tools, so each ball gets a text label drawn on a canvas.
-const tools = [
-  { name: "After Effects", color: "#1b1146" },
-  { name: "Premiere Pro", color: "#1d1a4d" },
-  { name: "Photoshop", color: "#0b2a4a" },
-  { name: "Illustrator", color: "#4a2a0b" },
-  { name: "InDesign", color: "#4a0b2e" },
-  { name: "CapCut", color: "#10303a" },
-];
 
 function drawLabel(canvas: HTMLCanvasElement, name: string, color: string) {
   const ctx = canvas.getContext("2d")!;

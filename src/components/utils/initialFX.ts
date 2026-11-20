@@ -1,6 +1,7 @@
 import { SplitText } from "gsap/SplitText";
 import gsap from "gsap";
 import { smoother } from "../Navbar";
+import { watchNameGradient } from "./nameGradient";
 
 export function initialFX() {
   document.body.style.overflowY = "auto";
@@ -15,7 +16,10 @@ export function initialFX() {
   var landingText = new SplitText([".landing-intro h2", ".landing-intro h1"], {
     type: "chars,lines",
     linesClass: "split-line",
+    charsClass: "split-char",
   });
+  // Colour fade on the name; must be in place before the letters start moving.
+  watchNameGradient();
   gsap.fromTo(
     landingText.chars,
     { opacity: 0, y: 80, filter: "blur(5px)" },

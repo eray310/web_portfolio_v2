@@ -1,0 +1,154 @@
+.brands-section {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  margin: 0 auto;
+  padding: 60px 0 40px;
+  text-align: center;
+  --brandsGap: 80px;
+}
+
+.brands-section h2 {
+  margin: 0 0 36px;
+  padding: 0 15px;
+  font-size: clamp(30px, 3.4vw, 50px);
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.brands-section h2 > span {
+  color: var(--accentColor);
+}
+
+/* One row of logos moving left at a slow, constant speed. */
+.brands-marquee {
+  overflow: hidden;
+  width: 100%;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.brands-track {
+  display: flex;
+  width: max-content;
+  /* About 20px per second: (item width + gap) per logo / speed. */
+  animation: brandsScroll calc(var(--brands-count, 8) * 11.5s) linear infinite;
+  will-change: transform;
+}
+
+.brands-set {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brands-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 150px;
+  height: 56px;
+  margin-right: var(--brandsGap);
+}
+
+.brands-item img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Dev preview only: empty slots that show where the logos will go. */
+.brands-placeholder {
+  box-sizing: border-box;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(234, 229, 236, 0.45);
+}
+
+.brands-note {
+  margin: 28px auto 0;
+  max-width: 560px;
+  padding: 0 15px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(234, 229, 236, 0.55);
+}
+
+.brands-note code {
+  font-family: ui-monospace, Consolas, monospace;
+  color: var(--accentColor);
+}
+
+@keyframes brandsScroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .brands-section {
+    padding: 40px 0 20px;
+    --brandsGap: 56px;
+  }
+
+  .brands-section h2 {
+    margin-bottom: 26px;
+  }
+
+  .brands-item {
+    width: 120px;
+    height: 46px;
+  }
+
+  /* Same ~20px per second with the narrower logos. */
+  .brands-track {
+    animation-duration: calc(var(--brands-count, 8) * 8.8s);
+  }
+}
+
+/* Reduced motion: no movement; the logos sit still, centred and wrapped, and
+   every one of them stays visible and readable. */
+@media (prefers-reduced-motion: reduce) {
+  .brands-marquee {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .brands-track {
+    width: 100%;
+    animation: none;
+    transform: none;
+    justify-content: center;
+  }
+
+  .brands-set {
+    flex-shrink: 1;
+    width: 100%;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 28px;
+    padding: 0 15px;
+  }
+
+  .brands-item {
+    margin: 0 28px;
+  }
+
+  .brands-repeat,
+  .brands-set[aria-hidden="true"] {
+    display: none;
+  }
+}

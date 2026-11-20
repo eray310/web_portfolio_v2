@@ -1,145 +1,127 @@
-import { useState, useCallback, useRef } from "react";
-import "./styles/Work.css";
-import WorkImage from "./WorkImage";
+import { useState, useCallback } from "react";
+import { MdPlayArrow } from "react-icons/md";
 import VideoModal from "./VideoModal";
-import { MdArrowBack, MdArrowForward } from "react-icons/md";
+import "./styles/Work.css";
 
 type Project = {
   title: string;
+  /** One or two short sentences about the work. */
+  description: string;
+  /** Video file inside `public/portfolio/`. */
   video: string;
+  /** Optional cover image inside `public/portfolio/`. Without it the first frame of the video is shown. */
+  poster?: string;
 };
 
-const videoUrl = (file: string) =>
+const fileUrl = (file: string) =>
   `${import.meta.env.BASE_URL}portfolio/${file}`;
 
+/**
+ * Selected works. To add a video: copy the file into `public/portfolio/` and
+ * add ONE entry here; the card, its size and the player come from this line.
+ * Videos keep their own shape (vertical or horizontal) inside a card of the
+ * same size.
+ */
 const projects: Project[] = [
   {
-    title: "Allesta — Yapay Zekâ Reklam Filmi",
-    video: videoUrl("Allesta_YZReklam.mp4"),
+    title: "Allesta | Yapay Zekâ Destekli Reklam",
+    description:
+      "Allesta için hazırladığım reklam videosunda yapay zekâ destekli görselleri kurgu ve hareketli grafiklerle birleştirdim. Geçişleri, ana mesajın kısa sürede anlaşılacağı bir akışa göre kurguladım.",
+    video: "Allesta_YZReklam.mp4",
+    poster: "Allesta_YZReklam.jpg",
   },
   {
-    // TODO: geçici başlık
-    title: "Allvex — Reels",
-    video: videoUrl("Allvex_Reels4.mp4"),
+    title: "Allvex | Sosyal Medya Videosu",
+    description:
+      "Allvex için hazırladığım dikey videoda görüntü seçimini, kesme ritmini ve metin yerleşimini mobil izleme deneyimine göre kurguladım.",
+    video: "Allvex_Reels4.mp4",
+    poster: "Allvex_Reels4.jpg",
   },
   {
-    // TODO: geçici başlık
-    title: "Elaris — Reels",
-    video: videoUrl("Elaris_Reels_22.mp4"),
+    title: "Elaris | Sosyal Medya Videosu",
+    description:
+      "Elaris için hazırladığım kısa videoda planları akıcı bir sırayla birleştirdim. Kurgu ritmini ve metinleri, projenin öne çıkan detaylarını mobilde rahat izletecek şekilde düzenledim.",
+    video: "Elaris_Reels_22.mp4",
+    poster: "Elaris_Reels_22.jpg",
   },
   {
-    // TODO: geçici başlık
-    title: "Res 360",
-    video: videoUrl("Res__360.mp4"),
+    title: "RES360 | Proje Tanıtım Videosu",
+    description:
+      "Gayrimenkul projelerinin kartlarını, görsellerini ve ekran geçişlerini hareketli grafiklerle tek bir akışta birleştiren video çalışması. Projeler arasındaki geçişler, bilgiyi kısa sürede takip edilecek şekilde kuruldu.",
+    video: "Res__360.mp4",
+    poster: "Res__360.jpg",
   },
 ];
 
-const Work = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [openVideo, setOpenVideo] = useState<Project | null>(null);
-  const closeVideo = useCallback(() => setOpenVideo(null), []);
+type Opened = { project: Project; ratio?: number };
 
-  const trackContainerRef = useRef<HTMLDivElement>(null);
-  const dragStartX = useRef(0);
-  const dragStartedAt = useRef(0);
-  const draggingRef = useRef(false);
-  const dragMovedRef = useRef(false);
+const WorkCard = ({
+  project,
+  index,
+  onOpen,
+}: {
+  project: Project;
+  index: number;
+  onOpen: (ratio?: number) => void;
+}) => {
+  // Shape of the video (width / height), read from the cover or the first frame.
+  const [ratio, setRatio] = useState<number>();
+  const poster = project.poster && fileUrl(project.poster);
 
-  const goToSlide = useCallback(
-    (index: number) => {
-      if (isAnimating) return;
-      setIsAnimating(true);
-      setCurrentIndex(index);
-      setTimeout(() => setIsAnimating(false), 500);
-    },
-    [isAnimating]
+  return (
+    <article className="work-card">
+      <button
+        type="button"
+        className="work-media"
+        style={
+          poster
+            ? ({ "--poster": `url("${poster}")` } as React.CSSProperties)
+            : undefined
+        }
+        onClick={() => onOpen(ratio)}
+        aria-label={`${project.title} videosunu oynat`}
+        data-cursor="disable"
+      >
+        {poster ? (
+          <img
+            src={poster}
+            alt=""
+            loading={index < 2 ? "eager" : "lazy"}
+            decoding="async"
+            draggable={false}
+            onLoad={(e) =>
+              setRatio(
+                e.currentTarget.naturalWidth / e.currentTarget.naturalHeight
+              )
+            }
+          />
+        ) : (
+          <video
+            src={`${fileUrl(project.video)}#t=0.1`}
+            preload="metadata"
+            muted
+            playsInline
+            draggable={false}
+            onLoadedMetadata={(e) =>
+              setRatio(e.currentTarget.videoWidth / e.currentTarget.videoHeight)
+            }
+          />
+        )}
+        <span className="work-play" aria-hidden="true">
+          <MdPlayArrow />
+        </span>
+      </button>
+      <div className="work-info">
+        <h3>{project.title}</h3>
+        <p>{project.description}</p>
+      </div>
+    </article>
   );
+};
 
-  const goToPrev = useCallback(() => {
-    const newIndex =
-      currentIndex === 0 ? projects.length - 1 : currentIndex - 1;
-    goToSlide(newIndex);
-  }, [currentIndex, goToSlide]);
-
-  const goToNext = useCallback(() => {
-    const newIndex =
-      currentIndex === projects.length - 1 ? 0 : currentIndex + 1;
-    goToSlide(newIndex);
-  }, [currentIndex, goToSlide]);
-
-  const getClientX = (e: TouchEvent | MouseEvent | React.TouchEvent | React.MouseEvent) => {
-    if ("touches" in e && e.touches.length) return e.touches[0].clientX;
-    if ("changedTouches" in e && e.changedTouches.length)
-      return e.changedTouches[0].clientX;
-    return (e as MouseEvent).clientX;
-  };
-
-  const handleDragStart = (e: React.TouchEvent | React.MouseEvent) => {
-    if (isAnimating) return;
-    draggingRef.current = true;
-    dragStartedAt.current = Date.now();
-    dragStartX.current = getClientX(e);
-    dragMovedRef.current = false;
-    setIsDragging(true);
-    setDragOffset(0);
-
-    const handleMove = (ev: TouchEvent | MouseEvent) => {
-      if (!draggingRef.current || !trackContainerRef.current) return;
-      const x = getClientX(ev);
-      const delta = x - dragStartX.current;
-      if (Math.abs(delta) > 5) dragMovedRef.current = true;
-      const width = trackContainerRef.current.offsetWidth || 1;
-      const clamped = Math.max(-width * 0.4, Math.min(width * 0.4, delta));
-      setDragOffset(clamped);
-    };
-
-    const handleEnd = (ev: TouchEvent | MouseEvent) => {
-      if (!draggingRef.current || !trackContainerRef.current) return;
-      draggingRef.current = false;
-      setIsDragging(false);
-
-      const x = getClientX(ev);
-      const delta = x - dragStartX.current;
-      const width = trackContainerRef.current.offsetWidth || 1;
-      const elapsed = Date.now() - dragStartedAt.current;
-      const velocity = Math.abs(delta) / Math.max(elapsed, 1);
-      const threshold = width * 0.15;
-
-      setDragOffset(0);
-
-      if (delta <= -threshold || (delta < 0 && velocity > 0.5)) {
-        goToNext();
-      } else if (delta >= threshold || (delta > 0 && velocity > 0.5)) {
-        goToPrev();
-      }
-
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseup", handleEnd);
-      window.removeEventListener("touchmove", handleMove);
-      window.removeEventListener("touchend", handleEnd);
-    };
-
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", handleEnd);
-    window.addEventListener("touchmove", handleMove, { passive: true });
-    window.addEventListener("touchend", handleEnd);
-  };
-
-  const baseOffset = -currentIndex * 100;
-  const dragPercent = trackContainerRef.current
-    ? (dragOffset / trackContainerRef.current.offsetWidth) * 100
-    : 0;
-
-  const handleTrackClickCapture = (e: React.MouseEvent) => {
-    if (dragMovedRef.current) {
-      e.preventDefault();
-      e.stopPropagation();
-      dragMovedRef.current = false;
-    }
-  };
+const Work = () => {
+  const [opened, setOpened] = useState<Opened | null>(null);
+  const closeVideo = useCallback(() => setOpened(null), []);
 
   return (
     <div className="work-section" id="work">
@@ -148,82 +130,22 @@ const Work = () => {
           Seçili <span>İşler</span>
         </h2>
 
-        <div className="carousel-wrapper">
-          {/* Navigation Arrows */}
-          <button
-            className="carousel-arrow carousel-arrow-left"
-            onClick={goToPrev}
-            aria-label="Previous project"
-            data-cursor="disable"
-          >
-            <MdArrowBack />
-          </button>
-          <button
-            className="carousel-arrow carousel-arrow-right"
-            onClick={goToNext}
-            aria-label="Next project"
-            data-cursor="disable"
-          >
-            <MdArrowForward />
-          </button>
-
-          {/* Slides */}
-          <div
-            className={`carousel-track-container${isDragging ? " dragging" : ""}`}
-            ref={trackContainerRef}
-            onMouseDown={handleDragStart}
-            onTouchStart={handleDragStart}
-            onClickCapture={handleTrackClickCapture}
-          >
-            <div
-              className={`carousel-track${isDragging ? " no-transition" : ""}`}
-              style={{
-                transform: `translateX(${baseOffset + dragPercent}%)`,
-              }}
-            >
-              {projects.map((project, index) => (
-                <div className="carousel-slide" key={index}>
-                  <div className="carousel-content">
-                    <div className="carousel-info">
-                      <div className="carousel-number">
-                        <h3>0{index + 1}</h3>
-                      </div>
-                      <div className="carousel-details">
-                        <h4>{project.title}</h4>
-                      </div>
-                    </div>
-                    <div className="carousel-image-wrapper">
-                      <WorkImage
-                        alt={project.title}
-                        videoSrc={project.video}
-                        onOpen={() => setOpenVideo(project)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Dot Indicators */}
-          <div className="carousel-dots">
-            {projects.map((_, index) => (
-              <button
-                key={index}
-                className={`carousel-dot ${index === currentIndex ? "carousel-dot-active" : ""
-                  }`}
-                onClick={() => goToSlide(index)}
-                aria-label={`Go to project ${index + 1}`}
-                data-cursor="disable"
-              />
-            ))}
-          </div>
+        <div className="work-grid">
+          {projects.map((project, index) => (
+            <WorkCard
+              key={project.video}
+              project={project}
+              index={index}
+              onOpen={(ratio) => setOpened({ project, ratio })}
+            />
+          ))}
         </div>
       </div>
-      {openVideo?.video && (
+      {opened && (
         <VideoModal
-          src={openVideo.video}
-          title={openVideo.title}
+          src={fileUrl(opened.project.video)}
+          title={opened.project.title}
+          ratio={opened.ratio}
           onClose={closeVideo}
         />
       )}

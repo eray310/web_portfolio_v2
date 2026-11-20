@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { MdClose } from "react-icons/md";
 import { smoother } from "./Navbar";
@@ -6,10 +6,14 @@ import { smoother } from "./Navbar";
 interface Props {
   src: string;
   title: string;
+  /** Shape of the video (width / height) if already known. */
+  ratio?: number;
   onClose: () => void;
 }
 
-const VideoModal = ({ src, title, onClose }: Props) => {
+const VideoModal = ({ src, title, ratio: knownRatio, onClose }: Props) => {
+  const [ratio, setRatio] = useState<number | undefined>(knownRatio);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -22,6 +26,12 @@ const VideoModal = ({ src, title, onClose }: Props) => {
     };
   }, [onClose]);
 
+  // The player is as wide as the video's own shape allows: a vertical video
+  // gets a narrow player that fits the screen height, a horizontal one a wide one.
+  const width = ratio
+    ? `min(1100px, 100%, calc((var(--vh, 100vh) - 130px) * ${ratio}))`
+    : undefined;
+
   return createPortal(
     <div
       className="video-modal"
@@ -30,7 +40,11 @@ const VideoModal = ({ src, title, onClose }: Props) => {
       aria-label={title}
       onClick={onClose}
     >
-      <div className="video-modal-inner" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="video-modal-inner"
+        style={width ? { width } : undefined}
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           className="video-modal-close"
           onClick={onClose}
@@ -40,7 +54,15 @@ const VideoModal = ({ src, title, onClose }: Props) => {
         >
           <MdClose />
         </button>
-        <video src={src} controls autoPlay playsInline />
+        <video
+          src={src}
+          controls
+          autoPlay
+          playsInline
+          onLoadedMetadata={(e) =>
+            setRatio(e.currentTarget.videoWidth / e.currentTarget.videoHeight)
+          }
+        />
       </div>
     </div>,
     document.body

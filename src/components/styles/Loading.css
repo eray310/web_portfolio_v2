@@ -46,7 +46,9 @@
 }
 
 .loading-wrap {
-  --Lsize: 145px;
+  /* Room for the text and a three-digit percentage side by side; on very narrow
+     screens the width shrinks and the percentage drops to a second line. */
+  --Lsize: min(225px, calc(100vw - 120px));
   padding: 6px;
   position: relative;
   min-width: 0px;
@@ -112,6 +114,36 @@
   position: relative;
   width: var(--Lsize);
   overflow: hidden;
+  /* Text and percentage share one flexible row; the percentage wraps below
+     the text only when they cannot fit on one line. */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  column-gap: 10px;
+  white-space: nowrap;
+}
+
+.loading-content .loading-text {
+  position: static;
+  top: auto;
+  right: auto;
+  transform: none;
+  font-weight: inherit;
+  opacity: 1;
+}
+
+.loading-content .loading-percent {
+  position: static;
+  top: auto;
+  right: auto;
+  transform: none;
+  /* Reserve the width of "100%" so the row does not jump while counting. */
+  min-width: 4.2ch;
+  margin-left: auto;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
 }
 
 .loading-content2 {
@@ -373,9 +405,19 @@
   }
 }
 
+@media only screen and (max-width: 420px) {
+  .loading-button {
+    padding: 20px 34px;
+  }
+
+  .loading-container {
+    left: 34px;
+  }
+}
+
 @media only screen and (min-width: 1400px) {
   .loading-wrap {
-    --Lsize: 210px;
+    --Lsize: 300px;
   }
 
   .loading-button {

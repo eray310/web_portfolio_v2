@@ -52,6 +52,7 @@ const Scene = () => {
       camera.zoom = 1.1;
       camera.updateProjectionMatrix();
 
+      let characterObj: THREE.Object3D | null = null;
       let headBone: THREE.Object3D | null = null;
       let screenLight: any | null = null;
       let mixer: THREE.AnimationMixer;
@@ -70,6 +71,7 @@ const Scene = () => {
           mixer = animations.mixer;
           let character = gltf.scene;
           setChar(character);
+          characterObj = character;
           scene.add(character);
           headBone = character.getObjectByName("spine006") || null;
           screenLight = character.getObjectByName("screenlight") || null;
@@ -89,6 +91,31 @@ const Scene = () => {
           console.error("3D character could not be loaded:", error);
           startWithout3D(setLoading, progress);
         });
+
+      // The canvas is sized once at start-up, but its box can change without a
+      // window resize: the scrollbar appears when the loading screen closes, the
+      // fonts settle, the page is zoomed. Follow the box so the scene stays centred.
+      let resizeTimer: number | undefined;
+      const box = canvasDiv.current;
+      const watcher =
+        typeof ResizeObserver !== "undefined"
+          ? new ResizeObserver(() => {
+              window.clearTimeout(resizeTimer);
+              resizeTimer = window.setTimeout(() => {
+                const r = box.getBoundingClientRect();
+                const w = parseFloat(renderer.domElement.style.width) || 0;
+                const h = parseFloat(renderer.domElement.style.height) || 0;
+                if (
+                  r.width > 0 &&
+                  (Math.abs(r.width - w) > 0.5 || Math.abs(r.height - h) > 0.5) &&
+                  characterObj
+                ) {
+                  handleResize(renderer, camera, canvasDiv, characterObj);
+                }
+              }, 150);
+            })
+          : null;
+      watcher?.observe(box);
 
       let mouse = { x: 0, y: 0 },
         interpolation = { x: 0.1, y: 0.2 };
@@ -143,6 +170,8 @@ const Scene = () => {
       animate();
       return () => {
         clearTimeout(debounce);
+        window.clearTimeout(resizeTimer);
+        watcher?.disconnect();
         scene.clear();
         renderer.dispose();
         window.removeEventListener("resize", () =>

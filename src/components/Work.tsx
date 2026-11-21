@@ -15,6 +15,10 @@ type Filter = "all" | Category;
 
 /** Distance between neighbouring cards, as a share of the card width. */
 const STEP = 0.82;
+/** Mouse travel (in card steps per card width of travel) while hovering. */
+const SCRUB_GAIN = 1.5;
+/** The mouse has been still this long: the nearest card settles in. */
+const SETTLE_MS = 220;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -35,13 +39,20 @@ const Work = () => {
   const [hot, setHot] = useState<number | null>(null); // card under the mouse
   const [previewKey, setPreviewKey] = useState<string | null>(null);
   const [previewOk] = useState(canPreview);
+  const [moving, setMoving] = useState(false); // mouse is sliding the gallery
+  // Card transforms captured at the moment of a press, so nothing moves under the pointer.
+  const [frozen, setFrozen] = useState<string[] | null>(null);
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const inView = useRef(false);
+  const hoverX = useRef<number | null>(null);
+  const settleTimer = useRef(0);
+  const posRef = useRef(0); // index - drag, kept current between renders
   const gesture = useRef({
     id: -1,
     startX: 0,
+    startPos: 0,
     lastX: 0,
     lastT: 0,
     vel: 0,
@@ -57,17 +68,21 @@ const Work = () => {
     [filter]
   );
   const count = visible.length;
+  posRef.current = index - drag;
   const current = visible[index];
 
   const goTo = useCallback(
     (i: number) => setIndex(clamp(i, 0, Math.max(0, count - 1))),
     [count]
   );
-  const prev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
-  const next = useCallback(
-    () => setIndex((i) => Math.min(count - 1, i + 1)),
-    [count]
-  );
+  const prev = useCallback(() => {
+    setDrag(0);
+    setIndex((i) => Math.max(0, i - 1));
+  }, []);
+  const next = useCallback(() => {
+    setDrag(0);
+    setIndex((i) => Math.min(count - 1, i + 1));
+  }, [count]);
 
   const chooseFilter = (f: Filter) => {
     setFilter(f);
@@ -109,7 +124,14 @@ const Work = () => {
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    // Pressing stops any slide or settle at once: the cards stay exactly where
+    // they are drawn, so the card that was pressed is the card that is clicked.
+    window.clearTimeout(settleTimer.current);
+    setMoving(false);
+    const cards = stageRef.current?.querySelectorAll<HTMLElement>(".work-card");
+    if (cards) setFrozen(Array.from(cards, (c) => getComputedStyle(c).transform));
     const g = gesture.current;
+    g.startPos = posRef.current;
     g.id = e.pointerId;
     g.startX = g.lastX = e.clientX;
     g.lastT = e.timeStamp;
@@ -117,13 +139,40 @@ const Work = () => {
     g.moved = false;
   };
 
+  // Mouse over the gallery, no button pressed: moving right slides the cards
+  // right, moving left slides them left. It stops with the mouse, then the
+  // nearest card eases into the centre. A still mouse never moves anything.
+  const scrub = (e: React.PointerEvent) => {
+    const last = hoverX.current;
+    hoverX.current = e.clientX;
+    if (last === null) return;
+    const dx = e.clientX - last;
+    if (dx === 0) return;
+    const pos = clamp(posRef.current - (dx * SCRUB_GAIN) / stepPx(), 0, count - 1);
+    posRef.current = pos;
+    const nearest = Math.round(pos);
+    setIndex(nearest);
+    setDrag(nearest - pos);
+    setMoving(true);
+    window.clearTimeout(settleTimer.current);
+    settleTimer.current = window.setTimeout(() => {
+      setDrag(0);
+      setMoving(false);
+    }, SETTLE_MS);
+  };
+
   const onPointerMove = (e: React.PointerEvent) => {
     const g = gesture.current;
+    if (e.pointerType === "mouse" && e.buttons === 0 && g.id === -1) {
+      if (!panelOpen) scrub(e);
+      return;
+    }
     if (e.pointerId !== g.id) return;
     const dx = e.clientX - g.startX;
     if (!g.moved) {
       if (Math.abs(dx) < 6) return;
       g.moved = true;
+      setFrozen(null);
       setDragging(true);
       setPreviewKey(null);
       setHot(null);
@@ -134,7 +183,7 @@ const Work = () => {
     g.lastX = e.clientX;
     g.lastT = e.timeStamp;
     // The finger moves the cards; a little resistance past either end.
-    const pos = clamp(index - dx / stepPx(), -0.35, count - 0.65);
+    const pos = clamp(g.startPos - dx / stepPx(), -0.35, count - 0.65);
     setDrag(index - pos);
   };
 
@@ -142,7 +191,11 @@ const Work = () => {
     const g = gesture.current;
     if (e.pointerId !== g.id) return;
     g.id = -1;
-    if (!g.moved) return;
+    if (!g.moved) {
+      // A plain press: let the click go through first, then release the freeze.
+      window.setTimeout(() => setFrozen(null), 0);
+      return;
+    }
     const pos = index - drag;
     const flick = cancelled ? 0 : clamp((-g.vel / stepPx()) * 180, -0.8, 0.8);
     setIndex(clamp(Math.round(pos + flick), 0, count - 1));
@@ -162,6 +215,7 @@ const Work = () => {
   const openCard = (i: number) => {
     if (gesture.current.suppressClick) return;
     goTo(i);
+    setDrag(0);
     setPreviewKey(null);
     setPanelOpen(true);
   };
@@ -203,13 +257,26 @@ const Work = () => {
               <div
                 key={filter}
                 ref={stageRef}
-                className={"work-stage" + (dragging ? " dragging" : "")}
+                className={
+                  "work-stage" + (dragging ? " dragging" : "") + (frozen ? " frozen" : "")
+                }
                 tabIndex={0}
                 role="group"
                 aria-roledescription="galeri"
                 aria-label="Seçili işler"
                 onPointerDown={onPointerDown}
                 onPointerMove={onPointerMove}
+                onPointerLeave={() => {
+                  // A press that slid out of the gallery without dragging is over.
+                  if (gesture.current.id !== -1 && !gesture.current.moved) {
+                    gesture.current.id = -1;
+                    setFrozen(null);
+                  }
+                  hoverX.current = null;
+                  window.clearTimeout(settleTimer.current);
+                  setDrag(0);
+                  setMoving(false);
+                }}
                 onPointerUp={(e) => endDrag(e, false)}
                 onPointerCancel={(e) => endDrag(e, true)}
               >
@@ -224,7 +291,7 @@ const Work = () => {
                   const isActive = a < 0.5;
                   const poster = project.poster && fileUrl(project.poster);
                   const showPreview =
-                    previewOk && isActive && !dragging && previewKey === project.video;
+                    previewOk && isActive && !dragging && !moving && previewKey === project.video;
                   return (
                     <button
                       key={project.video}
@@ -235,7 +302,9 @@ const Work = () => {
                       data-i={i}
                       style={
                         {
-                          transform: `translateX(-50%) translateX(${o * STEP * 100}%) rotateY(${-side * 17}deg) scale(${scale})`,
+                          transform:
+                            frozen?.[i] ??
+                            `translateX(-50%) translateX(${o * STEP * 100}%) rotateY(${-side * 17}deg) scale(${scale})`,
                           zIndex: isHot ? 30 : 20 - Math.round(a * 4),
                           opacity: a > 2.7 ? 0 : 1 - far * 0.2,
                           pointerEvents: a > 2.7 ? "none" : undefined,

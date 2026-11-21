@@ -5,7 +5,7 @@
   margin: 0 auto;
   padding: 60px 0 40px;
   text-align: center;
-  --brandsGap: 80px;
+  --brandsGap: 40px;
 }
 
 .brands-section h2 {
@@ -32,7 +32,7 @@
   display: flex;
   width: max-content;
   /* About 20px per second: (item width + gap) per logo / speed. */
-  animation: brandsScroll calc(var(--brands-count, 8) * 11.5s) linear infinite;
+  animation: brandsScroll calc(var(--brands-count, 8) * 10.8s) linear infinite;
   will-change: transform;
 }
 
@@ -50,8 +50,10 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 150px;
-  height: 56px;
+  box-sizing: border-box;
+  width: 176px;
+  height: 80px;
+  padding: 12px 18px;
   margin-right: var(--brandsGap);
 }
 
@@ -69,6 +71,7 @@
 /* Dev preview only: empty slots that show where the logos will go. */
 .brands-placeholder {
   box-sizing: border-box;
+  background: transparent;
   border: 1px dashed rgba(255, 255, 255, 0.25);
   border-radius: 8px;
   font-size: 12px;
@@ -100,7 +103,7 @@
 @media only screen and (max-width: 767px) {
   .brands-section {
     padding: 40px 0 20px;
-    --brandsGap: 56px;
+    --brandsGap: 28px;
   }
 
   .brands-section h2 {
@@ -108,13 +111,14 @@
   }
 
   .brands-item {
-    width: 120px;
-    height: 46px;
+    width: 136px;
+    height: 64px;
+    padding: 10px 14px;
   }
 
-  /* Same ~20px per second with the narrower logos. */
+  /* Same ~20px per second with the narrower plates. */
   .brands-track {
-    animation-duration: calc(var(--brands-count, 8) * 8.8s);
+    animation-duration: calc(var(--brands-count, 8) * 8.2s);
   }
 }
 

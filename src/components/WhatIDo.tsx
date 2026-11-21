@@ -63,7 +63,7 @@ const WhatIDo = () => {
   return (
     <div className="whatIDO" ref={rootRef}>
       <div className="what-box">
-        <h2 className="title">
+        <h2 className="what-title">
           Neler
           <div>
             <span className="hat-h2">Yapıyorum</span>

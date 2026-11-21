@@ -120,7 +120,8 @@
   will-change: transform;
 }
 
-.work-stage.dragging .work-card {
+.work-stage.dragging .work-card,
+.work-stage.frozen .work-card {
   transition: none;
 }
 

@@ -1,0 +1,223 @@
+/* ── Floating "Bir fikrim var" button ── */
+.idea-button {
+  position: fixed;
+  z-index: 9000;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #eae5ec;
+  background: rgba(10, 14, 23, 0.72);
+  border: 1px solid rgba(94, 234, 212, 0.4);
+  border-radius: 999px;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: opacity 0.25s ease, transform 0.25s ease, border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.idea-button svg {
+  font-size: 17px;
+  color: var(--accentColor);
+}
+
+.idea-button:hover {
+  background: rgba(10, 14, 23, 0.9);
+  border-color: var(--accentColor);
+}
+
+.idea-button:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 3px;
+}
+
+/* Moved aside while it would cover another control. */
+.idea-button.is-tucked {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+}
+
+/* "Deneyimimi Gör" sits in the same corner on desktop: it moves left, beside the button. */
+@media only screen and (min-width: 768px) {
+  .resume-button {
+    bottom: 26px;
+    right: 150px;
+  }
+}
+
+/* ── Panel ── */
+.idea-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99991;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.idea-panel {
+  position: relative;
+  box-sizing: border-box;
+  width: min(460px, 100%);
+  max-height: calc(var(--vh, 100vh) - 32px);
+  padding: 26px 24px 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #0a0e17;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+
+.idea-panel h3 {
+  margin: 0 48px 18px 0;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.idea-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 22px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.idea-close:hover,
+.idea-close:focus-visible {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.idea-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding: 0;
+  border: none;
+}
+
+.idea-types legend {
+  margin-bottom: 10px;
+  padding: 0;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(234, 229, 236, 0.6);
+}
+
+.idea-types label {
+  position: relative;
+  padding: 8px 14px;
+  font-size: 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.idea-types label.is-on {
+  color: #0a0e17;
+  background: var(--accentColor);
+  border: 1px solid var(--accentColor);
+}
+
+.idea-types input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+
+.idea-types label:focus-within {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 3px;
+}
+
+.idea-field {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.idea-field span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: rgba(234, 229, 236, 0.75);
+}
+
+.idea-field em {
+  font-style: normal;
+  opacity: 0.7;
+}
+
+.idea-field input,
+.idea-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 15px;
+  color: #eae5ec;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  resize: vertical;
+}
+
+.idea-field input:focus-visible,
+.idea-field textarea:focus-visible {
+  outline: none;
+  border-color: var(--accentColor);
+}
+
+.idea-note {
+  margin: 4px 0 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(234, 229, 236, 0.7);
+}
+
+.idea-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 20px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: #0a0e17;
+  background: var(--accentColor);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.idea-contact svg {
+  font-size: 19px;
+}
+
+.idea-contact:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}

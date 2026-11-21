@@ -35,8 +35,6 @@ const Brands = () => {
                 <img
                   src={logoUrl(brand.logo)}
                   alt={hidden || copy > 0 ? "" : brand.name}
-                  width={150}
-                  height={56}
                   loading="lazy"
                   decoding="async"
                   draggable={false}

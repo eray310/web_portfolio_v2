@@ -43,10 +43,14 @@ function getWhatIDoFit() {
 
   const canvasW = canvas.offsetWidth || window.innerWidth;
   const canvasH = canvas.offsetHeight || window.innerHeight;
-  const viewportCenter = window.innerWidth / 2;
+  // The canvas is centred in the layout viewport, which is narrower than
+  // window.innerWidth when the page has a classic scrollbar.
+  const layoutWidth = document.documentElement.clientWidth || window.innerWidth;
+  const viewportCenter = layoutWidth / 2;
 
   const minX = titleRight + CHAR_GAP;
-  const maxX = cardsLeft - CHAR_GAP;
+  // Never let the character reach the right edge of the window either.
+  const maxX = Math.min(cardsLeft - CHAR_GAP, layoutWidth - 24);
   const fullWidth = (CHAR_LEFT + CHAR_RIGHT) * canvasH;
   const scale = Math.max(0.5, Math.min(1, (maxX - minX) / fullWidth));
 
@@ -206,60 +210,5 @@ export function setCharTimeline(
   }
 }
 
-export function setAllTimeline() {
-  const careerTimeline = gsap.timeline({
-    scrollTrigger: {
-      trigger: ".career-section",
-      start: "top 30%",
-      end: "100% center",
-      scrub: true,
-      invalidateOnRefresh: true,
-    },
-  });
-  careerTimeline
-    .fromTo(
-      ".career-timeline",
-      { maxHeight: "10%" },
-      { maxHeight: "100%", duration: 0.5 },
-      0
-    )
-
-    .fromTo(
-      ".career-timeline",
-      { opacity: 0 },
-      { opacity: 1, duration: 0.1 },
-      0
-    )
-    .fromTo(
-      ".career-info-box",
-      { opacity: 0 },
-      { opacity: 1, stagger: 0.1, duration: 0.5 },
-      0
-    )
-    .fromTo(
-      ".career-dot",
-      { animationIterationCount: "infinite" },
-      {
-        animationIterationCount: "1",
-        delay: 0.3,
-        duration: 0.1,
-      },
-      0
-    );
-
-  if (window.innerWidth > 1024) {
-    careerTimeline.fromTo(
-      ".career-section",
-      { y: 0 },
-      { y: "20%", duration: 0.5, delay: 0.2 },
-      0
-    );
-  } else {
-    careerTimeline.fromTo(
-      ".career-section",
-      { y: 0 },
-      { y: 0, duration: 0.5, delay: 0.2 },
-      0
-    );
-  }
-}
+// The career section animates itself (see Career.tsx); nothing to set up here.
+export function setAllTimeline() {}

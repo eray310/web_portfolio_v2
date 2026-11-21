@@ -51,7 +51,7 @@ export default function setSplitText() {
   // The About heading carries a text gradient (background-clip: text), which
   // does not survive per-character transforms, so it is revealed as one block
   // with the same trigger and timing as the other text.
-  document.querySelectorAll<ParaElement>(".about-heading").forEach((heading) => {
+  document.querySelectorAll<ParaElement>(".about-heading, .what-title").forEach((heading) => {
     heading.anim?.progress(1).kill();
     heading.anim = gsap.fromTo(
       heading,

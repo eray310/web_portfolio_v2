@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { MdClose } from "react-icons/md";
-import { smoother } from "./Navbar";
+import { lockScroll, unlockScroll } from "./utils/scrollLock";
 
 interface Props {
   src: string;
@@ -19,10 +19,10 @@ const VideoModal = ({ src, title, ratio: knownRatio, onClose }: Props) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-    smoother?.paused(true);
+    lockScroll();
     return () => {
       window.removeEventListener("keydown", onKey);
-      smoother?.paused(false);
+      unlockScroll();
     };
   }, [onClose]);
 

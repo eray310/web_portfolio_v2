@@ -1,0 +1,164 @@
+export const CATEGORIES = ["Motion Graphics", "Kurgu", "Yapay Zekâ"] as const;
+export type Category = (typeof CATEGORIES)[number];
+
+export type Project = {
+  title: string;
+  /** One or two short sentences; shown as "Proje Özeti" in the detail panel. */
+  description: string;
+  /** Video file inside `public/portfolio/`. */
+  video: string;
+  /** Cover image inside `public/portfolio/`. Without it the first frame of the video is shown. */
+  poster?: string;
+  /**
+   * Short silent clip inside `public/portfolio/previews/` played when the
+   * centre card is hovered. Defaults to a file named like the video.
+   */
+  preview?: string;
+  /** A project may belong to several categories. */
+  categories: Category[];
+  /**
+   * Verified points for "Benim Katkım". Leave it out when not confirmed: the
+   * section is then not shown (nothing is guessed).
+   */
+  contribution?: string[];
+};
+
+/** Encodes each path segment so names with spaces or apostrophes still load. */
+export const fileUrl = (file: string) =>
+  `${import.meta.env.BASE_URL}portfolio/${file.split("/").map(encodeURIComponent).join("/")}`;
+
+export const previewUrl = (project: Project) =>
+  fileUrl(`previews/${project.preview ?? project.video}`);
+
+/**
+ * Selected works. To add one: copy the video into `public/portfolio/`, make a
+ * short silent clip of the same name in `public/portfolio/previews/`, and add
+ * ONE entry here; the card, filters, counter and detail panel follow.
+ */
+export const projects: Project[] = [
+  {
+    title: "PayPal",
+    description:
+      "PayPal için hazırladığım bu çalışmada, marka mesajını hareketli grafiklerle anlattım. Harita, telefon ekranı ve metin animasyonları tek bir akışta ilerliyor.",
+    video: "Paypal.mp4",
+    poster: "paypal.jpg",
+    preview: "paypal.mp4",
+    categories: ["Motion Graphics"],
+    contribution: ["Videodaki hareketli grafikleri ve metin animasyonlarını hazırladım."],
+  },
+  {
+    title: "Lay’s",
+    description:
+      "Lay’s odaklı bu video çalışmasında ürün sunumu ve görsel akış öne çıkıyor. Paketler ve logo, canlı renkli arka planlar üzerinde hareketli geçişlerle sunuluyor.",
+    video: "Lay's.mp4",
+    poster: "lays.jpg",
+    preview: "lays.mp4",
+    categories: ["Motion Graphics"],
+    contribution: ["Ürün animasyonlarını ve geçişleri içeren video çalışmasını hazırladım."],
+  },
+  {
+    title: "The Lock",
+    description:
+      "The Lock için hazırladığım bu kısa video, dikey sosyal medya formatına uygun bir akış sunuyor. Planlar birbirine kısa geçişlerle bağlanıyor.",
+    video: "TheLockReels.mp4",
+    poster: "the-lock.jpg",
+    preview: "the-lock.mp4",
+    categories: ["Kurgu"],
+    contribution: ["Planları dikey formatta kurguladım ve akışı mobil izlemeye göre düzenledim."],
+  },
+  {
+    title: "Uber Motion",
+    description:
+      "Uber odaklı bu motion graphics çalışmasında, marka anlatısı hareketli görsellerle ilerliyor. Sürüş akışının adımları ekran içi metin ve simge animasyonlarıyla gösteriliyor.",
+    video: "Uber Motion.mp4",
+    poster: "uber-motion.jpg",
+    preview: "uber-motion.mp4",
+    categories: ["Motion Graphics"],
+    contribution: ["Ekran içi metinleri, simgeleri ve geçişleri hareketli grafik olarak hazırladım."],
+  },
+  {
+    title: "Allvex | Sosyal Medya Videosu",
+    description:
+      "Allvex için hazırladığım dikey sosyal medya videosunda görüntü seçimini, kesme ritmini ve metin yerleşimini mobil izlemeye göre kurguladım.",
+    video: "Allvex_Reels4.mp4",
+    poster: "Allvex_Reels4.jpg",
+    categories: ["Kurgu"],
+    contribution: [
+      "Görüntü seçimini ve kesme ritmini belirledim.",
+      "Metin yerleşimini mobil izlemeye göre düzenledim.",
+    ],
+  },
+  {
+    title: "Motivasyon vs Disiplin",
+    description:
+      "Motivasyon ile disiplin arasındaki farkı kısa video formatında anlatan bir çalışma. Takvim ve illüstrasyonlar, ekrandaki metinlerle birlikte hareket ediyor.",
+    video: "Motivasyon vs Disiplin.mp4",
+    poster: "motivasyon-vs-disiplin.jpg",
+    preview: "motivasyon-vs-disiplin.mp4",
+    categories: ["Motion Graphics"],
+    contribution: ["Metin ve illüstrasyon animasyonlarını hazırladım."],
+  },
+  {
+    title: "La Vita",
+    description:
+      "La Vita için hazırladığım reklam videosu, projenin öne çıkan detaylarını kısa bir anlatıda bir araya getiriyor. Kullanım hakkı ve kira gibi bilgiler yuvarlak etiketlerle gösteriliyor.",
+    video: "LaVitaReklam3.3.mp4",
+    poster: "la-vita.jpg",
+    preview: "la-vita.mp4",
+    categories: ["Kurgu"],
+    contribution: ["Planları kurguladım; ekrandaki metinleri ve bilgi etiketlerini yerleştirdim."],
+  },
+  {
+    title: "Allesta | Yapay Zekâ Destekli Reklam",
+    description:
+      "Allesta için hazırladığım reklam videosunda yapay zekâ destekli görselleri, video kurgu ve hareketli grafiklerle birleştirdim.",
+    video: "Allesta_YZReklam.mp4",
+    poster: "Allesta_YZReklam.jpg",
+    categories: ["Yapay Zekâ", "Motion Graphics", "Kurgu"],
+    contribution: [
+      "Yapay zekâ destekli görselleri video akışında bir araya getirdim.",
+      "Kurguyu ve hareketli grafikleri hazırladım.",
+    ],
+  },
+  {
+    title: "Regnum Riva",
+    description:
+      "Regnum Riva tanıtım videosu, projeyi ve öne çıkan satış bilgilerini kısa bir formatta sunuyor.",
+    video: "RegnumRiva.mp4",
+    poster: "regnum-riva.jpg",
+    preview: "regnum-riva.mp4",
+    categories: ["Kurgu"],
+    contribution: ["Bu portfolyo için video çalışmasını hazırladım."],
+  },
+  {
+    title: "Siux",
+    description:
+      "Siux için hazırladığım video çalışmasında markayı öne çıkaran planlar, kısa bir görsel akışta bir araya geliyor. Video, vurgulu bir slogan yazısıyla kapanıyor.",
+    video: "Siux1.1.mp4",
+    poster: "siux.jpg",
+    preview: "siux.mp4",
+    categories: ["Motion Graphics", "Kurgu"],
+    contribution: ["Ürün planlarını kurguladım ve kapanıştaki yazı animasyonunu hazırladım."],
+  },
+  {
+    title: "Elaris | Sosyal Medya Videosu",
+    description:
+      "Elaris için hazırladığım kısa videoda projenin öne çıkan detaylarını akıcı bir kurgu ve okunaklı metinlerle sundum.",
+    video: "Elaris_Reels_22.mp4",
+    poster: "Elaris_Reels_22.jpg",
+    categories: ["Kurgu"],
+    contribution: [
+      "Planları akıcı bir sırayla kurguladım.",
+      "Metinleri mobilde okunaklı olacak şekilde düzenledim.",
+    ],
+  },
+  {
+    title: "RES360 | Proje Tanıtım Videosu",
+    description:
+      "RES360 için hazırladığım hareketli grafik videosu, farklı gayrimenkul projelerini kartlar hâlinde tanıtıyor.",
+    video: "Res__360.mp4",
+    poster: "Res__360.jpg",
+    categories: ["Motion Graphics"],
+    contribution: ["Proje kartlarını ve ekran geçişlerini hareketli grafik olarak hazırladım."],
+  },
+];

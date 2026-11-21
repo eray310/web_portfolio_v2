@@ -132,5 +132,10 @@ export const setProgress = (setLoading: (value: number) => void) => {
       }, 2);
     });
   }
-  return { loaded, percent, clear };
+  /** Stops the fake progress without finishing the loading screen. */
+  function stop() {
+    clearInterval(interval);
+  }
+
+  return { loaded, percent, clear, stop };
 };

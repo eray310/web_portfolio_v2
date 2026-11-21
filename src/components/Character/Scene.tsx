@@ -4,6 +4,8 @@ import setCharacter from "./utils/character";
 import setLighting from "./utils/lighting";
 import { useLoading } from "../../context/LoadingProvider";
 import handleResize from "./utils/resizeUtils";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { clearCharTimeline } from "../utils/GsapScroll";
 import {
   handleMouseMove,
   handleTouchEnd,
@@ -17,16 +19,18 @@ import { startWithout3D } from "../NoWebGLBoot";
 const Scene = () => {
   const canvasDiv = useRef<HTMLDivElement | null>(null);
   const hoverDivRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef(new THREE.Scene());
   const { setLoading } = useLoading();
 
-  const [character, setChar] = useState<THREE.Object3D | null>(null);
+  const [, setChar] = useState<THREE.Object3D | null>(null);
   useEffect(() => {
     if (canvasDiv.current) {
       let rect = canvasDiv.current.getBoundingClientRect();
       let container = { width: rect.width, height: rect.height };
       const aspect = container.width / container.height;
-      const scene = sceneRef.current;
+      // A fresh scene for every start: effects can run twice (React strict mode),
+      // and a shared scene would end up holding two characters.
+      const scene = new THREE.Scene();
+      let cancelled = false;
 
       let renderer: THREE.WebGLRenderer;
       try {
@@ -52,6 +56,7 @@ const Scene = () => {
       camera.zoom = 1.1;
       camera.updateProjectionMatrix();
 
+      let onResize: (() => void) | null = null;
       let characterObj: THREE.Object3D | null = null;
       let headBone: THREE.Object3D | null = null;
       let screenLight: any | null = null;
@@ -61,11 +66,16 @@ const Scene = () => {
 
       const light = setLighting(scene);
       let progress = setProgress((value) => setLoading(value));
-      const { loadCharacter } = setCharacter(renderer, scene, camera);
+      const { loadCharacter } = setCharacter(
+        renderer,
+        scene,
+        camera,
+        () => cancelled
+      );
 
       loadCharacter()
         .then((gltf) => {
-        if (gltf) {
+        if (gltf && !cancelled) {
           const animations = setAnimations(gltf);
           hoverDivRef.current && animations.hover(gltf, hoverDivRef.current);
           mixer = animations.mixer;
@@ -81,12 +91,12 @@ const Scene = () => {
               animations.startIntro();
             }, 2500);
           });
-          window.addEventListener("resize", () =>
-            handleResize(renderer, camera, canvasDiv, character)
-          );
+          onResize = () => handleResize(renderer, camera, canvasDiv, character);
+          window.addEventListener("resize", onResize);
         }
         })
         .catch((error) => {
+          if (cancelled) return;
           // Model could not be loaded: keep the page usable without it.
           console.error("3D character could not be loaded:", error);
           startWithout3D(setLoading, progress);
@@ -140,16 +150,15 @@ const Scene = () => {
         });
       };
 
-      document.addEventListener("mousemove", (event) => {
-        onMouseMove(event);
-      });
+      document.addEventListener("mousemove", onMouseMove);
       const landingDiv = document.getElementById("landingDiv");
       if (landingDiv) {
         landingDiv.addEventListener("touchstart", onTouchStart);
         landingDiv.addEventListener("touchend", onTouchEnd);
       }
+      let raf = 0;
       const animate = () => {
-        requestAnimationFrame(animate);
+        raf = requestAnimationFrame(animate);
         if (headBone) {
           handleHeadRotation(
             headBone,
@@ -169,21 +178,30 @@ const Scene = () => {
       };
       animate();
       return () => {
+        cancelled = true;
+        cancelAnimationFrame(raf);
         clearTimeout(debounce);
         window.clearTimeout(resizeTimer);
         watcher?.disconnect();
-        scene.clear();
-        renderer.dispose();
-        window.removeEventListener("resize", () =>
-          handleResize(renderer, camera, canvasDiv, character!)
-        );
-        if (canvasDiv.current) {
-          canvasDiv.current.removeChild(renderer.domElement);
-        }
+        progress.stop();
+        if (onResize) window.removeEventListener("resize", onResize);
+        document.removeEventListener("mousemove", onMouseMove);
         if (landingDiv) {
-          document.removeEventListener("mousemove", onMouseMove);
           landingDiv.removeEventListener("touchstart", onTouchStart);
           landingDiv.removeEventListener("touchend", onTouchEnd);
+        }
+        if (characterObj) {
+          // The scroll animations of this character must not outlive it.
+          const keep = ScrollTrigger.getById("work");
+          ScrollTrigger.getAll().forEach((t) => t !== keep && t.kill(true));
+          clearCharTimeline();
+        }
+        mixer?.stopAllAction();
+        scene.clear();
+        renderer.dispose();
+        renderer.forceContextLoss();
+        if (renderer.domElement.parentNode) {
+          renderer.domElement.parentNode.removeChild(renderer.domElement);
         }
       };
     }

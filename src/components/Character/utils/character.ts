@@ -6,7 +6,9 @@ import { decryptFile } from "./decrypt";
 const setCharacter = (
   renderer: THREE.WebGLRenderer,
   scene: THREE.Scene,
-  camera: THREE.PerspectiveCamera
+  camera: THREE.PerspectiveCamera,
+  /** True once the scene that asked for the model has been torn down. */
+  isCancelled: () => boolean = () => false
 ) => {
   const loader = new GLTFLoader();
   const dracoLoader = new DRACOLoader();
@@ -26,8 +28,20 @@ const setCharacter = (
         loader.load(
           blobUrl,
           async (gltf) => {
+            if (isCancelled()) {
+              // The scene was replaced while the model was loading (React strict
+              // mode, route change): do not build a second character.
+              dracoLoader.dispose();
+              resolve(null);
+              return;
+            }
             character = gltf.scene;
             await renderer.compileAsync(character, camera, scene);
+            if (isCancelled()) {
+              dracoLoader.dispose();
+              resolve(null);
+              return;
+            }
             character.traverse((child: any) => {
               if (child.isMesh) {
                 const mesh = child as THREE.Mesh;

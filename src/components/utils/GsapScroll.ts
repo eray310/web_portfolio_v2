@@ -84,6 +84,13 @@ export function setCharTimeline(
   camera: THREE.PerspectiveCamera
 ) {
   clearCharTimeline();
+  // The canvas box is centred by CSS (left: 50% + translateX(-50%)). GSAP reads
+  // that translation from the element when the first tween starts, and on some
+  // machines (real Chrome at 125% scale, a resize mid-start) it reads it as a
+  // plain pixel offset instead of a percentage, so the first tween {x: 0}
+  // wipes it out and the whole scene jumps half a screen to the right. State the
+  // centring explicitly so every rebuild starts from the same base.
+  gsap.set(".character-model", { xPercent: -50, x: 0 });
   let intensity: number = 0;
   flickerTimer = window.setInterval(() => {
     intensity = Math.random();

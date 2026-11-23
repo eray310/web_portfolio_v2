@@ -3,7 +3,7 @@ import "./App.css";
 
 const CharacterModel = lazy(() => import("./components/Character"));
 const MainContainer = lazy(() => import("./components/MainContainer"));
-const AboutPage = lazy(() => import("./components/AboutPage"));
+const OrbitPage = lazy(() => import("./components/OrbitPage"));
 import { LoadingProvider } from "./context/LoadingProvider";
 import NoWebGLBoot from "./components/NoWebGLBoot";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -17,7 +17,7 @@ const App = () => {
   if (isAboutPage()) {
     return (
       <Suspense>
-        <AboutPage />
+        <OrbitPage />
       </Suspense>
     );
   }

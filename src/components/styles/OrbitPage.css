@@ -1,0 +1,1051 @@
+/* "Eray'ın Yörüngesi": one camera moving through one world as the page scrolls. */
+
+.yr {
+  /* Defaults: the first paint, and the finished frames of the still version. */
+  --p: 0;
+  --app: 0;
+  --a: 0;
+  --g: 0;
+  --m: 0;
+  --mx: 0px;
+  --my: 0px;
+  --ms: 1;
+  --mo: 1;
+  --kc: 0;
+  --ai: 0;
+  --fin: 0;
+  --cam: 0;
+  --oA: 1;
+  --oK: 1;
+  --oI: 1;
+  --dot: 0;
+  --hero: 1;
+  --cta: 0;
+  --sc: 1;
+  --shx: 0px;
+  --shy: 0px;
+  --c0: 0;
+  --c1: 0;
+  --c2: 0;
+  --c3: 0;
+  --c4: 0;
+  background-color: #0b0f17;
+  color: #eae5ec;
+  font-family: "Geist", sans-serif;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow-x: clip;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* ── Top bar (always readable) ── */
+.yr-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px max(20px, 4vw) 22px;
+  background: linear-gradient(#0b0f17 35%, rgba(11, 15, 23, 0));
+  pointer-events: none;
+}
+
+.yr-top a {
+  pointer-events: auto;
+}
+
+.yr-logo {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.yr a.yr-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--accentColor);
+}
+
+.yr-back span {
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+
+.yr-back:hover span {
+  transform: translateX(-5px);
+}
+
+.yr a:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 5px;
+  border-radius: 4px;
+  background: rgba(94, 234, 212, 0.12);
+}
+
+/* ── The track: tall page, one sticky stage ── */
+.yr-track {
+  position: relative;
+  height: 760vh;
+}
+
+.yr-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  perspective: 1000px;
+  background: radial-gradient(120% 90% at 68% 42%, #141b2a 0%, #0b0f17 58%, #070a10 100%);
+}
+
+.yr-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.yr-stars {
+  position: absolute;
+  inset: -6%;
+  transform: translateY(calc(var(--p) * -90px));
+}
+
+.yr-stars i {
+  position: absolute;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.yr-orbits {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: translateX(var(--shx)) scale(calc(1 + var(--p) * 0.5));
+}
+
+.yr-orbits g {
+  transform-origin: 50% 50%;
+  transform-box: view-box;
+}
+
+.yr-orbits ellipse {
+  fill: none;
+  stroke: rgba(94, 234, 212, 0.22);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.yr-orbits ellipse:nth-child(2) {
+  stroke: rgba(94, 234, 212, 0.14);
+}
+
+.yr-orbits ellipse:nth-child(3) {
+  stroke: rgba(94, 234, 212, 0.09);
+}
+
+/* ── Opening text (left) ── */
+.yr-hero {
+  position: absolute;
+  left: max(20px, 6vw);
+  top: 50%;
+  width: min(560px, 44vw);
+  transform: translateY(calc(-50% - (1 - var(--hero)) * 30px));
+  opacity: var(--hero);
+  pointer-events: none;
+}
+
+.yr-hero h1 {
+  margin: 0;
+  font-size: clamp(44px, 7.4vw, 108px);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+}
+
+.yr-line {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
+}
+
+.yr-line-in {
+  display: inline-block;
+}
+
+.yr-grad {
+  background-image: linear-gradient(0deg, #0d9488, #5eead4 70%, #ffffff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--accentColor);
+}
+
+.yr-rule {
+  display: block;
+  width: 96px;
+  height: 2px;
+  margin: 24px 0 20px;
+  background: var(--accentColor);
+  transform-origin: left center;
+}
+
+.yr-hero p {
+  margin: 0;
+  font-size: clamp(18px, 1.7vw, 24px);
+  line-height: 1.5;
+  color: rgba(234, 229, 236, 0.88);
+  text-wrap: balance;
+}
+
+.yr-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(234, 229, 236, 0.55);
+  opacity: var(--hero);
+  pointer-events: none;
+}
+
+.yr-hint span {
+  display: inline-block;
+  animation: yr-nudge 1.8s ease-in-out infinite;
+}
+
+/* ── The world ── */
+.yr-world {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.yr-set {
+  --zoff: 0px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 560px;
+  height: 560px;
+  margin: -280px 0 0 -280px;
+  transform-style: preserve-3d;
+  transform: translate3d(
+      calc(var(--shx) + var(--fin) * var(--ox, 0px) * var(--spread, 1)),
+      calc(var(--shy) + var(--fin) * var(--oy, 0px) * var(--spread, 1)),
+      calc(var(--cam) * 1px + var(--zoff))
+    )
+    scale(var(--sc));
+  will-change: transform;
+}
+
+.yr-set-a {
+  --ox: -1100px;
+  --oy: -900px;
+}
+
+.yr-set-k {
+  --zoff: -1500px;
+  --ox: 300px;
+  --oy: -200px;
+}
+
+.yr-set-i {
+  --zoff: -3000px;
+  --ox: 1800px;
+  --oy: -1000px;
+}
+
+.yr-content {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.yr-a {
+  opacity: var(--oA);
+}
+.yr-k {
+  opacity: var(--oK);
+}
+.yr-i {
+  opacity: var(--oI);
+}
+
+.yr-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 520px;
+  height: 520px;
+  margin: -260px 0 0 -260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0 2.5%, rgba(94, 234, 212, 0.95) 3.5% 7%, rgba(94, 234, 212, 0.32) 15%, transparent 55%);
+  opacity: var(--dot);
+}
+
+/* ── Set A: Art Direction -> Grafik Tasarım -> Motion Design ── */
+.yr-a {
+  /* Art pieces are visible while they gather, then give way to the grid. */
+  --artOp: calc(min(1, var(--a) * 4) * (1 - min(1, var(--g) * 3)) * var(--mo));
+}
+
+.yr-a > * {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+.yr-frame-wrap {
+  width: 210px;
+  height: 372px;
+  margin: -186px 0 0 -105px;
+  transform: translate3d(
+      calc((1 - var(--app)) * 130px + min(1, var(--g) * 3) * -135px),
+      calc(min(1, var(--g) * 3) * 41px + (1 - var(--app)) * var(--hy, 0px)),
+      calc((1 - var(--app)) * -320px)
+    )
+    rotateY(calc((1 - var(--app)) * -18deg)) scale(calc(1 + var(--app) * 0.06));
+  opacity: var(--mo);
+}
+
+.yr-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(94, 234, 212, 0.55);
+  box-shadow: 0 0 70px rgba(94, 234, 212, 0.16), 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+/* Pieces that fly from far out to their place around the frame. */
+.yr-chip,
+.yr-type,
+.yr-ref {
+  transform: translate(-50%, -50%)
+    translate(
+      calc(var(--sx) + (var(--ex) - var(--sx)) * var(--a)),
+      calc(var(--sy) + (var(--ey) - var(--sy)) * var(--a))
+    )
+    rotate(calc(var(--sr, 0deg) + (var(--er, 0deg) - var(--sr, 0deg)) * var(--a)));
+  opacity: var(--artOp);
+}
+
+.yr-chip {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.yr-chip-1 {
+  background: #0a0e17;
+  --sx: -380px;
+  --sy: -230px;
+  --sr: -40deg;
+  --ex: 172px;
+  --ey: -96px;
+}
+.yr-chip-2 {
+  background: #0d9488;
+  --sx: 360px;
+  --sy: -250px;
+  --sr: 35deg;
+  --ex: 172px;
+  --ey: -52px;
+}
+.yr-chip-3 {
+  background: #5eead4;
+  --sx: 400px;
+  --sy: 180px;
+  --sr: -25deg;
+  --ex: 172px;
+  --ey: -8px;
+}
+.yr-chip-4 {
+  background: #eae5ec;
+  --sx: -340px;
+  --sy: 250px;
+  --sr: 50deg;
+  --ex: 172px;
+  --ey: 36px;
+}
+
+.yr-type {
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  border-radius: 12px;
+  border: 1px solid rgba(94, 234, 212, 0.5);
+  background: #0d1220;
+  font-size: 44px;
+  font-weight: 700;
+  color: #ffffff;
+  --sx: -400px;
+  --sy: 250px;
+  --sr: 30deg;
+  --ex: -150px;
+  --ey: 150px;
+  --er: -4deg;
+}
+
+.yr-ref {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.yr-ref-1 {
+  --sx: -380px;
+  --sy: -220px;
+  --sr: -30deg;
+  --ex: -168px;
+  --ey: -96px;
+  --er: -6deg;
+}
+.yr-ref-2 {
+  --sx: 380px;
+  --sy: 200px;
+  --sr: 30deg;
+  --ex: 168px;
+  --ey: 120px;
+  --er: 5deg;
+}
+
+.yr-art-ring {
+  width: 470px;
+  height: 470px;
+  margin: -235px 0 0 -235px;
+  border-radius: 50%;
+  border: 1px solid var(--accentColor);
+  transform: scale(calc(0.6 + var(--a) * 0.4));
+  opacity: calc(max(0, (var(--a) - 0.6) * 2.5) * (1 - min(1, var(--g) * 3)));
+}
+
+/* Grid cells draw in one after another. */
+.yr-cell {
+  border: 1px solid rgba(94, 234, 212, 0.7);
+  border-radius: 6px;
+  opacity: calc(clamp(0, (var(--g) - var(--gs)) * 5, 1) * var(--mo));
+  transform: translate(-50%, -50%) scale(calc(0.9 + 0.1 * clamp(0, (var(--g) - var(--gs)) * 5, 1)));
+}
+
+.yr-cell-title {
+  --gs: 0;
+  width: 490px;
+  height: 62px;
+  margin: -200px 0 0 -5px;
+}
+.yr-cell-img {
+  --gs: 0.1;
+  width: 230px;
+  height: 392px;
+  margin: 41px 0 0 -135px;
+}
+.yr-cell-gfx {
+  --gs: 0.3;
+  width: 250px;
+  height: 170px;
+  margin: -70px 0 0 115px;
+}
+.yr-cell-info {
+  --gs: 0.45;
+  width: 250px;
+  height: 202px;
+  margin: 136px 0 0 115px;
+}
+
+.yr-grid-title {
+  margin: -200px 0 0 -5px;
+  transform: translate(-50%, -50%);
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: #ffffff;
+  clip-path: inset(0 calc((1 - clamp(0, (var(--g) - 0.12) * 5, 1)) * 100%) 0 0);
+  opacity: var(--mo);
+}
+
+.yr-grid-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 200px;
+  margin: 136px 0 0 115px;
+  transform: translate(-50%, -50%);
+  opacity: calc(clamp(0, (var(--g) - 0.6) * 5, 1) * var(--mo));
+}
+
+.yr-grid-info i {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(234, 229, 236, 0.5);
+}
+.yr-grid-info i:nth-child(1) {
+  width: 90%;
+}
+.yr-grid-info i:nth-child(2) {
+  width: 62%;
+  background: var(--accentColor);
+}
+.yr-grid-info i:nth-child(3) {
+  width: 76%;
+}
+
+/* The graphic that comes alive (Motion Design) and finally opens the way. */
+.yr-circle {
+  width: 90px;
+  height: 90px;
+  margin: -45px 0 0 -45px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #5eead4, #0d9488);
+  box-shadow: 0 0 40px rgba(94, 234, 212, 0.45);
+  transform: translate(calc(115px + var(--mx)), calc(-70px + var(--my)))
+    scale(calc(var(--ms) * clamp(0, (var(--g) - 0.35) * 5, 1)));
+}
+
+/* ── Set K: Kurgu ── */
+.yr-k > * {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+.yr-monitor {
+  width: 220px;
+  height: 391px;
+  margin: -240px 0 0 -180px;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid rgba(94, 234, 212, 0.55);
+  box-shadow: 0 0 70px rgba(94, 234, 212, 0.14), 0 20px 50px rgba(0, 0, 0, 0.5);
+  background: #05070c;
+}
+
+.yr-cut-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+}
+
+[data-cut="0"] .yr-cut-0,
+[data-cut="1"] .yr-cut-1,
+[data-cut="2"] .yr-cut-2,
+[data-cut="3"] .yr-cut-3 {
+  opacity: 1;
+}
+
+.yr-strip {
+  display: flex;
+  gap: 10px;
+  margin: 168px 0 0 -277px;
+}
+
+.yr-thumb {
+  width: 96px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 4px;
+  opacity: 0.4;
+  border: 1px solid transparent;
+}
+
+[data-cut="0"] .yr-thumb-0,
+[data-cut="1"] .yr-thumb-1,
+[data-cut="2"] .yr-thumb-2,
+[data-cut="3"] .yr-thumb-3 {
+  opacity: 1;
+  border-color: var(--accentColor);
+}
+
+.yr-timeline {
+  width: 414px;
+  height: 3px;
+  margin: 240px 0 0 -277px;
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.16);
+  /* Cut marks where the picture changes. */
+  background-image:
+    linear-gradient(var(--accentColor), var(--accentColor)),
+    linear-gradient(var(--accentColor), var(--accentColor)),
+    linear-gradient(var(--accentColor), var(--accentColor));
+  background-size: 2px 100%;
+  background-position: 20% 0, 45% 0, 70% 0;
+  background-repeat: no-repeat;
+}
+
+.yr-playhead {
+  position: absolute;
+  top: -6px;
+  left: calc(var(--kc) * 100%);
+  width: 2px;
+  height: 15px;
+  background: #ffffff;
+}
+
+.yr-cutno {
+  margin: -45px 0 0 70px;
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: var(--accentColor);
+  font-variant-numeric: tabular-nums;
+}
+
+.yr-cutno::after {
+  content: "01 / 04";
+}
+[data-cut="1"] .yr-cutno::after {
+  content: "02 / 04";
+}
+[data-cut="2"] .yr-cutno::after {
+  content: "03 / 04";
+}
+[data-cut="3"] .yr-cutno::after {
+  content: "04 / 04";
+}
+
+/* ── Set I: AI Artist ── */
+.yr-i > * {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+.yr-ai-monitor {
+  margin: -230px 0 0 -110px;
+}
+
+.yr-ai-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Two readings of the same frame, and the original. These are treatments of a
+   real AI-assisted work, not extra client projects. */
+.yr-ai-1,
+.yr-ai-thumb-1 {
+  filter: grayscale(1) sepia(1) hue-rotate(110deg) saturate(2.4) contrast(1.1);
+}
+.yr-ai-2,
+.yr-ai-thumb-2 {
+  filter: grayscale(1) contrast(1.35) brightness(0.92);
+}
+
+.yr-ai-2 {
+  clip-path: circle(calc(clamp(0, (var(--ai) - 0.12) * 4, 1) * 75%) at 50% 50%);
+}
+.yr-ai-3 {
+  clip-path: inset(0 calc((1 - clamp(0, (var(--ai) - 0.5) * 4, 1)) * 100%) 0 0);
+}
+
+.yr-ai-sel {
+  position: absolute;
+  inset: -8px;
+  pointer-events: none;
+  opacity: clamp(0, (var(--ai) - 0.78) * 8, 1);
+  transform: scale(calc(1.08 - clamp(0, (var(--ai) - 0.78) * 4, 1) * 0.08));
+  background:
+    linear-gradient(var(--accentColor), var(--accentColor)) top left / 18px 2px no-repeat,
+    linear-gradient(var(--accentColor), var(--accentColor)) top left / 2px 18px no-repeat,
+    linear-gradient(var(--accentColor), var(--accentColor)) top right / 18px 2px no-repeat,
+    linear-gradient(var(--accentColor), var(--accentColor)) top right / 2px 18px no-repeat,
+    linear-gradient(var(--accentColor), var(--accentColor)) bottom left / 18px 2px no-repeat,
+    linear-gradient(var(--accentColor), var(--accentColor)) bottom left / 2px 18px no-repeat,
+    linear-gradient(var(--accentColor), var(--accentColor)) bottom right / 18px 2px no-repeat,
+    linear-gradient(var(--accentColor), var(--accentColor)) bottom right / 2px 18px no-repeat;
+}
+
+.yr-ai-thumbs {
+  display: flex;
+  gap: 12px;
+  margin: 183px 0 0 -81px;
+}
+
+.yr-ai-thumb {
+  width: 50px;
+  height: 89px;
+  object-fit: cover;
+  border-radius: 4px;
+  opacity: 0.45;
+  border: 1px solid transparent;
+  opacity: calc(0.35 + 0.65 * clamp(0, var(--ai) * 6, 1) * 0.6);
+}
+
+.yr-ai-thumb-3 {
+  opacity: calc(0.35 + 0.65 * clamp(0, (var(--ai) - 0.5) * 4, 1));
+  border-color: rgba(94, 234, 212, calc(clamp(0, (var(--ai) - 0.78) * 8, 1)));
+}
+
+.yr-ai-credit {
+  width: 130px;
+  margin: -30px 0 0 130px;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(234, 229, 236, 0.55);
+}
+
+/* ── Captions: one title and one sentence per scene ── */
+.yr-caps {
+  position: absolute;
+  left: max(20px, 6vw);
+  bottom: 12svh;
+  width: min(420px, 38vw);
+  height: 170px;
+  pointer-events: none;
+}
+
+.yr-cap {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  opacity: var(--ci);
+  transform: translateY(calc((1 - var(--ci)) * 18px));
+}
+
+.yr-num {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 4px;
+  color: var(--accentColor);
+}
+
+.yr-cap h2 {
+  margin: 0 0 8px;
+  font-size: clamp(30px, 3.4vw, 48px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.yr-cap p {
+  margin: 0;
+  font-size: clamp(16px, 1.3vw, 19px);
+  line-height: 1.5;
+  color: rgba(234, 229, 236, 0.78);
+  text-wrap: pretty;
+}
+
+/* ── Final call ── */
+.yr-cta {
+  position: absolute;
+  left: 50%;
+  top: 68%;
+  width: min(780px, calc(100% - 40px));
+  text-align: center;
+  transform: translate(-50%, calc(-50% + (1 - var(--cta)) * 20px));
+  opacity: var(--cta);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.yr-stage.is-cta .yr-cta {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.yr-cta h2,
+.yr-still-end h2 {
+  margin: 0 0 28px;
+  font-size: clamp(30px, 5vw, 62px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  text-wrap: balance;
+}
+
+.yr-cta-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.yr a.yr-cta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accentColor);
+  border: 1px solid var(--accentColor);
+  border-radius: 30px;
+  background: rgba(11, 15, 23, 0.6);
+  transition: background-color 0.2s ease;
+}
+
+.yr a.yr-cta-link:hover {
+  background-color: rgba(94, 234, 212, 0.16);
+}
+
+.yr-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 0;
+  margin: 30px 0 0;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(234, 229, 236, 0.55);
+}
+
+.yr-tools span {
+  white-space: nowrap;
+}
+
+.yr-tools span:not(:last-child)::after {
+  content: "\00B7";
+  margin: 0 10px;
+  opacity: 0.6;
+}
+
+/* ── Still version (reduced motion) ── */
+.yr-still {
+  width: min(760px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 96px 0 80px;
+  background: transparent;
+}
+
+.yr-still-hero h1 {
+  margin: 0 0 18px;
+  font-size: clamp(44px, 11vw, 96px);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+}
+
+.yr-still-hero p {
+  margin: 0;
+  font-size: clamp(19px, 5vw, 25px);
+  line-height: 1.5;
+  color: rgba(234, 229, 236, 0.88);
+}
+
+.yr-still-scene {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(234, 229, 236, 0.14);
+}
+
+.yr-still-box {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.yr-still-set {
+  position: relative;
+  left: 50%;
+  width: 560px;
+  height: 560px;
+  margin: 0 0 0 -280px;
+  transform: scale(var(--sc));
+  transform-origin: top center;
+  overflow: visible;
+}
+
+.yr-still-scene h2 {
+  margin: 4px 0 8px;
+  font-size: clamp(28px, 6vw, 40px);
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.yr-still-scene p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.55;
+  color: rgba(234, 229, 236, 0.78);
+}
+
+.yr-still-end {
+  margin-top: 72px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(234, 229, 236, 0.14);
+  text-align: center;
+}
+
+/* ── Phones: same story, lighter ── */
+@media only screen and (max-width: 767px) {
+  .yr {
+    --hy: 150px;
+    --spread: 0.5;
+  }
+
+  .yr-track {
+    height: 640vh;
+  }
+
+  .yr-hero {
+    top: 12svh;
+    width: calc(100% - 40px);
+    transform: translateY(calc((1 - var(--hero)) * -20px));
+  }
+
+  .yr-hero h1 {
+    font-size: clamp(44px, 13vw, 60px);
+  }
+
+  .yr-rule {
+    margin: 16px 0 14px;
+  }
+
+  .yr-hero p {
+    font-size: 18px;
+  }
+
+  .yr-caps {
+    left: 20px;
+    right: 20px;
+    bottom: 4svh;
+    width: auto;
+    height: 150px;
+  }
+
+  .yr-cap {
+    padding-top: 40px;
+  }
+
+  .yr-caps::before {
+    content: "";
+    position: absolute;
+    left: -20px;
+    right: -20px;
+    bottom: -4svh;
+    height: calc(100% + 60px);
+    background: linear-gradient(rgba(11, 15, 23, 0), rgba(11, 15, 23, 0.92) 55%);
+    z-index: -1;
+  }
+
+  .yr-cap h2 {
+    font-size: 30px;
+  }
+
+  .yr-cap p {
+    font-size: 16px;
+  }
+
+  /* Lighter depth on phones. */
+  .yr-frame {
+    box-shadow: 0 0 40px rgba(94, 234, 212, 0.14);
+  }
+}
+
+/* ── Motion: only for people who have not asked for less ── */
+@media (prefers-reduced-motion: no-preference) {
+  .yr-line-in {
+    transform: translateY(110%);
+    animation: yr-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  }
+  .yr-line:nth-child(2) .yr-line-in {
+    animation-delay: 0.12s;
+  }
+  .yr-rule {
+    transform: scaleX(0);
+    animation: yr-draw 0.7s 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  }
+  .yr-hero p {
+    animation: yr-fade-in 0.7s 0.8s ease both;
+  }
+  .yr-stars i {
+    animation: yr-twinkle 6s ease-in-out infinite;
+  }
+  .yr-orbits g {
+    animation: yr-spin 160s linear infinite;
+  }
+  .yr-frame {
+    animation: yr-float 7s ease-in-out infinite;
+  }
+}
+
+@keyframes yr-rise {
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes yr-draw {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes yr-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes yr-twinkle {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.55);
+  }
+}
+
+@keyframes yr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes yr-float {
+  0%,
+  100% {
+    transform: translateY(-6px);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes yr-nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}

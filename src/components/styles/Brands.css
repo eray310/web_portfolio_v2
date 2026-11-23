@@ -156,3 +156,233 @@
     display: none;
   }
 }
+
+/* ── Logos open the brand's video window ── */
+.brands-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.brands-open:hover,
+.brands-open:focus-visible {
+  transform: scale(1.06);
+}
+
+.brands-open:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 2px;
+}
+
+/* A moving logo is hard to click: the strip stands still under a real mouse. */
+@media (hover: hover) and (pointer: fine) {
+  .brands-marquee:hover .brands-track {
+    animation-play-state: paused;
+  }
+}
+
+/* ── Brand video window ── */
+.bg-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.85);
+  text-align: left;
+}
+
+.bg-panel {
+  box-sizing: border-box;
+  width: min(1000px, 100%);
+  max-height: calc(var(--vh, 100vh) - 32px);
+  overflow-y: auto;
+  padding: 20px 24px 28px;
+  background: #0f1420;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+}
+
+.bg-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.bg-head h3 {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 500;
+  color: var(--accentColor);
+}
+
+.bg-back,
+.bg-close {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.bg-back {
+  padding: 8px 16px 8px 10px;
+  font-size: 18px;
+}
+
+.bg-close {
+  flex-shrink: 0;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+}
+
+.bg-back:hover,
+.bg-back:focus-visible,
+.bg-close:hover,
+.bg-close:focus-visible {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.bg-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Fixed height, width follows each video's own shape (vertical or horizontal). */
+.bg-grid li {
+  --bgH: 280px;
+  height: var(--bgH);
+  max-width: 100%;
+  flex-shrink: 0;
+}
+
+.bg-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: #05070c;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  cursor: pointer;
+  color: #fff;
+}
+
+.bg-card img,
+.bg-preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bg-card:hover,
+.bg-card:focus-visible {
+  border-color: var(--accentColor);
+}
+
+.bg-card:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 2px;
+}
+
+.bg-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  font-size: 30px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.2s ease;
+}
+
+.bg-card:hover .bg-play {
+  opacity: 0;
+}
+
+.bg-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 24px 10px 8px;
+  font-size: 13px;
+  text-align: left;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+}
+
+.bg-player {
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+.bg-player video {
+  display: block;
+  width: 100%;
+  max-height: calc(var(--vh, 100vh) - 190px);
+  background: #000;
+  border-radius: 8px;
+}
+
+.bg-player-title {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: rgba(234, 229, 236, 0.7);
+}
+
+.bg-empty {
+  margin: 24px 0 12px;
+  text-align: center;
+  font-size: 18px;
+  color: rgba(234, 229, 236, 0.75);
+}
+
+@media only screen and (max-width: 767px) {
+  .bg-modal {
+    padding: 10px;
+  }
+
+  .bg-panel {
+    padding: 14px 14px 20px;
+  }
+
+  .bg-grid {
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .bg-grid li {
+    --bgH: 230px;
+  }
+}

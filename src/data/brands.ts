@@ -37,4 +37,6 @@ export const brands: Brand[] = [
   { name: "Üçay 360", logo: "brands/white/ucay360.png" },
   { name: "Allesta", logo: "brands/white/allesta.png" },
   { name: "Genç MÜSİAD", logo: "brands/white/gencmusiad.png" },
+  { name: "Yiğit Group", logo: "brands/white/yigitgroup.png" },
+  { name: "Voop", logo: "brands/white/voop.png" },
 ];

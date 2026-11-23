@@ -37,6 +37,42 @@ export const previewUrl = (project: Project) =>
  */
 export const projects: Project[] = [
   {
+    title: "Voop — Karikatür",
+    description:
+      "Voop için hazırlanan dikey videoda karikatür tarzı bir karakter ürünleri tanıtıyor. Altyazılar konuşmayı kelime kelime takip ediyor.",
+    video: "VoopKarikatür.mp4",
+    poster: "voop-karikatur.jpg",
+    preview: "voop-karikatur.mp4",
+    categories: ["Yapay Zekâ", "Kurgu"],
+  },
+  {
+    title: "Motosan",
+    description:
+      "Bir kask tanıtımı için hazırlanan dikey video. Kask parçalara ayrılıp yeniden birleşiyor, öne çıkan özellikler oklu yazılarla gösteriliyor.",
+    video: "Motosan.mp4",
+    poster: "motosan.jpg",
+    preview: "motosan.mp4",
+    categories: ["Motion Graphics"],
+  },
+  {
+    title: "RES360 | Proje Tanıtım Videosu",
+    description:
+      "RES360 için hazırladığım hareketli grafik videosu, farklı gayrimenkul projelerini kartlar hâlinde tanıtıyor.",
+    video: "Res__360.mp4",
+    poster: "Res__360.jpg",
+    categories: ["Motion Graphics"],
+    contribution: ["Proje kartlarını ve ekran geçişlerini hareketli grafik olarak hazırladım."],
+  },
+  {
+    title: "Next Telekom",
+    description:
+      "Next Telekom için hazırlanan dikey videoda internet hızı ve hızlı başvuru mesajları hareketli yazılar ve canlı görsellerle art arda geliyor.",
+    video: "Nexttelekom.mp4",
+    poster: "next-telekom.jpg",
+    preview: "next-telekom.mp4",
+    categories: ["Motion Graphics", "Kurgu"],
+  },
+  {
     title: "PayPal",
     description:
       "PayPal için hazırladığım bu çalışmada, marka mesajını hareketli grafiklerle anlattım. Harita, telefon ekranı ve metin animasyonları tek bir akışta ilerliyor.",
@@ -151,14 +187,5 @@ export const projects: Project[] = [
       "Planları akıcı bir sırayla kurguladım.",
       "Metinleri mobilde okunaklı olacak şekilde düzenledim.",
     ],
-  },
-  {
-    title: "RES360 | Proje Tanıtım Videosu",
-    description:
-      "RES360 için hazırladığım hareketli grafik videosu, farklı gayrimenkul projelerini kartlar hâlinde tanıtıyor.",
-    video: "Res__360.mp4",
-    poster: "Res__360.jpg",
-    categories: ["Motion Graphics"],
-    contribution: ["Proje kartlarını ve ekran geçişlerini hareketli grafik olarak hazırladım."],
   },
 ];

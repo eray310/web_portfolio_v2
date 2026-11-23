@@ -146,12 +146,12 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  transform: translateX(var(--shx)) scale(calc(1 + var(--p) * 0.5));
-}
-
-.yr-orbits g {
-  transform-origin: 50% 50%;
-  transform-box: view-box;
+  /* Individual transform properties, on their own layer: the slow turn below runs on
+     the compositor instead of repainting every line of the drawing on each frame. */
+  overflow: visible;
+  translate: var(--shx) 0;
+  scale: calc(1 + var(--p) * 0.5);
+  will-change: transform;
 }
 
 .yr-orbits ellipse {
@@ -1008,7 +1008,7 @@
   .yr-nebula {
     animation: yr-nebula 90s ease-in-out infinite alternate;
   }
-  .yr-orbits g {
+  .yr-orbits {
     animation: yr-spin 160s linear infinite;
   }
   .yr-frame {
@@ -1063,7 +1063,7 @@
 
 @keyframes yr-spin {
   to {
-    transform: rotate(360deg);
+    rotate: 360deg;
   }
 }
 
@@ -1329,6 +1329,15 @@
 
 .yr-ai-credit {
   margin: -22px 0 0 130px;
+}
+
+/* Phones: the stars keep their depth (layers, drift, shooting stars) but do not pulse.
+   Dozens of small elements animating at once cost the most frames on a phone. */
+@media only screen and (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+  .yr-far i:nth-child(4n),
+  .yr-mid i {
+    animation: none;
+  }
 }
 
 /* Phones: lighter effects. */

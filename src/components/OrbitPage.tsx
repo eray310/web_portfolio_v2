@@ -436,15 +436,24 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
 
     // A critically damped spring with a speed limit: soft start, soft stop,
     // heavy and slow for slow scrolling, and no sudden jump for a fast flick.
-    const OMEGA = 6.2;
-    const VMAX = 0.4; // fraction of the whole story per second (a flick takes about 2.5 s end to end)
+    // On a phone the finger and the browser's own momentum already give the scroll its
+    // softness, so the scene follows almost directly: it reacts at once to the finger
+    // and stops with it instead of gliding on.
+    const OMEGA = phone ? 24 : 6.2;
+    const VMAX = phone ? 2 : 0.4; // fraction of the whole story per second (desktop: a flick takes about 2.5 s end to end)
     const tick = (t: number) => {
       const dt = Math.min(0.05, last ? (t - last) / 1000 : 0.016);
       last = t;
-      const x = cur - target;
-      vel += (-OMEGA * OMEGA * x - 2 * OMEGA * vel) * dt;
-      vel = clamp(vel, -VMAX, VMAX);
-      cur += vel * dt;
+      // Small steps keep the stiff phone spring from overshooting on a long frame.
+      const steps = Math.ceil(dt / (1 / 120));
+      const h = dt / steps;
+      for (let k = 0; k < steps; k++) {
+        const x = cur - target;
+        vel += (-OMEGA * OMEGA * x - 2 * OMEGA * vel) * h;
+        vel = clamp(vel, -VMAX, VMAX);
+        cur += vel * h;
+      }
+      cur = clamp(cur, 0, 1);
       if (Math.abs(cur - target) < 0.0002 && Math.abs(vel) < 0.001) {
         cur = target;
         vel = 0;

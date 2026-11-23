@@ -29,7 +29,12 @@
   --c2: 0;
   --c3: 0;
   --c4: 0;
-  background-color: #0b0f17;
+  --open: 0;
+  --panx: 0px;
+  --pany: 0px;
+  --fK: none;
+  --fI: none;
+  background-color: #080b11;
   color: #eae5ec;
   font-family: "Geist", sans-serif;
   min-height: 100vh;
@@ -50,7 +55,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px max(20px, 4vw) 22px;
-  background: linear-gradient(#0b0f17 35%, rgba(11, 15, 23, 0));
+  background: linear-gradient(#080b11 35%, rgba(8, 11, 17, 0));
   pointer-events: none;
 }
 
@@ -102,7 +107,7 @@
   height: 100svh;
   overflow: hidden;
   perspective: 1000px;
-  background: radial-gradient(120% 90% at 68% 42%, #141b2a 0%, #0b0f17 58%, #070a10 100%);
+  background: radial-gradient(120% 90% at 68% 42%, #0f1522 0%, #080b11 58%, #05070b 100%);
 }
 
 .yr-bg {
@@ -114,7 +119,7 @@
 .yr-stars {
   position: absolute;
   inset: -6%;
-  transform: translateY(calc(var(--p) * -90px));
+  transform: translateY(calc(var(--p) * -28px));
 }
 
 .yr-stars i {
@@ -138,17 +143,17 @@
 
 .yr-orbits ellipse {
   fill: none;
-  stroke: rgba(94, 234, 212, 0.22);
+  stroke: rgba(94, 234, 212, 0.15);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
 
 .yr-orbits ellipse:nth-child(2) {
-  stroke: rgba(94, 234, 212, 0.14);
+  stroke: rgba(94, 234, 212, 0.1);
 }
 
 .yr-orbits ellipse:nth-child(3) {
-  stroke: rgba(94, 234, 212, 0.09);
+  stroke: rgba(94, 234, 212, 0.06);
 }
 
 /* ── Opening text (left) ── */
@@ -231,6 +236,7 @@
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
+  transform: translate3d(var(--panx), var(--pany), 0);
   pointer-events: none;
 }
 
@@ -280,9 +286,11 @@
 }
 .yr-k {
   opacity: var(--oK);
+  filter: var(--fK);
 }
 .yr-i {
   opacity: var(--oI);
+  filter: var(--fI);
 }
 
 .yr-dot {
@@ -803,7 +811,7 @@
   color: var(--accentColor);
   border: 1px solid var(--accentColor);
   border-radius: 30px;
-  background: rgba(11, 15, 23, 0.6);
+  background: rgba(8, 11, 17, 0.62);
   transition: background-color 0.2s ease;
 }
 
@@ -948,7 +956,7 @@
     right: -20px;
     bottom: -4svh;
     height: calc(100% + 60px);
-    background: linear-gradient(rgba(11, 15, 23, 0), rgba(11, 15, 23, 0.92) 55%);
+    background: linear-gradient(rgba(8, 11, 17, 0), rgba(8, 11, 17, 0.92) 55%);
     z-index: -1;
   }
 
@@ -1047,5 +1055,287 @@
   }
   50% {
     transform: translateY(5px);
+  }
+}
+
+/* ═══ v2: depth, atmosphere, one story around one work ═══ */
+
+.yr-nebula {
+  position: absolute;
+  inset: -10%;
+  background:
+    radial-gradient(40% 35% at 72% 32%, rgba(13, 148, 136, 0.13), transparent 70%),
+    radial-gradient(38% 40% at 18% 72%, rgba(64, 52, 140, 0.1), transparent 72%),
+    radial-gradient(30% 30% at 55% 88%, rgba(13, 148, 136, 0.06), transparent 70%);
+  transform: translate(calc(var(--p) * -40px), calc(var(--p) * 30px)) scale(calc(1 + var(--p) * 0.15));
+}
+
+/* Dark edges with a faint turquoise rim light. */
+.yr-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 100% at 50% 45%, transparent 55%, rgba(2, 4, 8, 0.55)),
+    linear-gradient(90deg, rgba(94, 234, 212, 0.05), transparent 16%, transparent 84%, rgba(94, 234, 212, 0.06));
+}
+
+.yr-stars i {
+  background: #e8fffb;
+}
+
+/* Dust and particles sit in the world itself, so the camera passes them. */
+.yr-field {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: translateZ(calc(var(--cam) * 1px));
+  pointer-events: none;
+}
+
+.yr-field i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+}
+
+.yr-dust {
+  background: #cfeee9;
+}
+
+.yr-near {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(94, 234, 212, 0.4) 55%, transparent 72%);
+  filter: blur(1.2px);
+}
+
+/* Thin, rare shooting stars. */
+.yr-shoot {
+  position: absolute;
+  width: 130px;
+  height: 1px;
+  opacity: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(190, 255, 245, 0.9));
+  transform: rotate(24deg);
+}
+.yr-shoot-1 {
+  left: 58%;
+  top: 11%;
+}
+.yr-shoot-2 {
+  left: 26%;
+  top: 24%;
+}
+.yr-shoot-3 {
+  left: 74%;
+  top: 7%;
+}
+
+/* A thin turquoise edge light on the frames. */
+.yr-monitor::after,
+.yr-frame-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(115deg, rgba(94, 234, 212, 0.3), transparent 26%);
+  mix-blend-mode: screen;
+}
+
+.yr-frame-wrap {
+  border-radius: 8px;
+}
+
+/* Titles stay readable over the dark sky. */
+.yr-cap h2,
+.yr-cap p,
+.yr-hero h1,
+.yr-hero p,
+.yr-cta h2 {
+  text-shadow: 0 2px 22px rgba(0, 0, 0, 0.7);
+}
+
+.yr-caps {
+  isolation: isolate;
+}
+
+.yr-caps::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: -8vw;
+  bottom: -10vh;
+  width: 54vw;
+  height: 50vh;
+  background: radial-gradient(60% 60% at 30% 68%, rgba(5, 7, 11, 0.7), transparent);
+}
+
+/* Art Direction: references taken from the Allesta poster itself. */
+.yr-type {
+  width: 118px;
+  height: 62px;
+  display: block;
+  border-radius: 10px;
+  border: 1px solid rgba(94, 234, 212, 0.5);
+  background: var(--poster) 50% 69% / 150% auto no-repeat, #0c1a18;
+  --sx: -400px;
+  --sy: 250px;
+  --sr: 30deg;
+  --ex: -144px;
+  --ey: 152px;
+  --er: -4deg;
+}
+
+.yr-ref {
+  display: block;
+  background-color: #0c1a18;
+  background-repeat: no-repeat;
+  background-image: var(--poster);
+}
+
+.yr-ref-1 {
+  background-position: 50% 8%;
+  background-size: 250% auto;
+}
+
+.yr-ref-2 {
+  background-position: 42% 96%;
+  background-size: 250% auto;
+}
+
+/* The circle becomes a ring the camera flies through. */
+.yr-circle {
+  box-sizing: border-box;
+  background: linear-gradient(160deg, rgba(94, 234, 212, calc(1 - var(--open) * 0.97)), rgba(13, 148, 136, calc(1 - var(--open) * 0.97)));
+  border: 3px solid rgba(94, 234, 212, var(--open));
+  box-shadow: 0 0 calc(40px + var(--open) * 60px) rgba(94, 234, 212, 0.45);
+}
+
+/* Kurgu and AI Artist share the frame position, so the last cut carries over. */
+.yr-k-monitor,
+.yr-ai-monitor {
+  margin: -240px 0 0 -110px;
+}
+
+.yr-strip {
+  margin: 168px 0 0 -207px;
+}
+
+.yr-timeline {
+  margin: 240px 0 0 -207px;
+}
+
+.yr-cutno {
+  margin: -45px 0 0 130px;
+}
+
+.yr-cut-img {
+  background: #05070c;
+}
+
+/* AI Artist: the original, two colour tests, and the original again (selected). */
+.yr-ai-0 {
+  clip-path: none;
+}
+
+.yr-ai-1 {
+  filter: grayscale(1) sepia(1) hue-rotate(110deg) saturate(2.4) contrast(1.1);
+  clip-path: circle(calc(clamp(0, (var(--ai) - 0.1) * 4.5, 1) * 75%) at 50% 50%);
+}
+
+.yr-ai-2 {
+  filter: grayscale(1) contrast(1.35) brightness(0.92);
+  clip-path: inset(0 calc((1 - clamp(0, (var(--ai) - 0.36) * 5, 1)) * 100%) 0 0);
+}
+
+.yr-ai-3 {
+  filter: none;
+  clip-path: inset(0 calc((1 - clamp(0, (var(--ai) - 0.62) * 5.5, 1)) * 100%) 0 0);
+}
+
+.yr-ai-thumb-0 {
+  filter: none;
+  border-color: rgba(94, 234, 212, calc(clamp(0, (var(--ai) - 0.78) * 8, 1)));
+  opacity: calc(0.4 + 0.6 * clamp(0, (var(--ai) - 0.78) * 8, 1));
+}
+.yr-ai-thumb-1 {
+  filter: grayscale(1) sepia(1) hue-rotate(110deg) saturate(2.4) contrast(1.1);
+}
+.yr-ai-thumb-2 {
+  filter: grayscale(1) contrast(1.35) brightness(0.92);
+}
+
+.yr-ai-tag {
+  margin: -264px 0 0 -110px;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accentColor);
+  white-space: nowrap;
+}
+
+.yr-ai-tag::after {
+  content: "Özgün kare";
+}
+[data-ai="1"] .yr-ai-tag::after {
+  content: "Renk denemesi 1";
+}
+[data-ai="2"] .yr-ai-tag::after {
+  content: "Renk denemesi 2";
+}
+[data-ai="3"] .yr-ai-tag::after {
+  content: "Özgün kare · seçilen";
+}
+
+.yr-ai-credit {
+  margin: -22px 0 0 130px;
+}
+
+/* Phones: lighter effects. */
+@media only screen and (max-width: 767px) {
+  .yr-shoot-2,
+  .yr-shoot-3 {
+    display: none;
+  }
+
+  .yr-nebula {
+    transform: none;
+  }
+
+  .yr-caps::before {
+    left: -20px;
+    width: auto;
+    right: -20px;
+    bottom: -4svh;
+    height: calc(100% + 60px);
+    background: linear-gradient(rgba(8, 11, 17, 0), rgba(8, 11, 17, 0.92) 55%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .yr-shoot-1 {
+    animation: yr-shoot 14s linear 3s infinite;
+  }
+  .yr-shoot-2 {
+    animation: yr-shoot 19s linear 9s infinite;
+  }
+  .yr-shoot-3 {
+    animation: yr-shoot 26s linear 15s infinite;
+  }
+}
+
+@keyframes yr-shoot {
+  0%,
+  8%,
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(24deg);
+  }
+  1.5% {
+    opacity: 0.85;
+  }
+  7% {
+    opacity: 0;
+    transform: translate(380px, 170px) rotate(24deg);
   }
 }

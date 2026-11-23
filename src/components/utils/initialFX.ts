@@ -2,6 +2,7 @@ import { SplitText } from "gsap/SplitText";
 import gsap from "gsap";
 import { smoother } from "../Navbar";
 import { watchNameGradient } from "./nameGradient";
+import { scrollToSection } from "./scrollToSection";
 
 export function initialFX() {
   document.body.style.overflowY = "auto";
@@ -65,4 +66,17 @@ export function initialFX() {
       delay: 0.1,
     }
   );
+
+  // A link such as /#work or /#contact (for example from the About page): once the
+  // intro is over and the smooth scroller is running, go to that section.
+  const hash = window.location.hash;
+  if (hash.length > 1) {
+    window.setTimeout(() => {
+      try {
+        if (document.querySelector(hash)) scrollToSection(hash);
+      } catch {
+        /* not a valid selector: stay at the top */
+      }
+    }, 1400);
+  }
 }

@@ -2,10 +2,23 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { tools } from "../data/tools";
 import "./styles/OrbitPage.css";
 
-const asset = (file: string) => `${import.meta.env.BASE_URL}portfolio/${file}`;
+const BASE = import.meta.env.BASE_URL;
+const asset = (file: string) => `${BASE}portfolio/${file}`;
+
+// One work carries the whole story: the Allesta ad (an AI-assisted film).
+const POSTER = asset("Allesta_YZReklam.jpg");
+const CUT_VIDEO = `${BASE}process/allesta/kurgu-final.mp4`; // the finished edit, 4 s
+// Moments of the edit shown as cuts; the last cut is the poster, which then
+// opens into the AI Artist scene.
+const CUTS = [
+  { kind: "video", t: 0.3 },
+  { kind: "video", t: 1.3 },
+  { kind: "video", t: 2.6 },
+  { kind: "poster", t: 0 },
+] as const;
 
 // The CV links are shown only when this file really exists (see the check below).
-const CV_URL = `${import.meta.env.BASE_URL}cv/Eray_Omeroglu_CV.pdf`;
+const CV_URL = `${BASE}cv/Eray_Omeroglu_CV.pdf`;
 
 // ── Maths helpers ─────────────────────────────────────────────────────────
 const clamp = (v: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
@@ -19,9 +32,9 @@ const W = {
   art: [0.19, 0.35],
   grid: [0.35, 0.49],
   motion: [0.49, 0.6],
-  fly1: [0.6, 0.66],
+  fly1: [0.58, 0.66],
   cut: [0.66, 0.77],
-  fly2: [0.77, 0.82],
+  fly2: [0.75, 0.83],
   ai: [0.82, 0.9],
   fin: [0.9, 1],
 } as const;
@@ -41,6 +54,7 @@ const motionPose = (m: number) => {
     my: (1 - w) * 90 * (Math.cos(2 * Math.PI * m) - 1) + w * 60,
     ms: 1 + w * 0.5 + open * 10,
     mo: 1 - ease(seg(m, 0.4, 0.8)),
+    open,
   };
 };
 
@@ -53,19 +67,42 @@ const scenes = [
   { n: "05", title: "AI Artist", text: "Yapay zekâ destekli görselleri kurgu ve motion tasarımla tamamlıyorum." },
 ];
 
-const cutFrames = ["the-lock.jpg", "siux.jpg", "regnum-riva.jpg", "la-vita.jpg"];
+// Palette sampled from the Allesta poster.
+const PALETTE = ["#0c1a18", "#748a8d", "#d7c8a3", "#e4ab65"];
 
-// Sparse stars: fixed positions so the sky does not change between renders.
-const makeStars = () => {
-  let s = 7;
-  const rnd = () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646;
-  return Array.from({ length: 46 }, () => ({
-    x: rnd() * 100,
-    y: rnd() * 100,
-    r: 1 + rnd() * 1.6,
-    d: rnd() * 6,
-    o: 0.25 + rnd() * 0.5,
+// ── Depth: stars, dust and particles ──────────────────────────────────────
+const rng = (seed: number) => {
+  let s = seed;
+  return () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646;
+};
+
+const useIsPhone = () => useMemo(() => typeof window !== "undefined" && window.innerWidth < 768, []);
+
+/** Far stars: very few, tiny, almost still. */
+const makeStars = (n: number) => {
+  const r = rng(7);
+  return Array.from({ length: n }, () => ({ x: r() * 100, y: r() * 100, s: 1 + r() * 1.2, d: r() * 6, o: 0.2 + r() * 0.4 }));
+};
+
+/** Dust and particles live in the same 3D space as the scenes, so the camera passes them. */
+const makeField = (mid: number, near: number) => {
+  const r = rng(31);
+  const side = () => (r() < 0.5 ? -1 : 1);
+  const dust = Array.from({ length: mid }, () => ({
+    x: side() * (160 + r() * 950),
+    y: (r() - 0.5) * 1300,
+    z: -3700 + r() * 4000,
+    s: 2 + r() * 2.4,
+    o: 0.25 + r() * 0.3,
   }));
+  const close = Array.from({ length: near }, () => ({
+    x: side() * (420 + r() * 600),
+    y: (r() - 0.5) * 1000,
+    z: -3300 + r() * 3900,
+    s: 5 + r() * 4,
+    o: 0.28 + r() * 0.2,
+  }));
+  return { dust, close };
 };
 
 // ── Set contents (shared by the live scroll story and the still version) ───
@@ -83,29 +120,38 @@ const SetArt = () => (
       <i />
     </span>
     <div className="yr-frame-wrap">
-      <img className="yr-frame" src={asset("paypal.jpg")} alt="" decoding="async" draggable={false} />
+      <img className="yr-frame" src={POSTER} alt="" decoding="async" draggable={false} />
     </div>
-    <span className="yr-chip yr-chip-1" />
-    <span className="yr-chip yr-chip-2" />
-    <span className="yr-chip yr-chip-3" />
-    <span className="yr-chip yr-chip-4" />
-    <span className="yr-type">Aa</span>
-    <img className="yr-ref yr-ref-1" src={asset("uber-motion.jpg")} alt="" decoding="async" draggable={false} />
-    <img className="yr-ref yr-ref-2" src={asset("lays.jpg")} alt="" decoding="async" draggable={false} />
+    {PALETTE.map((c, i) => (
+      <span key={c} className={`yr-chip yr-chip-${i + 1}`} style={{ background: c }} />
+    ))}
+    <span className="yr-type" />
+    <span className="yr-ref yr-ref-1" />
+    <span className="yr-ref yr-ref-2" />
     <span className="yr-circle" />
   </div>
 );
 
+const CutFrame = ({ i, thumb = false }: { i: number; thumb?: boolean }) => {
+  const c = CUTS[i];
+  const cls = thumb ? `yr-thumb yr-thumb-${i}` : `yr-cut-img yr-cut-${i}`;
+  return c.kind === "video" ? (
+    <video className={cls} src={`${CUT_VIDEO}#t=${c.t}`} muted playsInline preload="auto" tabIndex={-1} />
+  ) : (
+    <img className={cls} src={POSTER} alt="" decoding="async" draggable={false} />
+  );
+};
+
 const SetCut = () => (
   <div className="yr-content yr-k" aria-hidden="true">
-    <div className="yr-monitor">
-      {cutFrames.map((f, i) => (
-        <img key={f} className={`yr-cut-img yr-cut-${i}`} src={asset(f)} alt="" decoding="async" draggable={false} />
+    <div className="yr-monitor yr-k-monitor">
+      {CUTS.map((_, i) => (
+        <CutFrame key={i} i={i} />
       ))}
     </div>
     <div className="yr-strip">
-      {cutFrames.map((f, i) => (
-        <img key={f} className={`yr-thumb yr-thumb-${i}`} src={asset(f)} alt="" decoding="async" draggable={false} />
+      {CUTS.map((_, i) => (
+        <CutFrame key={i} i={i} thumb />
       ))}
     </div>
     <div className="yr-timeline">
@@ -115,21 +161,22 @@ const SetCut = () => (
   </div>
 );
 
-const aiThumbs = ["a", "b", "c"] as const;
 const SetAi = () => (
   <div className="yr-content yr-i" aria-hidden="true">
     <div className="yr-monitor yr-ai-monitor">
-      <img className="yr-ai-layer yr-ai-1" src={asset("Allesta_YZReklam.jpg")} alt="" decoding="async" draggable={false} />
-      <img className="yr-ai-layer yr-ai-2" src={asset("Allesta_YZReklam.jpg")} alt="" decoding="async" draggable={false} />
-      <img className="yr-ai-layer yr-ai-3" src={asset("Allesta_YZReklam.jpg")} alt="" decoding="async" draggable={false} />
+      <img className="yr-ai-layer yr-ai-0" src={POSTER} alt="" decoding="async" draggable={false} />
+      <img className="yr-ai-layer yr-ai-1" src={POSTER} alt="" decoding="async" draggable={false} />
+      <img className="yr-ai-layer yr-ai-2" src={POSTER} alt="" decoding="async" draggable={false} />
+      <img className="yr-ai-layer yr-ai-3" src={POSTER} alt="" decoding="async" draggable={false} />
       <span className="yr-ai-sel" />
     </div>
+    <span className="yr-ai-tag" />
     <div className="yr-ai-thumbs">
-      {aiThumbs.map((k, i) => (
-        <img key={k} className={`yr-ai-thumb yr-ai-thumb-${i + 1}`} src={asset("Allesta_YZReklam.jpg")} alt="" decoding="async" draggable={false} />
-      ))}
+      <img className="yr-ai-thumb yr-ai-thumb-0" src={POSTER} alt="" decoding="async" draggable={false} />
+      <img className="yr-ai-thumb yr-ai-thumb-1" src={POSTER} alt="" decoding="async" draggable={false} />
+      <img className="yr-ai-thumb yr-ai-thumb-2" src={POSTER} alt="" decoding="async" draggable={false} />
     </div>
-    <span className="yr-ai-credit">Allesta · yapay zekâ destekli reklam</span>
+    <span className="yr-ai-credit">Allesta · yapay zekâ destekli reklam. Renk denemeleri.</span>
   </div>
 );
 
@@ -186,7 +233,7 @@ const useReducedMotion = () => {
 
 // ── Still version (reduced motion): the same scenes, finished, in a column ─
 const finalVars = (scene: number): Vars => {
-  const base: Vars = { "--app": 1, "--a": 1, "--g": 0, "--m": 0, "--mx": 0, "--my": 0, "--ms": 1, "--mo": 1, "--cut": 3, "--kc": 0.9, "--ai": 1 };
+  const base: Vars = { "--app": 1, "--a": 1, "--g": 0, "--m": 0, "--mx": 0, "--my": 0, "--ms": 1, "--mo": 1, "--open": 0, "--kc": 0.9, "--ai": 1 };
   if (scene === 0) return base;
   if (scene === 1) return { ...base, "--g": 1 };
   const mp = motionPose(0.45);
@@ -214,7 +261,7 @@ const StillOrbit = ({ hasCv }: { hasCv: boolean }) => {
       {scenes.map((s, i) => (
         <section key={s.title} className="yr-still-scene" aria-labelledby={`yr-st-${i}`}>
           <div className="yr-still-box" style={{ height: 560 * sc }}>
-            <div className="yr-still-set" style={vars({ ...finalVars(i), "--sc": sc })} data-cut="3">
+            <div className="yr-still-set" style={vars({ ...finalVars(i), "--sc": sc })} data-cut="3" data-ai="3">
               {visuals[i]}
             </div>
           </div>
@@ -236,7 +283,9 @@ const StillOrbit = ({ hasCv }: { hasCv: boolean }) => {
 const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const stars = useMemo(makeStars, []);
+  const phone = useIsPhone();
+  const stars = useMemo(() => makeStars(phone ? 14 : 26), [phone]);
+  const field = useMemo(() => (phone ? makeField(12, 3) : makeField(30, 9)), [phone]);
 
   useEffect(() => {
     const track = trackRef.current;
@@ -244,26 +293,36 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
     if (!track || !stage) return;
     let target = 0;
     let cur = -1;
+    let vel = 0;
     let raf = 0;
+    let last = 0;
     let lastCut = -1;
+    let lastAi = -1;
     let camA0 = 260; // how far the camera has moved in once the frame has become scene one
+    let shxPx = 0;
+    let scale = 1;
+    let blurOn = true;
     const set = (k: string, v: number | string) => stage.style.setProperty(k, String(v));
 
     const layout = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
       const mobile = w < 768;
+      blurOn = !mobile;
       camA0 = mobile ? 120 : 260;
       const dolly = 1000 / (1000 - camA0); // the scenes are drawn this much bigger than the set
-      const sc = mobile
+      scale = mobile
         ? Math.min(1, (w * 0.9) / 560 / dolly, (h * 0.5) / 560 / dolly)
         : Math.min(1, (h * 0.8) / 560 / dolly, (w * 0.46) / 560 / dolly);
-      set("--sc", sc.toFixed(3));
-      set("--shx", `${mobile ? 0 : Math.round(w * 0.15)}px`);
+      shxPx = mobile ? 0 : Math.round(w * 0.15);
+      set("--sc", scale.toFixed(3));
+      set("--shx", `${shxPx}px`);
       set("--shy", `${mobile ? -Math.round(h * 0.04) : 0}px`);
     };
 
-    const ramp = (z: number) => seg(z, -1300, -500) * (1 - seg(z, 100, 650));
+    // Content is faint and soft far away, sharp and solid when it arrives.
+    const arrive = (z: number) => seg(z, -1300, -500);
+    const leave = (z: number) => 1 - seg(z, 650, 960);
 
     const apply = (P: number) => {
       const app = ease(seg(P, W.approach[0], W.approach[1]));
@@ -279,26 +338,42 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
       const cam = camA0 * app + CAM_STEP * fly1 + CAM_STEP * fly2 - CAM_BACK * fin;
 
       const mp = motionPose(m);
+      const mx = lerp(mp.mx, 0, finGate);
+      const my = lerp(mp.my, 0, finGate);
       set("--p", P.toFixed(4));
       set("--app", app.toFixed(4));
       set("--a", a.toFixed(4));
       set("--g", g.toFixed(4));
       set("--m", m.toFixed(4));
-      set("--mx", `${lerp(mp.mx, 0, finGate).toFixed(2)}px`);
-      set("--my", `${lerp(mp.my, 0, finGate).toFixed(2)}px`);
+      set("--mx", `${mx.toFixed(2)}px`);
+      set("--my", `${my.toFixed(2)}px`);
       set("--ms", lerp(mp.ms, 1, finGate).toFixed(3));
       set("--mo", lerp(mp.mo, 1, finGate).toFixed(3));
+      set("--open", (mp.open * (1 - finGate)).toFixed(3));
       set("--kc", kc.toFixed(4));
       set("--ai", ai.toFixed(4));
       set("--fin", fin.toFixed(4));
       set("--cam", cam.toFixed(1));
 
+      // The camera follows the moving circle, then lets go as it flies through.
+      const follow = seg(P, 0.49, 0.53) * (1 - ease(seg(P, W.fly1[0], W.fly1[1]))) * (1 - finGate);
+      set("--panx", `${(-(115 + mx) * 0.5 * scale * follow).toFixed(1)}px`);
+      set("--pany", `${(-(-70 + my) * 0.5 * scale * follow).toFixed(1)}px`);
+
       const fade = 1 - seg(fin, 0.35, 0.8);
       // The camera has already moved in by camA0 when the scenes start; measure from there.
-      const content = (z: number) => lerp(ramp(z - camA0), 1, finGate) * fade;
-      set("--oA", content(cam).toFixed(3));
-      set("--oK", content(cam - CAM_STEP).toFixed(3));
-      set("--oI", content(cam - 2 * CAM_STEP).toFixed(3));
+      const zA = cam - camA0;
+      const zK = cam - CAM_STEP - camA0;
+      const zI = cam - 2 * CAM_STEP - camA0;
+      const content = (z: number) => lerp(arrive(z) * leave(z), 1, finGate) * fade;
+      set("--oA", content(zA).toFixed(3));
+      set("--oK", content(zK).toFixed(3));
+      set("--oI", content(zI).toFixed(3));
+      const soft = (z: number) => (blurOn && finGate < 0.5 ? Math.max(0, (1 - arrive(z)) * 9) : 0);
+      const bk = soft(zK);
+      const bi = soft(zI);
+      set("--fK", bk > 0.2 ? `blur(${bk.toFixed(1)}px)` : "none");
+      set("--fI", bi > 0.2 ? `blur(${bi.toFixed(1)}px)` : "none");
       set("--dot", seg(fin, 0.35, 0.85).toFixed(3));
       set("--hero", (1 - seg(P, 0.04, 0.13)).toFixed(3));
       set("--cta", seg(P, 0.955, 0.985).toFixed(3));
@@ -316,6 +391,12 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
         lastCut = cut;
         stage.dataset.cut = String(cut);
       }
+      // AI Artist: which reading is on screen (for the small label).
+      const aiState = ai < 0.1 ? 0 : ai < 0.36 ? 1 : ai < 0.62 ? 2 : 3;
+      if (aiState !== lastAi) {
+        lastAi = aiState;
+        stage.dataset.ai = String(aiState);
+      }
       stage.classList.toggle("is-cta", seg(P, 0.955, 0.985) > 0.5);
     };
 
@@ -325,10 +406,27 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
       target = clamp(-r.top / max);
     };
 
-    const tick = () => {
-      cur = Math.abs(target - cur) < 0.0005 ? target : cur + (target - cur) * 0.14;
+    // A critically damped spring with a speed limit: soft start, soft stop,
+    // heavy and slow for slow scrolling, and no sudden jump for a fast flick.
+    const OMEGA = 6.2;
+    const VMAX = 0.7; // fraction of the whole story per second
+    const tick = (t: number) => {
+      const dt = Math.min(0.05, last ? (t - last) / 1000 : 0.016);
+      last = t;
+      const x = cur - target;
+      vel += (-OMEGA * OMEGA * x - 2 * OMEGA * vel) * dt;
+      vel = clamp(vel, -VMAX, VMAX);
+      cur += vel * dt;
+      if (Math.abs(cur - target) < 0.0002 && Math.abs(vel) < 0.001) {
+        cur = target;
+        vel = 0;
+        apply(cur);
+        raf = 0;
+        last = 0;
+        return;
+      }
       apply(cur);
-      raf = cur !== target ? requestAnimationFrame(tick) : 0;
+      raf = requestAnimationFrame(tick);
     };
 
     const onScroll = () => {
@@ -355,11 +453,12 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
 
   return (
     <div className="yr-track" ref={trackRef}>
-      <div className="yr-stage" ref={stageRef} data-cut="0">
+      <div className="yr-stage" ref={stageRef} data-cut="0" data-ai="0">
         <div className="yr-bg" aria-hidden="true">
+          <div className="yr-nebula" />
           <div className="yr-stars">
             {stars.map((s, i) => (
-              <i key={i} style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.r, height: s.r, opacity: s.o, animationDelay: `${s.d}s` }} />
+              <i key={i} style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.s, height: s.s, opacity: s.o, animationDelay: `${s.d}s` }} />
             ))}
           </div>
           <svg className="yr-orbits" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice">
@@ -369,6 +468,20 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
               <ellipse cx="500" cy="300" rx="560" ry="110" />
             </g>
           </svg>
+          <i className="yr-shoot yr-shoot-1" />
+          <i className="yr-shoot yr-shoot-2" />
+          <i className="yr-shoot yr-shoot-3" />
+          <div className="yr-vignette" />
+        </div>
+
+        {/* Dust and particles in the same space as the scenes: the camera moves past them. */}
+        <div className="yr-field" aria-hidden="true">
+          {field.dust.map((d, i) => (
+            <i key={`d${i}`} className="yr-dust" style={{ width: d.s, height: d.s, opacity: d.o, transform: `translate3d(${d.x}px, ${d.y}px, ${d.z}px)` }} />
+          ))}
+          {field.close.map((d, i) => (
+            <i key={`c${i}`} className="yr-near" style={{ width: d.s, height: d.s, opacity: d.o, transform: `translate3d(${d.x}px, ${d.y}px, ${d.z}px)` }} />
+          ))}
         </div>
 
         <div className="yr-hero">
@@ -402,9 +515,7 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
         <div className="yr-caps">
           {scenes.map((s, i) => (
             <div key={s.title} className="yr-cap" style={vars({ "--ci": `var(--c${i})` })}>
-              <span className="yr-num">
-                {s.n} / 05
-              </span>
+              <span className="yr-num">{s.n} / 05</span>
               <h2>{s.title}</h2>
               <p>{s.text}</p>
             </div>
@@ -433,7 +544,7 @@ const OrbitPage = () => {
     document.title = "Hakkımda — Eray Ömeroğlu";
     // The home page keeps the body locked until its intro is over; this page scrolls freely.
     document.body.style.overflowY = "auto";
-    document.body.style.backgroundColor = "#0b0f17";
+    document.body.style.backgroundColor = "#080b11";
     window.scrollTo(0, 0);
   }, []);
 
@@ -453,7 +564,7 @@ const OrbitPage = () => {
   }, []);
 
   return (
-    <div className="yr" data-mode={reduced ? "still" : "live"}>
+    <div className="yr" data-mode={reduced ? "still" : "live"} style={vars({ "--poster": `url("${POSTER}")` })}>
       <header className="yr-top">
         <a className="yr-logo" href="/" aria-label="Eray Ömeroğlu, ana sayfa">
           EÖ

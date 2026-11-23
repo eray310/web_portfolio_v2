@@ -2,7 +2,8 @@ import { SplitText } from "gsap/SplitText";
 import gsap from "gsap";
 import { smoother } from "../Navbar";
 import { watchNameGradient } from "./nameGradient";
-import { scrollToSection, sectionScrollTop } from "./scrollToSection";
+import { scrollToSection, sectionGap } from "./scrollToSection";
+import { deepLinkHash, restoreDeepLink } from "../../utils/deepLink";
 
 export function initialFX() {
   document.body.style.overflowY = "auto";
@@ -74,40 +75,41 @@ export function initialFX() {
   // the position is checked a few times and corrected until it holds, without the
   // visitor having to touch the wheel. Any scroll, touch or key press by the
   // visitor ends this at once.
-  const hash = window.location.hash;
+  const hash = deepLinkHash || window.location.hash;
   if (hash.length > 1) {
     let done = false;
     let tries = 0;
-    let lastTop = -1;
+    let lastGap = Infinity;
     const events = ["wheel", "touchstart", "keydown", "mousedown"] as const;
     const finish = () => {
       done = true;
+      restoreDeepLink();
       events.forEach((e) => window.removeEventListener(e, finish));
     };
     events.forEach((e) => window.addEventListener(e, finish, { passive: true }));
     const aim = () => {
       if (done) return;
-      let want: number | null = null;
+      let gap: number | null = null;
       try {
-        want = sectionScrollTop(hash);
+        gap = sectionGap(hash);
       } catch {
         /* not a valid selector: stay at the top */
         return finish();
       }
-      if (want === null) {
+      if (gap === null) {
         // Not there yet (the scroller is still starting); try again shortly.
         if (tries++ < 12) window.setTimeout(aim, 500);
         else finish();
         return;
       }
-      const top = smoother.scrollTop();
-      const arrived = Math.abs(top - want) <= 6;
-      // Re-aim only when the page has come to rest away from the target, so a
+      const arrived = Math.abs(gap) <= 6;
+      // Re-aim only when the section has come to rest away from its place, so a
       // scroll that is still running is never restarted.
-      if (!arrived && Math.abs(top - lastTop) < 1) scrollToSection(hash);
-      lastTop = top;
+      if (!arrived && Math.abs(gap - lastGap) < 1) scrollToSection(hash);
+      lastGap = gap;
       if (arrived) {
-        // Hold for one more check in case the layout changes again, then stop.
+        restoreDeepLink();
+        // Hold for a few more checks in case the layout changes again, then stop.
         if (tries++ >= 6) return finish();
       } else if (tries++ >= 14) {
         return finish();

@@ -21,11 +21,17 @@ export function scrollToSection(selector: string) {
   smoother.scrollTo(selector, true, offset ? `top ${offset}px` : "top top");
 }
 
-/** Where the page has to be scrolled for a section to sit where scrollToSection puts it (null: not ready). */
-export function sectionScrollTop(selector: string): number | null {
+/**
+ * How far (px) a section still is from where scrollToSection puts it, measured on
+ * screen: positive when it is still below that line. Null when the page is not
+ * ready yet. At the very end of the page a section that cannot reach the line
+ * counts as arrived.
+ */
+export function sectionGap(selector: string): number | null {
   const smoother = ScrollSmoother.get();
-  if (!smoother || !document.querySelector(selector)) return null;
-  const offset = topOffset();
-  const want = smoother.offset(selector, offset ? `top ${offset}px` : "top top");
-  return Math.min(want, ScrollTrigger.maxScroll(window));
+  const el = document.querySelector(selector);
+  if (!smoother || !el) return null;
+  const gap = el.getBoundingClientRect().top - topOffset();
+  const atEnd = smoother.scrollTop() >= ScrollTrigger.maxScroll(window) - 6;
+  return atEnd && gap > 0 ? 0 : gap;
 }

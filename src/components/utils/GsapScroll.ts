@@ -79,6 +79,15 @@ export function clearCharTimeline() {
   flickerTimeline = undefined;
 }
 
+/** How far the About text may start above its resting place without reaching the first screen. */
+function aboutRise() {
+  const me = document.querySelector<HTMLElement>(".about-me");
+  const sec = document.querySelector<HTMLElement>(".about-section");
+  if (!me || !sec) return 0;
+  const room = (sec.offsetHeight - me.offsetHeight) / 2 - 12; // gap above the text inside its section
+  return Math.max(0, Math.min(me.offsetHeight * 0.5, room));
+}
+
 export function setCharTimeline(
   character: THREE.Object3D<THREE.Object3DEventMap> | null,
   camera: THREE.PerspectiveCamera
@@ -156,7 +165,11 @@ export function setCharTimeline(
         .fromTo(".character-model", { x: 0 }, { x: "-25%", duration: 1 }, 0)
         .to(".landing-container", { opacity: 0, duration: 0.4 }, 0)
         .to(".landing-container", { y: "40%", duration: 0.8 }, 0)
-        .fromTo(".about-me", { y: "-50%" }, { y: "0%" }, 0);
+        // The About text starts half a block higher and slides into place as the
+        // landing scrolls away. It must never start high enough to rise into the
+        // first screen (on a short window the section is only just taller than the
+        // text, so half a block up would put its heading behind the character).
+        .fromTo(".about-me", { y: () => -aboutRise() }, { y: 0 }, 0);
 
       tl2
         .to(

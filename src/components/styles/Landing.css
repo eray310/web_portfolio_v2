@@ -249,6 +249,19 @@
 }
 
 @media screen and (min-width: 1025px) {
+  /*
+   * The model layer is fixed above the page. It must not catch clicks, or it
+   * covers links in the sections it passes (e.g. the About link). Only the
+   * small hover circle over the face reacts to the mouse.
+   */
+  .character-model {
+    pointer-events: none;
+  }
+
+  .character-hover {
+    pointer-events: auto;
+  }
+
   .character-model {
     height: 100vh;
     bottom: 0;

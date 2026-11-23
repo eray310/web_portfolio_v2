@@ -13,6 +13,12 @@ const About = () => {
           içerikleri tasarlıyorum. After Effects ve Premiere Pro ile tasarımı
           hareketle buluşturuyorum.
         </p>
+        <a className="about-more" href="/hakkimda" data-cursor="disable">
+          <span className="about-more-text">İşin arkasındaki Eray’ı tanı</span>
+          <span className="about-more-arrow" aria-hidden="true">
+            →
+          </span>
+        </a>
       </div>
     </div>
   );

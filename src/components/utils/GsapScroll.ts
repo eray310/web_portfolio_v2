@@ -172,11 +172,17 @@ export function setCharTimeline(
         )
         .to(".about-section", { y: "30%", duration: 6 }, 0)
         .to(".about-section", { opacity: 0, delay: 3, duration: 2 }, 0)
+        // The fixed model layer never takes clicks (see Landing.css); only the small
+        // hover circle over the face does, until the section has scrolled away.
         .fromTo(
+          ".character-hover",
+          { pointerEvents: "auto" },
+          { pointerEvents: "none", delay: 2, duration: 0.01 },
+          0
+        )
+        .to(
           ".character-model",
-          { pointerEvents: "inherit" },
           {
-            pointerEvents: "none",
             x: () => getWhatIDoFit().x,
             delay: 2,
             duration: 5,

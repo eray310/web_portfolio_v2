@@ -15,10 +15,14 @@ type Filter = "all" | Category;
 
 /** Distance between neighbouring cards, as a share of the card width. */
 const STEP = 0.82;
-/** Mouse travel (in card steps per card width of travel) while hovering. */
-const SCRUB_GAIN = 1.5;
-/** The mouse has been still this long: the nearest card settles in. */
-const SETTLE_MS = 220;
+/** Wheel travel (in pixels) that counts as one deliberate step. */
+const WHEEL_STEP = 50;
+/** After a card change the wheel is ignored this long, so a fast spin cannot skip cards. */
+const WHEEL_LOCK_MS = 450;
+/** Wheel events closer together than this belong to one gesture (spin or trackpad swipe). */
+const WHEEL_GESTURE_GAP_MS = 180;
+/** Inside one gesture, another card needs at least this much travel in a single event. */
+const WHEEL_FRESH_DELTA = 60;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -39,15 +43,13 @@ const Work = () => {
   const [hot, setHot] = useState<number | null>(null); // card under the mouse
   const [previewKey, setPreviewKey] = useState<string | null>(null);
   const [previewOk] = useState(canPreview);
-  const [moving, setMoving] = useState(false); // mouse is sliding the gallery
   // Card transforms captured at the moment of a press, so nothing moves under the pointer.
   const [frozen, setFrozen] = useState<string[] | null>(null);
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const inView = useRef(false);
-  const hoverX = useRef<number | null>(null);
-  const settleTimer = useRef(0);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const posRef = useRef(0); // index - drag, kept current between renders
   const gesture = useRef({
     id: -1,
@@ -70,6 +72,10 @@ const Work = () => {
   const count = visible.length;
   posRef.current = index - drag;
   const current = visible[index];
+
+  // Latest values for the native wheel listener below.
+  const live = useRef({ index: 0, count: 0, panelOpen: false });
+  live.current = { index, count, panelOpen };
 
   const goTo = useCallback(
     (i: number) => setIndex(clamp(i, 0, Math.max(0, count - 1))),
@@ -116,6 +122,71 @@ const Work = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, [panelOpen, prev, next]);
 
+  // Mouse wheel over the gallery: down = next card, up = previous card. One card
+  // per step, whatever the spin speed. At either end the wheel goes to the page.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const w = {
+      lastT: -1e9, // time of the previous wheel event
+      lockUntil: 0, // no card change before this time
+      acc: 0, // travel gathered towards the next step
+      dir: 0,
+      owned: false, // this gesture belongs to the gallery
+      passThrough: false, // this gesture belongs to the page
+      fresh: true, // the next step needs no extra push
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.defaultPrevented) return; // pinch zoom etc.
+      if (Math.abs(e.deltaY) < Math.abs(e.deltaX) || e.deltaY === 0) return;
+      const { index: i, count: n, panelOpen: open } = live.current;
+      if (open || n < 2) return;
+
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1;
+      const dy = e.deltaY * unit;
+      const dir = dy > 0 ? 1 : -1;
+      const now = e.timeStamp;
+      const sameGesture = now - w.lastT < WHEEL_GESTURE_GAP_MS;
+      w.lastT = now;
+      if (!sameGesture) {
+        w.owned = false;
+        w.passThrough = false;
+        w.fresh = true;
+        w.acc = 0;
+      }
+      if (dir !== w.dir) {
+        w.acc = 0;
+        w.dir = dir;
+      }
+
+      // A gesture that started on the page keeps scrolling the page.
+      if (w.passThrough) return;
+
+      const canMove = dir > 0 ? i < n - 1 : i > 0;
+      if (!canMove) {
+        // At the end: the page scrolls, unless this very gesture was just moving the
+        // gallery (then its remaining spin is absorbed so the page does not lurch).
+        if (w.owned || now < w.lockUntil) e.preventDefault();
+        else w.passThrough = true;
+        return;
+      }
+
+      e.preventDefault();
+      w.owned = true;
+      if (now < w.lockUntil) return;
+      w.acc += dy;
+      if (Math.abs(w.acc) < WHEEL_STEP) return;
+      if (!w.fresh && Math.abs(dy) < WHEEL_FRESH_DELTA) return;
+      w.acc = 0;
+      w.fresh = false;
+      w.lockUntil = now + WHEEL_LOCK_MS;
+      setDrag(0);
+      setIndex(dir > 0 ? i + 1 : i - 1);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
   // ── Horizontal drag. Vertical moves are left to the browser (touch-action: pan-y).
   const stepPx = () => {
     const card = stageRef.current?.querySelector<HTMLElement>(".work-card");
@@ -126,8 +197,6 @@ const Work = () => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
     // Pressing stops any slide or settle at once: the cards stay exactly where
     // they are drawn, so the card that was pressed is the card that is clicked.
-    window.clearTimeout(settleTimer.current);
-    setMoving(false);
     const cards = stageRef.current?.querySelectorAll<HTMLElement>(".work-card");
     if (cards) setFrozen(Array.from(cards, (c) => getComputedStyle(c).transform));
     const g = gesture.current;
@@ -139,34 +208,9 @@ const Work = () => {
     g.moved = false;
   };
 
-  // Mouse over the gallery, no button pressed: moving right slides the cards
-  // right, moving left slides them left. It stops with the mouse, then the
-  // nearest card eases into the centre. A still mouse never moves anything.
-  const scrub = (e: React.PointerEvent) => {
-    const last = hoverX.current;
-    hoverX.current = e.clientX;
-    if (last === null) return;
-    const dx = e.clientX - last;
-    if (dx === 0) return;
-    const pos = clamp(posRef.current - (dx * SCRUB_GAIN) / stepPx(), 0, count - 1);
-    posRef.current = pos;
-    const nearest = Math.round(pos);
-    setIndex(nearest);
-    setDrag(nearest - pos);
-    setMoving(true);
-    window.clearTimeout(settleTimer.current);
-    settleTimer.current = window.setTimeout(() => {
-      setDrag(0);
-      setMoving(false);
-    }, SETTLE_MS);
-  };
-
   const onPointerMove = (e: React.PointerEvent) => {
     const g = gesture.current;
-    if (e.pointerType === "mouse" && e.buttons === 0 && g.id === -1) {
-      if (!panelOpen) scrub(e);
-      return;
-    }
+    // Moving the mouse over the gallery without pressing does nothing.
     if (e.pointerId !== g.id) return;
     const dx = e.clientX - g.startX;
     if (!g.moved) {
@@ -250,7 +294,7 @@ const Work = () => {
             ))}
           </div>
 
-          <div className="work-stage-wrap">
+          <div className="work-stage-wrap" ref={wrapRef}>
             {count === 0 ? (
               <p className="work-empty">Bu kategoride henüz proje yok.</p>
             ) : (
@@ -272,10 +316,7 @@ const Work = () => {
                     gesture.current.id = -1;
                     setFrozen(null);
                   }
-                  hoverX.current = null;
-                  window.clearTimeout(settleTimer.current);
-                  setDrag(0);
-                  setMoving(false);
+                  if (gesture.current.id === -1) setDrag(0);
                 }}
                 onPointerUp={(e) => endDrag(e, false)}
                 onPointerCancel={(e) => endDrag(e, true)}
@@ -291,7 +332,7 @@ const Work = () => {
                   const isActive = a < 0.5;
                   const poster = project.poster && fileUrl(project.poster);
                   const showPreview =
-                    previewOk && isActive && !dragging && !moving && previewKey === project.video;
+                    previewOk && isActive && !dragging && previewKey === project.video;
                   return (
                     <button
                       key={project.video}

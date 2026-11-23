@@ -2,7 +2,7 @@ import { SplitText } from "gsap/SplitText";
 import gsap from "gsap";
 import { smoother } from "../Navbar";
 import { watchNameGradient } from "./nameGradient";
-import { scrollToSection } from "./scrollToSection";
+import { scrollToSection, sectionScrollTop } from "./scrollToSection";
 
 export function initialFX() {
   document.body.style.overflowY = "auto";
@@ -68,15 +68,60 @@ export function initialFX() {
   );
 
   // A link such as /#work or /#contact (for example from the About page): once the
-  // intro is over and the smooth scroller is running, go to that section.
+  // intro is over and the smooth scroller is running, go to that section. The page
+  // can still grow while the 3D scene finishes setting up (its pinned scroll
+  // sections add height), which would leave the first jump short of the target, so
+  // the position is checked a few times and corrected until it holds, without the
+  // visitor having to touch the wheel. Any scroll, touch or key press by the
+  // visitor ends this at once.
   const hash = window.location.hash;
   if (hash.length > 1) {
+    let done = false;
+    let tries = 0;
+    let lastTop = -1;
+    const events = ["wheel", "touchstart", "keydown", "mousedown"] as const;
+    const finish = () => {
+      done = true;
+      events.forEach((e) => window.removeEventListener(e, finish));
+    };
+    events.forEach((e) => window.addEventListener(e, finish, { passive: true }));
+    const aim = () => {
+      if (done) return;
+      let want: number | null = null;
+      try {
+        want = sectionScrollTop(hash);
+      } catch {
+        /* not a valid selector: stay at the top */
+        return finish();
+      }
+      if (want === null) {
+        // Not there yet (the scroller is still starting); try again shortly.
+        if (tries++ < 12) window.setTimeout(aim, 500);
+        else finish();
+        return;
+      }
+      const top = smoother.scrollTop();
+      const arrived = Math.abs(top - want) <= 6;
+      // Re-aim only when the page has come to rest away from the target, so a
+      // scroll that is still running is never restarted.
+      if (!arrived && Math.abs(top - lastTop) < 1) scrollToSection(hash);
+      lastTop = top;
+      if (arrived) {
+        // Hold for one more check in case the layout changes again, then stop.
+        if (tries++ >= 6) return finish();
+      } else if (tries++ >= 14) {
+        return finish();
+      }
+      window.setTimeout(aim, 700);
+    };
     window.setTimeout(() => {
+      if (done) return;
       try {
         if (document.querySelector(hash)) scrollToSection(hash);
       } catch {
-        /* not a valid selector: stay at the top */
+        return finish();
       }
+      window.setTimeout(aim, 900);
     }, 1400);
   }
 }

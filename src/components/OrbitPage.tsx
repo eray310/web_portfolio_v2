@@ -78,10 +78,16 @@ const rng = (seed: number) => {
 
 const useIsPhone = () => useMemo(() => typeof window !== "undefined" && window.innerWidth < 768, []);
 
-/** Far stars: very few, tiny, almost still. */
-const makeStars = (n: number) => {
+/** Far stars: many, tiny and dim, almost still. */
+const makeFarStars = (n: number) => {
   const r = rng(7);
-  return Array.from({ length: n }, () => ({ x: r() * 100, y: r() * 100, s: 1 + r() * 1.2, d: r() * 6, o: 0.2 + r() * 0.4 }));
+  return Array.from({ length: n }, () => ({ x: r() * 100, y: r() * 100, s: 0.8 + r() * 0.9, d: r() * 8, o: 0.12 + r() * 0.3 }));
+};
+
+/** Mid layer: star dust that drifts slowly and moves a little with the scroll. */
+const makeMidStars = (n: number) => {
+  const r = rng(19);
+  return Array.from({ length: n }, () => ({ x: r() * 100, y: r() * 100, s: 1.4 + r() * 1.6, d: r() * 10, o: 0.22 + r() * 0.3 }));
 };
 
 /** Dust and particles live in the same 3D space as the scenes, so the camera passes them. */
@@ -284,7 +290,8 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const phone = useIsPhone();
-  const stars = useMemo(() => makeStars(phone ? 14 : 26), [phone]);
+  const farStars = useMemo(() => makeFarStars(phone ? 56 : 130), [phone]);
+  const midStars = useMemo(() => makeMidStars(phone ? 16 : 40), [phone]);
   const field = useMemo(() => (phone ? makeField(12, 3) : makeField(30, 9)), [phone]);
 
   useEffect(() => {
@@ -320,9 +327,16 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
       set("--shy", `${mobile ? -Math.round(h * 0.04) : 0}px`);
     };
 
-    // Content is faint and soft far away, sharp and solid when it arrives.
+    // Content is faint and soft far away, sharp and solid when it arrives. A scene
+    // is never fully gone in the distance: a dim, soft ghost of it hangs there, so the
+    // next scene is seen ahead and nothing pops in from an empty frame.
+    const GHOST = phone ? 0.28 : 0.5;
     const arrive = (z: number) => seg(z, -1300, -500);
-    const leave = (z: number) => 1 - seg(z, 650, 960);
+    const ghost = (z: number) => GHOST * seg(z, -3600, -2800);
+    const shown = (z: number) => Math.max(ghost(z), arrive(z));
+    const leave = (z: number) => 1 - seg(z, 560, 960);
+    // How far a scene has swung aside after the camera has passed it.
+    const passed = (z: number) => ease(seg(z, 120, 900));
 
     const apply = (P: number) => {
       const app = ease(seg(P, W.approach[0], W.approach[1]));
@@ -365,15 +379,29 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
       const zA = cam - camA0;
       const zK = cam - CAM_STEP - camA0;
       const zI = cam - 2 * CAM_STEP - camA0;
-      const content = (z: number) => lerp(arrive(z) * leave(z), 1, finGate) * fade;
+      const content = (z: number) => lerp(shown(z) * leave(z), 1, finGate) * fade;
       set("--oA", content(zA).toFixed(3));
       set("--oK", content(zK).toFixed(3));
       set("--oI", content(zI).toFixed(3));
-      const soft = (z: number) => (blurOn && finGate < 0.5 ? Math.max(0, (1 - arrive(z)) * 9) : 0);
+      const soft = (z: number) => (blurOn && finGate < 0.5 ? Math.max(0, (1 - arrive(z)) * 6) : 0);
       const bk = soft(zK);
       const bi = soft(zI);
       set("--fK", bk > 0.2 ? `blur(${bk.toFixed(1)}px)` : "none");
       set("--fI", bi > 0.2 ? `blur(${bi.toFixed(1)}px)` : "none");
+      // Each scene waits off to one side and glides to the middle as the camera comes
+      // up to it; once passed it swings aside again, turned a little, instead of just
+      // dissolving in place. Phones get a smaller sweep.
+      const sw = (phone ? 0.3 : 1) * (1 - finGate);
+      const glide = (z: number) => (1 - arrive(z)) * sw;
+      const away = (z: number) => passed(z) * sw;
+      const side = (name: string, dx: number, dy: number, ry: number) => {
+        set("--dx" + name, dx.toFixed(1) + "px");
+        set("--dy" + name, dy.toFixed(1) + "px");
+        set("--ry" + name, ry.toFixed(2) + "deg");
+      };
+      side("A", -away(zA) * 520, -away(zA) * 150, -away(zA) * 16);
+      side("K", glide(zK) * 760 - away(zK) * 520, glide(zK) * 330 - away(zK) * 150, -glide(zK) * 14 - away(zK) * 16);
+      side("I", glide(zI) * 1000, -glide(zI) * 420, -glide(zI) * 16);
       set("--dot", seg(fin, 0.35, 0.85).toFixed(3));
       set("--hero", (1 - seg(P, 0.04, 0.13)).toFixed(3));
       set("--cta", seg(P, 0.955, 0.985).toFixed(3));
@@ -409,7 +437,7 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
     // A critically damped spring with a speed limit: soft start, soft stop,
     // heavy and slow for slow scrolling, and no sudden jump for a fast flick.
     const OMEGA = 6.2;
-    const VMAX = 0.7; // fraction of the whole story per second
+    const VMAX = 0.4; // fraction of the whole story per second (a flick takes about 2.5 s end to end)
     const tick = (t: number) => {
       const dt = Math.min(0.05, last ? (t - last) / 1000 : 0.016);
       last = t;
@@ -449,17 +477,24 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
       window.removeEventListener("resize", onResize);
       cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [phone]);
 
   return (
     <div className="yr-track" ref={trackRef}>
       <div className="yr-stage" ref={stageRef} data-cut="0" data-ai="0">
         <div className="yr-bg" aria-hidden="true">
           <div className="yr-nebula" />
-          <div className="yr-stars">
-            {stars.map((s, i) => (
+          <div className="yr-stars yr-far">
+            {farStars.map((s, i) => (
               <i key={i} style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.s, height: s.s, opacity: s.o, animationDelay: `${s.d}s` }} />
             ))}
+          </div>
+          <div className="yr-stars yr-mid">
+            <div className="yr-drift">
+              {midStars.map((s, i) => (
+                <i key={i} style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.s, height: s.s, opacity: s.o, animationDelay: `${s.d}s` }} />
+              ))}
+            </div>
           </div>
           <svg className="yr-orbits" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice">
             <g>
@@ -471,6 +506,8 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
           <i className="yr-shoot yr-shoot-1" />
           <i className="yr-shoot yr-shoot-2" />
           <i className="yr-shoot yr-shoot-3" />
+          <i className="yr-shoot yr-shoot-4" />
+          <i className="yr-shoot yr-shoot-5" />
           <div className="yr-vignette" />
         </div>
 
@@ -493,7 +530,6 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
               <span className="yr-line-in yr-grad">Ömeroğlu.</span>
             </span>
           </h1>
-          <span className="yr-rule" aria-hidden="true" />
           <p>Markalar için hareketli grafikler, kurgu ve görsel anlatılar üretiyorum.</p>
         </div>
 

@@ -69,7 +69,8 @@ html {
 }
 
 .ai a:focus-visible,
-.ai button:focus-visible {
+.ai button:focus-visible,
+.ai summary:focus-visible {
   outline: 2px solid var(--accentColor);
   outline-offset: 3px;
   border-radius: 6px;
@@ -77,6 +78,18 @@ html {
 
 main:focus {
   outline: none;
+}
+
+.ai-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ── Intro ── */
@@ -112,107 +125,221 @@ main:focus {
 }
 
 .ai-lead {
-  max-width: 620px;
+  max-width: 640px;
   margin: 22px 0 0;
   font-size: clamp(17px, 1.6vw, 21px);
   line-height: 1.55;
-  color: rgba(234, 229, 236, 0.85);
+  color: rgba(234, 229, 236, 0.88);
   text-wrap: pretty;
 }
 
-/* ── Cards ── */
-.ai-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(16px, 2vw, 28px);
-  width: min(1240px, calc(100% - 40px));
-  margin: 0 auto;
-  padding: 0 0 clamp(48px, 9vh, 110px);
+/* Links to the three areas below */
+.ai-jump ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 30px 0 0;
+  padding: 0;
   list-style: none;
 }
 
-.ai-card {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 20px;
-  transition: border-color 0.25s ease, transform 0.25s ease;
-}
-
-.ai-card:hover,
-.ai-card:focus-within {
-  border-color: rgba(94, 234, 212, 0.55);
-  transform: translateY(-3px);
-}
-
-.ai-media {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  background: #05070c;
-}
-
-.ai-media img,
-.ai-media video {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* Until real pictures or videos are added: a quiet panel, not a broken image. */
-.ai-media-empty {
-  display: flex;
+.ai-jump a {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  background:
-    linear-gradient(rgba(94, 234, 212, 0.05) 1px, transparent 1px) 0 0 / 100% 32px,
-    linear-gradient(90deg, rgba(94, 234, 212, 0.05) 1px, transparent 1px) 0 0 / 32px 100%,
-    radial-gradient(80% 90% at 50% 40%, rgba(13, 148, 136, 0.28), transparent 70%),
-    #060a11;
-}
-
-.ai-media-empty span {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  font-size: 34px;
-  color: var(--accentColor);
+  min-height: 44px;
+  padding: 0 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #eae5ec;
   border: 1px solid rgba(94, 234, 212, 0.45);
-  border-radius: 20px;
-  background: rgba(8, 11, 17, 0.55);
-  box-shadow: 0 0 40px rgba(94, 234, 212, 0.18);
+  border-radius: 999px;
+  background: rgba(94, 234, 212, 0.06);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.ai-card-body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 22px 22px 24px;
+.ai-jump a:hover {
+  color: #ffffff;
+  border-color: var(--accentColor);
+  background: rgba(94, 234, 212, 0.14);
 }
 
-.ai-card-body h2 {
-  margin: 0 0 10px;
-  font-size: clamp(22px, 2vw, 28px);
+/* ── One wide section per area ── */
+.ai-sec {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: center;
+  width: min(1240px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: clamp(44px, 9vh, 96px) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  scroll-margin-top: 8px;
+}
+
+.ai-sec-flip .ai-sec-text {
+  order: 2;
+}
+
+.ai-sec-kicker {
+  margin: 0 0 12px;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(234, 229, 236, 0.85);
+}
+
+.ai-sec-kicker span {
+  margin-right: 8px;
+  color: var(--accentColor);
   font-weight: 600;
-  line-height: 1.2;
+}
+
+.ai-sec h2 {
+  margin: 0 0 16px;
+  font-size: clamp(32px, 4.2vw, 54px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
   color: #ffffff;
 }
 
-.ai-card-body p {
-  flex: 1;
-  margin: 0 0 22px;
-  font-size: 16px;
-  line-height: 1.55;
-  color: rgba(234, 229, 236, 0.82);
+.ai-sec-sum {
+  margin: 0 0 26px;
+  max-width: 560px;
+  font-size: clamp(17px, 1.5vw, 20px);
+  line-height: 1.6;
+  color: rgba(234, 229, 236, 0.9);
   text-wrap: pretty;
+}
+
+.ai-h3 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accentColor);
+}
+
+.ai-outputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 26px;
+  padding: 0;
+  list-style: none;
+}
+
+.ai-outputs li {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 16px;
+  font-size: 16px;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ai-outputs li::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accentColor);
+}
+
+/* Stages: numbered rows */
+.ai-stages {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+  counter-reset: stage;
+}
+
+.ai-stages li {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 2px 0 2px 46px;
+  counter-increment: stage;
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(234, 229, 236, 0.88);
+}
+
+.ai-stages li::before {
+  content: counter(stage);
+  position: absolute;
+  left: 0;
+  top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0a0e17;
+  background: var(--accentColor);
+  border-radius: 50%;
+}
+
+.ai-stages strong {
+  font-size: 17px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* Folded box with the fuller scope */
+.ai-details {
+  margin: 0 0 28px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ai-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 18px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ai-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.ai-details summary::after {
+  content: "+";
+  font-size: 22px;
+  line-height: 1;
+  color: var(--accentColor);
+}
+
+.ai-details[open] summary::after {
+  content: "−";
+}
+
+.ai-details ul {
+  margin: 0;
+  padding: 2px 18px 18px 38px;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: rgba(234, 229, 236, 0.88);
+}
+
+.ai-details li {
+  margin-bottom: 8px;
 }
 
 .ai-cta {
@@ -220,7 +347,7 @@ main:focus {
   align-items: center;
   gap: 8px;
   min-height: 48px;
-  padding: 0 24px;
+  padding: 0 26px;
   font: inherit;
   font-size: 16px;
   font-weight: 600;
@@ -238,6 +365,309 @@ main:focus {
 
 .ai-cta svg {
   font-size: 20px;
+}
+
+.ai-cta-big {
+  min-height: 56px;
+  padding: 0 34px;
+  font-size: 18px;
+}
+
+/* ── Media ── */
+.ai-sec-media {
+  min-width: 0;
+}
+
+.ai-media-note {
+  margin: 14px 0 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  text-align: center;
+  color: rgba(234, 229, 236, 0.82);
+}
+
+.ai-sec figure {
+  margin: 0;
+}
+
+.ai-sec figcaption {
+  margin-top: 10px;
+  font-size: 14.5px;
+  text-align: center;
+  color: rgba(234, 229, 236, 0.82);
+}
+
+/* Screenshots: a browser frame with a phone frame overlapping its corner */
+.ai-devices {
+  position: relative;
+  padding-bottom: 14%;
+}
+
+.ai-frame {
+  overflow: hidden;
+  background: #05070c;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), 0 0 60px rgba(94, 234, 212, 0.08);
+}
+
+.ai-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ai-browser {
+  display: flex;
+  gap: 6px;
+  padding: 9px 12px;
+  background: #0f141d;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ai-browser i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.ai-shot-phone {
+  position: absolute;
+  right: -1%;
+  bottom: 0;
+  width: 27%;
+}
+
+.ai-shot-phone .ai-frame {
+  border: 5px solid #121823;
+  border-radius: 22px;
+}
+
+.ai-shot-phone figcaption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+/* A single phone shot on its own */
+.ai-devices:not(:has(.ai-shot-desktop)) {
+  padding-bottom: 0;
+}
+
+.ai-devices:not(:has(.ai-shot-desktop)) .ai-shot-phone {
+  position: static;
+  width: min(280px, 70%);
+  margin: 0 auto;
+}
+
+.ai-devices:not(:has(.ai-shot-phone)) {
+  padding-bottom: 0;
+}
+
+/* Video cover */
+.ai-video {
+  width: min(340px, 78%);
+  margin: 0 auto;
+}
+
+.ai-video-box {
+  position: relative;
+  overflow: hidden;
+  background: #05070c;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), 0 0 60px rgba(94, 234, 212, 0.08);
+}
+
+.ai-video-box video,
+.ai-video-play,
+.ai-video-play img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ai-video-play {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ai-video-play::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(5, 8, 15, 0.55), rgba(5, 8, 15, 0) 55%);
+}
+
+.ai-play-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  font-size: 44px;
+  color: #0a0e17;
+  background: var(--accentColor);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 10px rgba(94, 234, 212, 0.2);
+  transition: transform 0.25s ease;
+}
+
+.ai-video-play:hover .ai-play-icon {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+/* Drawn concept (not a real app) */
+.ai-concept {
+  width: min(270px, 70%);
+  margin: 0 auto;
+}
+
+.ai-phone-sketch {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 44px 16px 14px;
+  background:
+    radial-gradient(90% 40% at 50% 0%, rgba(13, 148, 136, 0.25), transparent 70%),
+    #060a11;
+  border: 5px solid #121823;
+  border-radius: 34px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+}
+
+.ai-badge {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  padding: 4px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0a0e17;
+  background: var(--accentColor);
+  border-radius: 999px;
+  transform: translateX(-50%);
+}
+
+.ai-phone-sketch .sk-bar,
+.ai-phone-sketch .sk-card,
+.ai-phone-sketch .sk-line {
+  border: 1px solid rgba(94, 234, 212, 0.35);
+  border-radius: 10px;
+  background: rgba(94, 234, 212, 0.06);
+}
+
+.sk-bar {
+  height: 14%;
+}
+
+.sk-wide {
+  height: 28%;
+}
+
+.sk-row {
+  display: flex;
+  gap: 12px;
+  height: 18%;
+}
+
+.sk-row .sk-card {
+  flex: 1;
+}
+
+.sk-line {
+  height: 9px;
+}
+
+.sk-short {
+  width: 60%;
+}
+
+.sk-tabs {
+  display: flex;
+  justify-content: space-around;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sk-tabs i {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: rgba(94, 234, 212, 0.35);
+}
+
+/* ── Working together ── */
+.ai-flow {
+  width: min(1240px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: clamp(44px, 9vh, 96px) 0 clamp(56px, 11vh, 130px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ai-flow h2 {
+  margin: 0 0 28px;
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.ai-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(14px, 2vw, 24px);
+  margin: 0 0 34px;
+  padding: 0;
+  list-style: none;
+}
+
+.ai-steps li {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px;
+  font-size: 16px;
+  line-height: 1.55;
+  color: rgba(234, 229, 236, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+}
+
+.ai-steps strong {
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.ai-step-n {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  font-weight: 600;
+  color: #0a0e17;
+  background: var(--accentColor);
+  border-radius: 50%;
 }
 
 /* ── Footer ── */
@@ -258,17 +688,49 @@ main:focus {
   color: var(--accentColor);
 }
 
+/* ── Sections rise into place (switched on by the page script only when motion is welcome) ── */
+.ai[data-motion="on"] .ai-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.ai[data-motion="on"] .ai-reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
 /* ── Narrower screens ── */
 @media only screen and (max-width: 1000px) {
-  .ai-grid {
+  .ai-sec {
     grid-template-columns: minmax(0, 1fr);
-    max-width: 560px;
+    gap: 32px;
+  }
+
+  .ai-sec-flip .ai-sec-text {
+    order: 0;
+  }
+
+  .ai-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ai-sec-media {
+    max-width: 640px;
   }
 }
 
 @media only screen and (max-width: 560px) {
+  /* Logo on its own line, the four links in one row below it. */
   .ai-top {
+    flex-direction: column;
     align-items: flex-start;
+    gap: 0;
+  }
+
+  .ai-top nav ul {
+    justify-content: flex-start;
+    margin-left: -8px;
   }
 
   .ai-top nav a {
@@ -277,24 +739,24 @@ main:focus {
     letter-spacing: 0.04em;
   }
 
-  .ai-card-body {
-    padding: 18px 18px 20px;
-  }
-
   .ai-cta {
     width: 100%;
     justify-content: center;
   }
+
+  .ai-outputs li {
+    font-size: 15px;
+  }
+
+  .ai-shot-phone {
+    width: 30%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ai-card,
-  .ai-cta {
+  .ai-cta,
+  .ai-jump a,
+  .ai-play-icon {
     transition: none;
-  }
-
-  .ai-card:hover,
-  .ai-card:focus-within {
-    transform: none;
   }
 }

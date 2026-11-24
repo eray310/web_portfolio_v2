@@ -38,7 +38,7 @@ const Brands = () => {
               key={`${copy}-${i}`}
               className={`brands-item${copy > 0 ? " brands-repeat" : ""}${
                 brand ? "" : " brands-placeholder"
-              }`}
+              }${brand?.wide ? " brands-item--wide" : ""}`}
             >
               {brand ? (
                 <button

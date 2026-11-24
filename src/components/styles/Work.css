@@ -591,3 +591,40 @@
 .video-modal-close:focus-visible {
   background: rgba(255, 255, 255, 0.25);
 }
+
+/* "Projeyi keşfet" next to the arrows; the panel row for the other interactions. */
+.work-explore,
+.project-panel-play-with button {
+  min-height: 44px;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accentColor);
+  background: transparent;
+  border: 1px solid var(--accentColor);
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+.work-explore {
+  margin-left: 12px;
+}
+
+.work-explore:hover,
+.project-panel-play-with button:hover {
+  background: rgba(94, 234, 212, 0.14);
+}
+
+.work-explore:focus-visible,
+.project-panel-play-with button:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 3px;
+}
+
+.project-panel-play-with {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 18px;
+}

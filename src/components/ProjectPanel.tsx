@@ -1,8 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MdClose, MdPlayArrow, MdArrowBack, MdArrowForward } from "react-icons/md";
 import { fileUrl, type Project } from "../data/projects";
+import { projectInteractions } from "../data/interactive";
+import type { CreativeRequest } from "./creative/CreativeHost";
 import { lockScroll, unlockScroll } from "./utils/scrollLock";
+
+// Loaded only when a visitor opens an interaction.
+const CreativeHost = lazy(() => import("./creative/CreativeHost"));
 
 interface Props {
   project: Project;
@@ -31,6 +36,9 @@ const ProjectPanel = ({
   const [ratio, setRatio] = useState(9 / 16);
   // True while the browser has not let the video start by itself.
   const [needsPlay, setNeedsPlay] = useState(false);
+  const [creative, setCreative] = useState<CreativeRequest | null>(null);
+  const closeCreative = useCallback(() => setCreative(null), []);
+  const extra = projectInteractions[project.title];
 
   useEffect(() => {
     lockScroll();
@@ -39,7 +47,25 @@ const ProjectPanel = ({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab" || !sheet.current) return;
+      // Keep Tab inside the panel.
+      const items = Array.from(
+        sheet.current.querySelectorAll<HTMLElement>('button, [href], video[controls], [tabindex]:not([tabindex="-1"])')
+      ).filter((el) => !el.hasAttribute("disabled"));
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -136,6 +162,26 @@ const ProjectPanel = ({
             </section>
           )}
 
+          {extra && (
+            <div className="project-panel-play-with">
+              {extra.layers && (
+                <button type="button" onClick={() => setCreative({ kind: "layers", spec: extra.layers! })} data-cursor="disable">
+                  Kareyi aç
+                </button>
+              )}
+              {extra.cut && (
+                <button type="button" onClick={() => setCreative({ kind: "cut", spec: extra.cut! })} data-cursor="disable">
+                  Kesme noktasını sen seç
+                </button>
+              )}
+              {extra.gravity && (
+                <button type="button" onClick={() => setCreative({ kind: "gravity", spec: extra.gravity! })} data-cursor="disable">
+                  Projeyi keşfet
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="project-panel-actions">
             <button
               type="button"
@@ -157,6 +203,11 @@ const ProjectPanel = ({
           </div>
         </div>
       </div>
+      {creative && (
+        <Suspense fallback={null}>
+          <CreativeHost request={creative} onClose={closeCreative} />
+        </Suspense>
+      )}
     </div>,
     document.body
   );

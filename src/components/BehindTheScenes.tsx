@@ -96,8 +96,10 @@ const BehindTheScenes = () => {
     </div>
   );
 
-  const renderImageLayer = (i: number, path: string) => (
-    <div className={layerClass(i)} key={path} style={{ ["--bg" as string]: `url("${url(path)}")` }}>
+  const renderImageLayer = (i: number, path: string) =>
+    // A step without a picture is not drawn at all on the published site (no request).
+    !dev && isMissing(path) ? null : (
+    <div className={layerClass(i)} key={path || `empty-${i}`} style={{ ["--bg" as string]: path ? `url("${url(path)}")` : "none" }}>
       {isMissing(path) ? (
         placeholder(path)
       ) : (

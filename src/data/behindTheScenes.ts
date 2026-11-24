@@ -45,13 +45,15 @@ export const behindTheScenes: BehindTheScenes = {
       id: "fikir",
       title: "Fikir",
       note: "Reklamın ana mesajını ve sahne akışını netleştirdim.",
-      image: "process/allesta/fikir.jpg",
+      // No source picture exists in the project yet. Empty = the step is left out (no request,
+      // no broken image). Add the file and set e.g. "process/allesta/fikir.jpg" to show it.
+      image: "",
     },
     {
       id: "gorsel",
       title: "Görsel Üretim",
       note: "Yapay zekâ destekli görselleri reklamın akışına göre bir araya getirdim.",
-      image: "process/allesta/gorsel-uretim.jpg",
+      image: "", // same: add "process/allesta/gorsel-uretim.jpg" when the picture is ready
     },
     {
       id: "kurgu",

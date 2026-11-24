@@ -25,6 +25,8 @@ export type Brand = {
   name: string;
   /** Path of the logo inside `public/`, e.g. "brands/dbh-group.png". */
   logo: string;
+  /** A very wide, thin script logo: it gets more of the plate so it carries the same weight. */
+  wide?: boolean;
 };
 
 export const brands: Brand[] = [
@@ -39,4 +41,5 @@ export const brands: Brand[] = [
   { name: "Genç MÜSİAD", logo: "brands/white/gencmusiad.png" },
   { name: "Yiğit Group", logo: "brands/white/yigitgroup.png" },
   { name: "Voop", logo: "brands/white/voop.png" },
+  { name: "Blackbörk", logo: "brands/white/blackbork.png", wide: true },
 ];

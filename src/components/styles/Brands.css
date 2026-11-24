@@ -57,6 +57,12 @@
   margin-right: var(--brandsGap);
 }
 
+/* Wide script logo: use the full plate width so its thin strokes keep their weight. */
+.brands-item.brands-item--wide {
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
 .brands-item img {
   display: block;
   max-width: 100%;

@@ -33,23 +33,37 @@ export type BrandVideo = {
   ratio?: number;
 };
 
+/**
+ * Own list, separate from the "Seçili İşler" gallery data (src/data/projects.ts): a change
+ * there does not touch this window and the other way round.
+ *
+ * Each entry below is a video made for that brand (the work descriptions in the gallery
+ * name the brand: "Allvex için", "Allesta için", "Voop için"). It points at the same files
+ * on disk, nothing is copied. A brand with no entry shows the empty state.
+ */
 export const brandVideos: Record<string, BrandVideo[]> = {
-  // Demo entries that reuse files already in public/portfolio, so the window
-  // can be tried. Replace or delete them when the real videos are ready.
   Allvex: [
     {
-      title: "Allvex Reels",
+      title: "Allvex | Sosyal Medya Videosu",
       poster: "portfolio/Allvex_Reels4.jpg",
       preview: "portfolio/previews/Allvex_Reels4.mp4",
-      video: "portfolio/Allvex_Reels4.mp4",
+      video: "portfolio/web/Allvex_Reels4.mp4",
     },
   ],
   Allesta: [
     {
-      title: "Allesta YZ Reklam",
+      title: "Allesta | Yapay Zekâ Destekli Reklam",
       poster: "portfolio/Allesta_YZReklam.jpg",
       preview: "portfolio/previews/Allesta_YZReklam.mp4",
-      video: "portfolio/Allesta_YZReklam.mp4",
+      video: "portfolio/web/Allesta_YZReklam.mp4",
+    },
+  ],
+  Voop: [
+    {
+      title: "Voop — Karikatür",
+      poster: "portfolio/voop-karikatur.jpg",
+      preview: "portfolio/previews/voop-karikatur.mp4",
+      video: "portfolio/VoopKarikatür.mp4",
     },
   ],
 };

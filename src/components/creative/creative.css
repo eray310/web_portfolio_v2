@@ -1,0 +1,320 @@
+/* Interactions opened on request: "Kareyi aç", "Kesme noktasını sen seç", "Projeyi keşfet". */
+
+.cx-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(4, 6, 10, 0.82);
+}
+
+.cx-dialog {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: calc(100svh - 32px);
+  overflow-y: auto;
+  padding: 22px 22px 20px;
+  border: 1px solid rgba(94, 234, 212, 0.35);
+  border-radius: 16px;
+  background: #0b0f17;
+  color: #eae5ec;
+  font-family: "Geist", sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.cx-title {
+  margin: 0 40px 14px 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.cx-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.cx-dialog button:focus-visible,
+.cx-dialog input:focus-visible,
+.cx-dialog [tabindex]:focus-visible {
+  outline: 2px solid #5eead4;
+  outline-offset: 3px;
+}
+
+.cx-btn {
+  min-height: 44px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5eead4;
+  background: transparent;
+  border: 1px solid #5eead4;
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+.cx-btn:hover {
+  background: rgba(94, 234, 212, 0.14);
+}
+
+.cx-note {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(234, 229, 236, 0.62);
+}
+
+.cx-slider {
+  display: block;
+  margin: 16px 0 10px;
+  font-size: 13px;
+  letter-spacing: 0.4px;
+  color: rgba(234, 229, 236, 0.8);
+}
+
+.cx-slider input[type="range"] {
+  display: block;
+  width: 100%;
+  height: 44px;
+  margin: 6px 0 0;
+  accent-color: #5eead4;
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+/* ── Kareyi aç ── */
+.lp-stage {
+  position: relative;
+  width: min(260px, 62%);
+  aspect-ratio: 9 / 16;
+  margin: 0 auto;
+  perspective: 900px;
+  transform-style: preserve-3d;
+  transform: rotateX(calc(var(--o) * 16deg)) rotateY(calc(var(--o) * -24deg));
+}
+
+.lp-layer {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.lp-l1 {
+  transform: translateZ(0);
+}
+.lp-l1 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  filter: saturate(calc(1 - var(--o) * 0.45)) brightness(calc(1 - var(--o) * 0.25));
+}
+
+.lp-l2 {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  opacity: calc(var(--o) * 0.85);
+  transform: translateZ(calc(var(--o) * 70px)) translateX(calc(var(--o) * 26px));
+}
+.lp-l2 i {
+  flex: 1;
+}
+
+.lp-l3 {
+  transform: translateZ(calc(var(--o) * 150px)) translateX(calc(var(--o) * -22px));
+}
+
+.lp-type {
+  position: absolute;
+  border: 1px solid #5eead4;
+  box-shadow: 0 0 calc(var(--o) * 30px) rgba(94, 234, 212, 0.55);
+  background-repeat: no-repeat;
+}
+
+.lp-tag {
+  position: absolute;
+  left: -4px;
+  bottom: calc(100% + 4px);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #5eead4;
+  white-space: nowrap;
+  opacity: clamp(0, calc(var(--o) * 3 - 0.3), 1);
+}
+.lp-l1 .lp-tag {
+  top: 4px;
+  bottom: auto;
+  left: calc(100% + 10px);
+}
+.lp-l2 .lp-tag {
+  left: calc(100% + 10px);
+  bottom: auto;
+  top: 40%;
+}
+.lp-l3 .lp-tag {
+  left: calc(100% + 10px);
+  bottom: auto;
+  top: 70%;
+}
+
+.lp-stage.settling .lp-l2,
+.lp-stage.settling .lp-l3,
+.lp-stage.settling {
+  transition: transform 0.15s cubic-bezier(0.3, 1.5, 0.4, 1);
+}
+
+/* ── Kesme noktasını sen seç ── */
+.cp-row {
+  display: flex;
+  gap: 12px;
+}
+
+.cp-row figure {
+  flex: 1;
+  margin: 0;
+}
+
+.cp-row video,
+.cp-monitor video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #05070c;
+}
+
+.cp-row video {
+  max-height: 34svh;
+  aspect-ratio: auto;
+}
+
+.cp-row figcaption {
+  margin-top: 6px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: rgba(234, 229, 236, 0.7);
+}
+
+.cp-monitor {
+  position: relative;
+  width: min(180px, 46%);
+  margin: 14px auto 0;
+}
+
+.cp-monitor.is-near video {
+  outline: 2px solid #5eead4;
+  outline-offset: 2px;
+}
+
+.cp-time,
+.cp-flag {
+  position: absolute;
+  left: 8px;
+  padding: 2px 8px;
+  font-size: 12px;
+  border-radius: 20px;
+  background: rgba(5, 7, 12, 0.75);
+}
+.cp-time {
+  top: 8px;
+  color: #fff;
+}
+.cp-flag {
+  bottom: 8px;
+  color: #5eead4;
+}
+
+.cp-track {
+  position: relative;
+}
+
+.cp-mark {
+  position: absolute;
+  top: 4px;
+  width: 2px;
+  height: 10px;
+  background: #5eead4;
+  pointer-events: none;
+}
+
+.cp-jumps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── Projeyi keşfet ── */
+.gv-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 12px;
+  background: radial-gradient(circle at 50% 50%, rgba(94, 234, 212, 0.1), transparent 60%), #0d1220;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.gv-piece {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-repeat: no-repeat;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.gv-chip {
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.gv-type {
+  outline: 1px solid #5eead4;
+}
+
+.gv-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.gv-pad {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.gv-pad .cx-btn {
+  min-width: 44px;
+  padding: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-stage.settling,
+  .lp-stage.settling .lp-l2,
+  .lp-stage.settling .lp-l3 {
+    transition: none;
+  }
+}

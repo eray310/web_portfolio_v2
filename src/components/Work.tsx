@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { lazy, Suspense, useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { MdPlayArrow, MdChevronLeft, MdChevronRight } from "react-icons/md";
 import ProjectPanel from "./ProjectPanel";
 import { scrollToSection } from "./utils/scrollToSection";
@@ -9,7 +9,16 @@ import {
   projects,
   type Category,
 } from "../data/projects";
+import { projectInteractions } from "../data/interactive";
+import type { CreativeRequest } from "./creative/CreativeHost";
 import "./styles/Work.css";
+
+// Loaded only when a visitor opens an interaction.
+const CreativeHost = lazy(() => import("./creative/CreativeHost"));
+
+/** A press that moves less than this (mouse) still counts as a click: hands jitter. */
+const DRAG_START_MOUSE = 12;
+const DRAG_START_TOUCH = 8;
 
 type Filter = "all" | Category;
 
@@ -45,6 +54,9 @@ const Work = () => {
   const [previewOk] = useState(canPreview);
   // Card transforms captured at the moment of a press, so nothing moves under the pointer.
   const [frozen, setFrozen] = useState<string[] | null>(null);
+  const [creative, setCreative] = useState<CreativeRequest | null>(null);
+  const closeCreative = useCallback(() => setCreative(null), []);
+  const wasOpen = useRef(false);
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -72,6 +84,25 @@ const Work = () => {
   const count = visible.length;
   posRef.current = index - drag;
   const current = visible[index];
+  const exploreSpec = current ? projectInteractions[current.title]?.gravity : undefined;
+
+  // Keep the keyboard focus on the card that is in the middle. Without this, after the
+  // arrow keys the focus stays on the card that moved away and Enter opens that one.
+  useEffect(() => {
+    const st = stageRef.current;
+    const ae = document.activeElement as HTMLElement | null;
+    if (!st || !ae || !st.contains(ae) || !ae.classList.contains("work-card")) return;
+    const active = st.querySelector<HTMLElement>(".work-card.is-active");
+    if (active && active !== ae) active.focus({ preventScroll: true });
+  }, [index]);
+
+  // When the detail panel closes, the focus goes back to the card in the middle.
+  useEffect(() => {
+    if (wasOpen.current && !panelOpen) {
+      stageRef.current?.querySelector<HTMLElement>(".work-card.is-active")?.focus({ preventScroll: true });
+    }
+    wasOpen.current = panelOpen;
+  }, [panelOpen]);
 
   // Latest values for the native wheel listener below.
   const live = useRef({ index: 0, count: 0, panelOpen: false });
@@ -112,15 +143,17 @@ const Work = () => {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (panelOpen || !inView.current) return;
+      if (panelOpen || creative || !inView.current) return;
       const t = e.target as HTMLElement | null;
       if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+      // Keys typed inside a dialog belong to the dialog.
+      if (t?.closest('[role="dialog"]')) return;
       if (e.key === "ArrowLeft") prev();
       else if (e.key === "ArrowRight") next();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [panelOpen, prev, next]);
+  }, [panelOpen, creative, prev, next]);
 
   // Mouse wheel over the gallery: down = next card, up = previous card. One card
   // per step, whatever the spin speed. At either end the wheel goes to the page.
@@ -214,7 +247,7 @@ const Work = () => {
     if (e.pointerId !== g.id) return;
     const dx = e.clientX - g.startX;
     if (!g.moved) {
-      if (Math.abs(dx) < 6) return;
+      if (Math.abs(dx) < (e.pointerType === "mouse" ? DRAG_START_MOUSE : DRAG_START_TOUCH)) return;
       g.moved = true;
       setFrozen(null);
       setDragging(true);
@@ -446,9 +479,25 @@ const Work = () => {
                 <MdChevronRight />
               </button>
             </div>
+            {exploreSpec && (
+              <button
+                type="button"
+                className="work-explore"
+                onClick={() => setCreative({ kind: "gravity", spec: exploreSpec })}
+                data-cursor="disable"
+              >
+                Projeyi keşfet
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {creative && !panelOpen && (
+        <Suspense fallback={null}>
+          <CreativeHost request={creative} onClose={closeCreative} />
+        </Suspense>
+      )}
 
       {panelOpen && current && (
         <ProjectPanel

@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { allesta } from "../data/interactive";
+import type { CreativeRequest } from "./creative/CreativeHost";
 import { tools } from "../data/tools";
 import "./styles/OrbitPage.css";
 
@@ -7,14 +9,17 @@ const asset = (file: string) => `${BASE}portfolio/${file}`;
 
 // One work carries the whole story: the Allesta ad (an AI-assisted film).
 const POSTER = asset("Allesta_YZReklam.jpg");
-const CUT_VIDEO = `${BASE}process/allesta/kurgu-final.mp4`; // the finished edit, 4 s
-// Moments of the edit shown as cuts; the last cut is the poster, which then
-// opens into the AI Artist scene.
+// Moments of the finished edit (4 s) shown as cuts; the last cut is the poster, which then
+// opens into the AI Artist scene. The three moments are plain stills cut from the film
+// (kurgu-final.mp4 at 0.3, 1.3 and 2.6 s). They used to be six <video> elements that
+// were seeked with "#t=": a hidden video can stay black until the browser has decoded
+// it, and browsers cap how many videos they decode at once, so a cut could show nothing.
+// An image is decoded the same way every time and needs no player.
 const CUTS = [
-  { kind: "video", t: 0.3 },
-  { kind: "video", t: 1.3 },
-  { kind: "video", t: 2.6 },
-  { kind: "poster", t: 0 },
+  { src: `${BASE}process/allesta/kurgu-kesit-1.jpg` },
+  { src: `${BASE}process/allesta/kurgu-kesit-2.jpg` },
+  { src: `${BASE}process/allesta/kurgu-kesit-3.jpg` },
+  { src: POSTER },
 ] as const;
 
 // The CV links are shown only when this file really exists (see the check below).
@@ -27,17 +32,69 @@ const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 /** Scroll windows (0..1 over the whole track) for each beat of the story. */
-const W = {
-  approach: [0.09, 0.19],
-  art: [0.19, 0.35],
-  grid: [0.35, 0.49],
-  motion: [0.49, 0.6],
-  fly1: [0.58, 0.66],
-  cut: [0.66, 0.77],
-  fly2: [0.75, 0.83],
-  ai: [0.82, 0.9],
-  fin: [0.9, 1],
-} as const;
+type Win = readonly [number, number];
+type Timeline = {
+  W: { approach: Win; art: Win; grid: Win; motion: Win; fly1: Win; cut: Win; fly2: Win; ai: Win; fin: Win };
+  heroFade: Win;
+  follow: Win;
+  /** Caption window per scene: it fades in, stays while the composition is finished, fades out. */
+  caps: Win[];
+  capFade: number;
+  cta: Win;
+  /** Spring speed limit, as a share of the whole story per second. */
+  vmax: number;
+  /** Where each scene is readable (title, sentence and finished picture together). */
+  scenes: number[];
+};
+
+// Phones: the short story that was tuned for the finger (unchanged).
+const PHONE_TL: Timeline = {
+  W: {
+    approach: [0.09, 0.19],
+    art: [0.19, 0.35],
+    grid: [0.35, 0.49],
+    motion: [0.49, 0.6],
+    fly1: [0.58, 0.66],
+    cut: [0.66, 0.77],
+    fly2: [0.75, 0.83],
+    ai: [0.82, 0.9],
+    fin: [0.9, 1],
+  },
+  heroFade: [0.04, 0.13],
+  follow: [0.49, 0.53],
+  caps: [[0.19, 0.35], [0.35, 0.49], [0.49, 0.62], [0.66, 0.78], [0.82, 0.9]],
+  capFade: 0.025,
+  cta: [0.955, 0.985],
+  vmax: 2,
+  scenes: [0.27, 0.42, 0.55, 0.72, 0.86],
+};
+
+// Desktop: the story is laid out in "units" of scroll (34 in all, about 410 px each at a
+// 900 px window). Every scene gets three stretches: approach (the pieces come together),
+// reading (title, sentence and finished composition stay together, with nothing moving
+// but the camera settling) and hand-over (one element carries into the next scene).
+const UNITS = 34;
+const u = (a: number, b: number): Win => [a / UNITS, b / UNITS];
+const DESK_TL: Timeline = {
+  W: {
+    approach: u(0.6, 1.7), // the hanging frame comes to the middle
+    art: u(1.7, 3.0), // Art Direction: pieces gather (approach); 3.0 - 5.9 is the reading stretch
+    grid: u(5.9, 11.9), // hand-over: the frame and the pieces travel into the grid (6 units, about 24 notches); 11.9 - 14.4 is Grafik Tasarım reading stretch
+    motion: u(14.4, 18.9), // the circle leaves the grid and moves (reading), then opens
+    fly1: u(18.2, 21.6), // hand-over: the circle opens into a ring, the camera flies through
+    cut: u(21.6, 24.6), // Kurgu: cuts (reading)
+    fly2: u(24.3, 27.5), // hand-over: the last cut becomes the AI frame
+    ai: u(27.5, 30.1), // AI Artist: colour tests, then the chosen frame; 30.1 - 31.4 is its reading stretch
+    fin: u(31.4, 34.0), // the camera pulls back
+  },
+  heroFade: u(0.3, 1.2),
+  follow: u(14.4, 16.9),
+  caps: [u(1.7, 8.9), u(9.7, 15.0), u(14.8, 20.4), u(21.0, 26.5), u(27.1, 32.0)],
+  capFade: 0.6 / UNITS,
+  cta: u(33.4, 34.0),
+  vmax: 0.125, // about 1500 px/s: only a hard flick reaches it
+  scenes: [4.45, 13.15, 16.65, 23.1, 30.75].map((x) => x / UNITS),
+};
 
 const CAM_STEP = 1500; // distance between the three sets
 const CAM_BACK = 5600; // how far the camera pulls back in the finale
@@ -82,6 +139,26 @@ const useIsPhone = () => useMemo(() => typeof window !== "undefined" && window.i
 const makeFarStars = (n: number) => {
   const r = rng(7);
   return Array.from({ length: n }, () => ({ x: r() * 100, y: r() * 100, s: 0.8 + r() * 0.9, d: r() * 8, o: 0.12 + r() * 0.3 }));
+};
+
+/**
+ * The still sky: many fine points of light of different sizes and brightness, drawn as
+ * box-shadows of three empty elements (one paint each, no per-star element, nothing
+ * animated). Positions are in vw / vh so the sky fills any window.
+ */
+const makeSky = (faint: number, mid: number, bright: number) => {
+  const r = rng(101);
+  const tints = ["232,255,251", "207,227,255", "255,241,214", "255,255,255"];
+  const build = (n: number, spread: () => number, blur: () => number, alpha: () => number) =>
+    Array.from({ length: n }, () => {
+      const t = tints[Math.floor(r() * tints.length)];
+      return `${(r() * 100).toFixed(2)}vw ${(r() * 100).toFixed(2)}vh ${blur().toFixed(1)}px ${spread().toFixed(2)}px rgba(${t},${alpha().toFixed(2)})`;
+    }).join(",");
+  return {
+    faint: build(faint, () => 0.3 + r() * 0.35, () => 0, () => 0.3 + r() * 0.4),
+    mid: build(mid, () => 0.55 + r() * 0.5, () => 0.4, () => 0.5 + r() * 0.4),
+    bright: build(bright, () => 1.1 + r() * 0.9, () => 3 + r() * 3, () => 0.8 + r() * 0.2),
+  };
 };
 
 /** Mid layer: star dust that drifts slowly and moves a little with the scroll. */
@@ -139,13 +216,8 @@ const SetArt = () => (
 );
 
 const CutFrame = ({ i, thumb = false }: { i: number; thumb?: boolean }) => {
-  const c = CUTS[i];
   const cls = thumb ? `yr-thumb yr-thumb-${i}` : `yr-cut-img yr-cut-${i}`;
-  return c.kind === "video" ? (
-    <video className={cls} src={`${CUT_VIDEO}#t=${c.t}`} muted playsInline preload="auto" tabIndex={-1} />
-  ) : (
-    <img className={cls} src={POSTER} alt="" decoding="async" draggable={false} />
-  );
+  return <img className={cls} src={CUTS[i].src} alt="" loading="eager" decoding="async" draggable={false} />;
 };
 
 const SetCut = () => (
@@ -237,6 +309,23 @@ const useReducedMotion = () => {
   return reduced;
 };
 
+// The interactions are loaded only when a visitor opens one.
+const CreativeHost = lazy(() => import("./creative/CreativeHost"));
+
+const ACTIONS: Record<number, { label: string; request: CreativeRequest }> = {
+  1: { label: "Kareyi aç", request: { kind: "layers", spec: allesta.layers } },
+  3: { label: "Kesme noktasını sen seç", request: { kind: "cut", spec: allesta.cut } },
+};
+
+/** Where the five stars of the final constellation hang (percent of the screen). */
+const STARS = [
+  { x: 20, y: 24, k: "art" },
+  { x: 36, y: 37, k: "grid" },
+  { x: 52, y: 21, k: "motion" },
+  { x: 68, y: 36, k: "cut" },
+  { x: 84, y: 23, k: "ai" },
+];
+
 // ── Still version (reduced motion): the same scenes, finished, in a column ─
 const finalVars = (scene: number): Vars => {
   const base: Vars = { "--app": 1, "--a": 1, "--g": 0, "--m": 0, "--mx": 0, "--my": 0, "--ms": 1, "--mo": 1, "--open": 0, "--kc": 0.9, "--ai": 1 };
@@ -258,6 +347,17 @@ const StillOrbit = ({ hasCv }: { hasCv: boolean }) => {
   const visuals = [<SetArt />, <SetArt />, <SetArt />, <SetCut />, <SetAi />];
   return (
     <main className="yr-still">
+      <nav className="yr-still-nav" aria-label="Sahneler">
+        <ul>
+          {scenes.map((s, i) => (
+            <li key={s.title}>
+              <a href={`#sahne-${i + 1}`}>
+                {s.n} {s.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
       <section className="yr-still-hero">
         <h1>
           <span>Ben Eray</span> <span className="yr-grad">Ömeroğlu.</span>
@@ -265,7 +365,7 @@ const StillOrbit = ({ hasCv }: { hasCv: boolean }) => {
         <p>Markalar için hareketli grafikler, kurgu ve görsel anlatılar üretiyorum.</p>
       </section>
       {scenes.map((s, i) => (
-        <section key={s.title} className="yr-still-scene" aria-labelledby={`yr-st-${i}`}>
+        <section key={s.title} id={`sahne-${i + 1}`} className="yr-still-scene" aria-labelledby={`yr-st-${i}`}>
           <div className="yr-still-box" style={{ height: 560 * sc }}>
             <div className="yr-still-set" style={vars({ ...finalVars(i), "--sc": sc })} data-cut="3" data-ai="3">
               {visuals[i]}
@@ -291,8 +391,74 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
   const stageRef = useRef<HTMLDivElement>(null);
   const phone = useIsPhone();
   const farStars = useMemo(() => makeFarStars(phone ? 56 : 130), [phone]);
+  const sky = useMemo(() => (phone ? makeSky(260, 70, 6) : makeSky(900, 260, 14)), [phone]);
   const midStars = useMemo(() => makeMidStars(phone ? 16 : 40), [phone]);
   const field = useMemo(() => (phone ? makeField(12, 3) : makeField(30, 9)), [phone]);
+  const TL = phone ? PHONE_TL : DESK_TL;
+  const [scene, setScene] = useState(-1);
+  const sceneRef = useRef(-1);
+  // Set when the page jumps a long way (scene list, stars, End key): the camera then flies
+  // instead of crawling at the reading speed.
+  const jumpRef = useRef(false);
+  const [navOpen, setNavOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+  const [creative, setCreative] = useState<CreativeRequest | null>(null);
+  const closeCreative = useCallback(() => setCreative(null), []);
+
+  // One way to reach a scene, used by the list and by the stars: scroll to the point
+  // where the scene reads best. The camera follows by itself.
+  const goScene = useCallback(
+    (i: number) => {
+      const t = trackRef.current;
+      if (!t) return;
+      const range = Math.max(1, t.offsetHeight - window.innerHeight);
+      const y = t.getBoundingClientRect().top + window.scrollY + TL.scenes[i] * range;
+      // Jump at once; the camera does the travelling. A browser-animated scroll would drag
+      // the target along slowly and the camera would follow it for many seconds.
+      jumpRef.current = true;
+      window.scrollTo({ top: Math.round(y), behavior: "auto" });
+      setNavOpen(false);
+    },
+    [TL]
+  );
+
+  // The scene list closes with Escape or a tap outside it.
+  useEffect(() => {
+    if (!navOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setNavOpen(false);
+        navRef.current?.querySelector<HTMLElement>("button")?.focus();
+      }
+    };
+    const onDown = (e: PointerEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) setNavOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onDown);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onDown);
+    };
+  }, [navOpen]);
+
+  // Nothing animates while the stage is off screen or the tab is hidden.
+  useEffect(() => {
+    const stage = stageRef.current;
+    const track = trackRef.current;
+    if (!stage || !track) return;
+    let io: IntersectionObserver | undefined;
+    if ("IntersectionObserver" in window) {
+      io = new IntersectionObserver(([e]) => stage.classList.toggle("is-off", !e.isIntersecting));
+      io.observe(track);
+    }
+    const vis = () => stage.classList.toggle("is-hidden", document.hidden);
+    document.addEventListener("visibilitychange", vis);
+    return () => {
+      io?.disconnect();
+      document.removeEventListener("visibilitychange", vis);
+    };
+  }, []);
 
   useEffect(() => {
     const track = trackRef.current;
@@ -309,6 +475,7 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
     let shxPx = 0;
     let scale = 1;
     let blurOn = true;
+    const W = TL.W;
     const set = (k: string, v: number | string) => stage.style.setProperty(k, String(v));
 
     const layout = () => {
@@ -358,6 +525,10 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
       set("--app", app.toFixed(4));
       set("--a", a.toFixed(4));
       set("--g", g.toFixed(4));
+      // Hand-over Art -> Grafik: the frame and the pieces travel (gt) while the Art pieces
+      // fade out only on the way (gf), so the middle frames show the turn into the grid.
+      set("--gt", ease(seg(g, 0.02, 0.85)).toFixed(4));
+      set("--gf", seg(g, 0.08, 0.72).toFixed(4));
       set("--m", m.toFixed(4));
       set("--mx", `${mx.toFixed(2)}px`);
       set("--my", `${my.toFixed(2)}px`);
@@ -370,7 +541,7 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
       set("--cam", cam.toFixed(1));
 
       // The camera follows the moving circle, then lets go as it flies through.
-      const follow = seg(P, 0.49, 0.53) * (1 - ease(seg(P, W.fly1[0], W.fly1[1]))) * (1 - finGate);
+      const follow = seg(P, TL.follow[0], TL.follow[1]) * (1 - ease(seg(P, W.fly1[0], W.fly1[1]))) * (1 - finGate);
       set("--panx", `${(-(115 + mx) * 0.5 * scale * follow).toFixed(1)}px`);
       set("--pany", `${(-(-70 + my) * 0.5 * scale * follow).toFixed(1)}px`);
 
@@ -403,15 +574,26 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
       side("K", glide(zK) * 760 - away(zK) * 520, glide(zK) * 330 - away(zK) * 150, -glide(zK) * 14 - away(zK) * 16);
       side("I", glide(zI) * 1000, -glide(zI) * 420, -glide(zI) * 16);
       set("--dot", seg(fin, 0.35, 0.85).toFixed(3));
-      set("--hero", (1 - seg(P, 0.04, 0.13)).toFixed(3));
-      set("--cta", seg(P, 0.955, 0.985).toFixed(3));
+      set("--hero", (1 - seg(P, TL.heroFade[0], TL.heroFade[1])).toFixed(3));
+      set("--cta", seg(P, TL.cta[0], TL.cta[1]).toFixed(3));
 
-      const cap = (s: number, e: number) => seg(P, s, s + 0.025) * (1 - seg(P, e - 0.025, e));
-      set("--c0", cap(0.19, 0.35).toFixed(3));
-      set("--c1", cap(0.35, 0.49).toFixed(3));
-      set("--c2", cap(0.49, 0.62).toFixed(3));
-      set("--c3", cap(0.66, 0.78).toFixed(3));
-      set("--c4", cap(0.82, 0.9).toFixed(3));
+      const f = TL.capFade;
+      let sc = -1;
+      let best = 0.5;
+      TL.caps.forEach(([s, e], i) => {
+        const v = seg(P, s, s + f) * (1 - seg(P, e - f, e));
+        set("--c" + i, v.toFixed(3));
+        if (v > best) {
+          best = v;
+          sc = i;
+        }
+      });
+      if (sc !== sceneRef.current) {
+        sceneRef.current = sc;
+        setScene(sc);
+      }
+      stage.dataset.nav = P > TL.heroFade[1] && P < W.fin[0] ? "1" : "0";
+      stage.classList.toggle("is-const", seg(fin, 0.35, 0.85) > 0.6);
 
       // Kurgu: hard cuts at uneven moments of the scroll.
       const cut = kc < 0.2 ? 0 : kc < 0.45 ? 1 : kc < 0.7 ? 2 : 3;
@@ -425,7 +607,7 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
         lastAi = aiState;
         stage.dataset.ai = String(aiState);
       }
-      stage.classList.toggle("is-cta", seg(P, 0.955, 0.985) > 0.5);
+      stage.classList.toggle("is-cta", seg(P, TL.cta[0], TL.cta[1]) > 0.5);
     };
 
     const read = () => {
@@ -439,8 +621,9 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
     // On a phone the finger and the browser's own momentum already give the scroll its
     // softness, so the scene follows almost directly: it reacts at once to the finger
     // and stops with it instead of gliding on.
-    const OMEGA = phone ? 24 : 6.2;
-    const VMAX = phone ? 2 : 0.4; // fraction of the whole story per second (desktop: a flick takes about 2.5 s end to end)
+    const OMEGA = phone ? 24 : 10;
+    const VMAX = TL.vmax; // fraction of the whole story per second
+    const JUMP_VMAX = phone ? VMAX : 1.8; // desktop long jumps: about a second for the whole story; phones already follow the finger
     const tick = (t: number) => {
       const dt = Math.min(0.05, last ? (t - last) / 1000 : 0.016);
       last = t;
@@ -450,13 +633,15 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
       for (let k = 0; k < steps; k++) {
         const x = cur - target;
         vel += (-OMEGA * OMEGA * x - 2 * OMEGA * vel) * h;
-        vel = clamp(vel, -VMAX, VMAX);
+        const lim = jumpRef.current ? JUMP_VMAX : VMAX;
+        vel = clamp(vel, -lim, lim);
         cur += vel * h;
       }
       cur = clamp(cur, 0, 1);
       if (Math.abs(cur - target) < 0.0002 && Math.abs(vel) < 0.001) {
         cur = target;
         vel = 0;
+        jumpRef.current = false;
         apply(cur);
         raf = 0;
         last = 0;
@@ -468,6 +653,7 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
 
     const onScroll = () => {
       read();
+      if (Math.abs(cur - target) > 0.3) jumpRef.current = true; // End / Home key, scrollbar drag
       if (!raf) raf = requestAnimationFrame(tick);
     };
     const onResize = () => {
@@ -486,13 +672,18 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
       window.removeEventListener("resize", onResize);
       cancelAnimationFrame(raf);
     };
-  }, [phone]);
+  }, [phone, TL]);
 
   return (
     <div className="yr-track" ref={trackRef}>
       <div className="yr-stage" ref={stageRef} data-cut="0" data-ai="0">
         <div className="yr-bg" aria-hidden="true">
           <div className="yr-nebula" />
+          <div className="yr-sky">
+            <i style={{ boxShadow: sky.faint }} />
+            <i style={{ boxShadow: sky.mid }} />
+            <i style={{ boxShadow: sky.bright }} />
+          </div>
           <div className="yr-stars yr-far">
             {farStars.map((s, i) => (
               <i key={i} style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.s, height: s.s, opacity: s.o, animationDelay: `${s.d}s` }} />
@@ -560,12 +751,52 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
         <div className="yr-caps">
           {scenes.map((s, i) => (
             <div key={s.title} className="yr-cap" style={vars({ "--ci": `var(--c${i})` })}>
-              <span className="yr-num">{s.n} / 05</span>
               <h2>{s.title}</h2>
               <p>{s.text}</p>
+              {ACTIONS[i] && (
+                <button type="button" className="yr-cap-btn" disabled={scene !== i} onClick={() => setCreative(ACTIONS[i].request)}>
+                  {ACTIONS[i].label}
+                </button>
+              )}
             </div>
           ))}
         </div>
+
+        <nav className="yr-nav" ref={navRef} aria-label="Sahneler">
+          <button type="button" className="yr-nav-btn" aria-expanded={navOpen} aria-controls="yr-nav-list" onClick={() => setNavOpen((o) => !o)}>
+            <span>{scene >= 0 ? `${scenes[scene].n} / 05` : "Sahneler"}</span>
+            <span aria-hidden="true">{navOpen ? "▴" : "▾"}</span>
+          </button>
+          <ul id="yr-nav-list" hidden={!navOpen}>
+            {scenes.map((s, i) => (
+              <li key={s.title}>
+                <button type="button" aria-current={scene === i ? "true" : undefined} onClick={() => goScene(i)}>
+                  <span>{s.n}</span> {s.title}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        {/* The final constellation: one star per scene, each takes you back to its scene. */}
+        <div className="yr-const">
+          <svg className="yr-const-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <polyline points={STARS.map((s) => `${s.x},${s.y}`).join(" ")} />
+          </svg>
+          {STARS.map((s, i) => (
+            <button key={s.k} type="button" className={`yr-star yr-star-${s.k}`} style={{ left: `${s.x}%`, top: `${s.y}%` }} onClick={() => goScene(i)} aria-label={`${scenes[i].title} sahnesine dön`}>
+              <span className="yr-star-label" aria-hidden="true">
+                {scenes[i].title}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {creative && (
+          <Suspense fallback={null}>
+            <CreativeHost request={creative} onClose={closeCreative} />
+          </Suspense>
+        )}
 
         <div className="yr-hint" aria-hidden="true">
           Kaydır <span>↓</span>

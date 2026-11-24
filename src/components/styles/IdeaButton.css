@@ -221,3 +221,65 @@
   outline: 2px solid #fff;
   outline-offset: 3px;
 }
+
+/* Sending, success and error states of the form */
+.idea-trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.idea-err {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #ff9b9b;
+}
+
+.idea-field input[aria-invalid="true"],
+.idea-field textarea[aria-invalid="true"] {
+  border-color: #ff9b9b;
+}
+
+.idea-status {
+  min-height: 22px;
+  margin: 10px 0 8px;
+  font-size: 14px;
+  color: rgba(234, 229, 236, 0.8);
+}
+
+.idea-status.is-error {
+  color: #ff9b9b;
+}
+
+.idea-submit {
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 10px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0a0e17;
+  background: var(--accentColor);
+  border: 0;
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+.idea-submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.idea-submit:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.idea-sent p {
+  margin: 8px 0 18px;
+  font-size: 16px;
+  line-height: 1.55;
+}

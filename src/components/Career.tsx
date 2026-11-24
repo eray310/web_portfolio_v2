@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import BehindTheScenes from "./BehindTheScenes";
+import Starters from "./Starters";
 import "./styles/Career.css";
 
 const experience = [
@@ -114,7 +114,7 @@ const Career = () => {
             })}
           </ol>
         </div>
-        <BehindTheScenes />
+        <Starters />
       </div>
     </section>
   );

@@ -10,7 +10,7 @@ const TYPES = ["Reklam Videosu", "Motion Design", "Video Kurgu", "HenÃ¼z Net DeÄ
 
 /** Controls the floating button must never sit on top of. */
 const AVOID =
-  ".work-arrows button, .work-filter, .bts-tab, .career-head, .contact-social, .landing-cta";
+  ".work-arrows button, .work-filter, .starter, .career-head, .contact-social, .contact-signature, .landing-cta";
 
 type Status = "idle" | "sending" | "sent" | "error";
 type Fields = Partial<Record<"type" | "name" | "email" | "summary" | "reference", string>>;

@@ -169,11 +169,6 @@ const ProjectPanel = ({
                   Kareyi aç
                 </button>
               )}
-              {extra.cut && (
-                <button type="button" onClick={() => setCreative({ kind: "cut", spec: extra.cut! })} data-cursor="disable">
-                  Kesme noktasını sen seç
-                </button>
-              )}
               {extra.gravity && (
                 <button type="button" onClick={() => setCreative({ kind: "gravity", spec: extra.gravity! })} data-cursor="disable">
                   Projeyi keşfet

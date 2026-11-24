@@ -1,4 +1,4 @@
-/* Interactions opened on request: "Kareyi aç", "Kesme noktasını sen seç", "Projeyi keşfet". */
+/* Interactions opened on request: "Kareyi aç", "Projeyi keşfet". */
 
 .cx-backdrop {
   position: fixed;
@@ -179,87 +179,6 @@
 .lp-stage.settling .lp-l3,
 .lp-stage.settling {
   transition: transform 0.15s cubic-bezier(0.3, 1.5, 0.4, 1);
-}
-
-/* ── Kesme noktasını sen seç ── */
-.cp-row {
-  display: flex;
-  gap: 12px;
-}
-
-.cp-row figure {
-  flex: 1;
-  margin: 0;
-}
-
-.cp-row video,
-.cp-monitor video {
-  display: block;
-  width: 100%;
-  aspect-ratio: 9 / 16;
-  object-fit: cover;
-  border-radius: 8px;
-  background: #05070c;
-}
-
-.cp-row video {
-  max-height: 34svh;
-  aspect-ratio: auto;
-}
-
-.cp-row figcaption {
-  margin-top: 6px;
-  font-size: 12px;
-  letter-spacing: 1px;
-  color: rgba(234, 229, 236, 0.7);
-}
-
-.cp-monitor {
-  position: relative;
-  width: min(180px, 46%);
-  margin: 14px auto 0;
-}
-
-.cp-monitor.is-near video {
-  outline: 2px solid #5eead4;
-  outline-offset: 2px;
-}
-
-.cp-time,
-.cp-flag {
-  position: absolute;
-  left: 8px;
-  padding: 2px 8px;
-  font-size: 12px;
-  border-radius: 20px;
-  background: rgba(5, 7, 12, 0.75);
-}
-.cp-time {
-  top: 8px;
-  color: #fff;
-}
-.cp-flag {
-  bottom: 8px;
-  color: #5eead4;
-}
-
-.cp-track {
-  position: relative;
-}
-
-.cp-mark {
-  position: absolute;
-  top: 4px;
-  width: 2px;
-  height: 10px;
-  background: #5eead4;
-  pointer-events: none;
-}
-
-.cp-jumps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 /* ── Projeyi keşfet ── */

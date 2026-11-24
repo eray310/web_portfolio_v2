@@ -11,15 +11,15 @@ export let smoother: ScrollSmoother;
 
 const Navbar = () => {
   useEffect(() => {
-    // Mouse wheel on a desktop: the content moves half of what the wheel gave in the
-    // first version (speed 0.5) and comes to rest quickly (smooth 0.8 s). Touch screens
-    // keep the finger-following setting they had.
+    // Mouse wheel on a desktop: the content moves a little over half of what the wheel gave
+    // in the first version (speed 0.55, up from 0.5) and comes to rest quickly (smooth 0.8 s).
+    // Touch screens keep the finger-following setting they had.
     const wheel = window.matchMedia("(hover: hover) and (pointer: fine) and (min-width: 768px)").matches;
     smoother = ScrollSmoother.create({
       wrapper: "#smooth-wrapper",
       content: "#smooth-content",
       smooth: wheel ? 0.8 : 1.7,
-      speed: wheel ? 0.5 : 1,
+      speed: wheel ? 0.55 : 1,
       effects: true,
       autoResize: true,
       ignoreMobileResize: true,

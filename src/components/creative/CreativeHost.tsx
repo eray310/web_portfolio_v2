@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { MdClose } from "react-icons/md";
-import type { CutSpec, GravitySpec, LayersSpec, Rect } from "../../data/interactive";
+import type { GravitySpec, LayersSpec, Rect } from "../../data/interactive";
 import "./creative.css";
 
 const BASE = import.meta.env.BASE_URL;
@@ -141,101 +141,7 @@ const LayerPeel = ({ spec }: { spec: LayersSpec }) => {
   );
 };
 
-// ── 2. Kesme noktasını sen seç: scrub the timeline, see before and after a real cut ─
-const CutPicker = ({ spec }: { spec: CutSpec }) => {
-  const main = useRef<HTMLVideoElement>(null);
-  const before = useRef<HTMLVideoElement>(null);
-  const after = useRef<HTMLVideoElement>(null);
-  const [t, setT] = useState(Math.max(0, spec.cuts[0] - 0.4));
-  const [dur, setDur] = useState(spec.duration);
-  const sel = useMemo(() => {
-    let best = 0;
-    spec.cuts.forEach((c, i) => {
-      if (Math.abs(c - t) < Math.abs(spec.cuts[best] - t)) best = i;
-    });
-    return best;
-  }, [t, spec.cuts]);
-  const near = Math.abs(spec.cuts[sel] - t) < 0.25;
-  const src = file(spec.src);
-
-  useEffect(() => {
-    if (main.current) main.current.currentTime = t;
-  }, [t]);
-  useEffect(() => {
-    const c = spec.cuts[sel];
-    if (before.current) before.current.currentTime = Math.max(0, c - 0.06);
-    if (after.current) after.current.currentTime = Math.min(dur - 0.02, c + 0.06);
-  }, [sel, spec.cuts, dur]);
-
-  const frame = (ref: React.RefObject<HTMLVideoElement>, cls: string) => (
-    <video
-      ref={ref}
-      className={cls}
-      src={`${src}#t=0.1`}
-      muted
-      playsInline
-      preload="auto"
-      tabIndex={-1}
-      onLoadedMetadata={(e) => {
-        if (cls === "cp-main") setDur(e.currentTarget.duration || spec.duration);
-      }}
-      onLoadedData={() => {
-        const c = spec.cuts[sel];
-        if (cls === "cp-main" && main.current) main.current.currentTime = t;
-        if (cls === "cp-before" && before.current) before.current.currentTime = Math.max(0, c - 0.06);
-        if (cls === "cp-after" && after.current) after.current.currentTime = c + 0.06;
-      }}
-    />
-  );
-
-  return (
-    <div className="cp">
-      <div className="cp-row">
-        <figure>
-          {frame(before, "cp-before")}
-          <figcaption>Kesmeden önce · {(spec.cuts[sel] - 0.06).toFixed(2)} sn</figcaption>
-        </figure>
-        <figure>
-          {frame(after, "cp-after")}
-          <figcaption>Kesmeden sonra · {(spec.cuts[sel] + 0.06).toFixed(2)} sn</figcaption>
-        </figure>
-      </div>
-      <div className={"cp-monitor" + (near ? " is-near" : "")}>
-        {frame(main, "cp-main")}
-        <span className="cp-time">{t.toFixed(2)} sn</span>
-        {near && <span className="cp-flag">Kesme noktası</span>}
-      </div>
-      <label className="cx-slider">
-        <span>Zaman çizelgesini sürükle</span>
-        <div className="cp-track">
-          {spec.cuts.map((c) => (
-            <i key={c} className="cp-mark" style={{ left: `${(c / dur) * 100}%` }} aria-hidden="true" />
-          ))}
-          <input
-            type="range"
-            min={0}
-            max={dur}
-            step={0.02}
-            value={t}
-            aria-label="Zaman çizelgesi"
-            aria-valuetext={`${t.toFixed(2)} saniye${near ? ", kesme noktası" : ""}`}
-            onChange={(e) => setT(Number(e.target.value))}
-          />
-        </div>
-      </label>
-      <div className="cp-jumps">
-        {spec.cuts.map((c, i) => (
-          <button key={c} type="button" className="cx-btn" onClick={() => setT(c)}>
-            {i + 1}. kesmeye git ({c.toFixed(2)} sn)
-          </button>
-        ))}
-      </div>
-      <p className="cx-note">{spec.title}: görüntüler işin kendi videosundan alınmıştır.</p>
-    </div>
-  );
-};
-
-// ── 3. Projeyi keşfet: parts of the real cover are drawn to a point you steer ─
+// ── 2. Projeyi keşfet: parts of the real cover are drawn to a point you steer ─
 type Piece = { el: HTMLElement | null; x: number; y: number; vx: number; vy: number; tx: number; ty: number; r: number; a: number; w: number; h: number };
 
 const COLS = 3;
@@ -417,15 +323,13 @@ const Gravity = ({ spec }: { spec: GravitySpec }) => {
 // ── Host: one entry point, loaded only when an interaction is opened ────────
 export type CreativeRequest =
   | { kind: "layers"; spec: LayersSpec }
-  | { kind: "cut"; spec: CutSpec }
   | { kind: "gravity"; spec: GravitySpec };
 
-const TITLES = { layers: "Kareyi aç", cut: "Kesme noktasını sen seç", gravity: "Projeyi keşfet" } as const;
+const TITLES = { layers: "Kareyi aç", gravity: "Projeyi keşfet" } as const;
 
 const CreativeHost = ({ request, onClose }: { request: CreativeRequest; onClose: () => void }) => (
   <Dialog title={TITLES[request.kind]} onClose={onClose}>
     {request.kind === "layers" && <LayerPeel spec={request.spec} />}
-    {request.kind === "cut" && <CutPicker spec={request.spec} />}
     {request.kind === "gravity" && <Gravity spec={request.spec} />}
   </Dialog>
 );

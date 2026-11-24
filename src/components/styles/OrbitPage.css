@@ -1,3 +1,7 @@
+html {
+  scrollbar-gutter: stable;
+}
+
 /* "Eray'ın Yörüngesi": one camera moving through one world as the page scrolls. */
 
 .yr {
@@ -595,98 +599,20 @@
   background: #05070c;
 }
 
-.yr-cut-img {
+/* Kurgu: one still from the finished edit. Towards the end of the scene it dissolves into the
+   poster, which is the frame the AI Artist scene starts from. */
+.yr-k-still,
+.yr-k-poster {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
+  background: #05070c;
 }
 
-/* The cuts are stacked: every cut up to the current one stays opaque and the later ones
-   cover the earlier ones. Scrolling forward or back therefore never leaves the monitor
-   empty, whatever the order in which the pictures were decoded. */
-[data-cut="0"] .yr-cut-0,
-[data-cut="1"] .yr-cut-0,
-[data-cut="1"] .yr-cut-1,
-[data-cut="2"] .yr-cut-0,
-[data-cut="2"] .yr-cut-1,
-[data-cut="2"] .yr-cut-2,
-[data-cut="3"] .yr-cut-0,
-[data-cut="3"] .yr-cut-1,
-[data-cut="3"] .yr-cut-2,
-[data-cut="3"] .yr-cut-3 {
-  opacity: 1;
-}
-
-.yr-strip {
-  display: flex;
-  gap: 10px;
-  margin: 168px 0 0 -277px;
-}
-
-.yr-thumb {
-  width: 96px;
-  height: 54px;
-  object-fit: cover;
-  border-radius: 4px;
-  opacity: 0.4;
-  border: 1px solid transparent;
-}
-
-[data-cut="0"] .yr-thumb-0,
-[data-cut="1"] .yr-thumb-1,
-[data-cut="2"] .yr-thumb-2,
-[data-cut="3"] .yr-thumb-3 {
-  opacity: 1;
-  border-color: var(--accentColor);
-}
-
-.yr-timeline {
-  width: 414px;
-  height: 3px;
-  margin: 240px 0 0 -277px;
-  border-radius: 2px;
-  background-color: rgba(255, 255, 255, 0.16);
-  /* Cut marks where the picture changes. */
-  background-image:
-    linear-gradient(var(--accentColor), var(--accentColor)),
-    linear-gradient(var(--accentColor), var(--accentColor)),
-    linear-gradient(var(--accentColor), var(--accentColor));
-  background-size: 2px 100%;
-  background-position: 20% 0, 45% 0, 70% 0;
-  background-repeat: no-repeat;
-}
-
-.yr-playhead {
-  position: absolute;
-  top: -6px;
-  left: calc(var(--kc) * 100%);
-  width: 2px;
-  height: 15px;
-  background: #ffffff;
-}
-
-.yr-cutno {
-  margin: -45px 0 0 70px;
-  font-size: 13px;
-  letter-spacing: 3px;
-  color: var(--accentColor);
-  font-variant-numeric: tabular-nums;
-}
-
-.yr-cutno::after {
-  content: "01 / 04";
-}
-[data-cut="1"] .yr-cutno::after {
-  content: "02 / 04";
-}
-[data-cut="2"] .yr-cutno::after {
-  content: "03 / 04";
-}
-[data-cut="3"] .yr-cutno::after {
-  content: "04 / 04";
+.yr-k-poster {
+  opacity: clamp(0, (var(--kc) - 0.62) * 3, 1);
 }
 
 /* ── Set I: AI Artist ── */
@@ -855,7 +781,8 @@
   gap: 12px;
 }
 
-.yr a.yr-cta-link {
+.yr a.yr-cta-link,
+.yr button.yr-cta-link {
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -867,11 +794,19 @@
   border: 1px solid var(--accentColor);
   border-radius: 30px;
   background: rgba(8, 11, 17, 0.62);
+  font-family: inherit;
+  cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
-.yr a.yr-cta-link:hover {
+.yr a.yr-cta-link:hover,
+.yr button.yr-cta-link:hover {
   background-color: rgba(94, 234, 212, 0.16);
+}
+
+.yr button.yr-cta-link:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 4px;
 }
 
 .yr-tools {
@@ -1297,22 +1232,6 @@
 .yr-k-monitor,
 .yr-ai-monitor {
   margin: -240px 0 0 -110px;
-}
-
-.yr-strip {
-  margin: 168px 0 0 -207px;
-}
-
-.yr-timeline {
-  margin: 240px 0 0 -207px;
-}
-
-.yr-cutno {
-  margin: -45px 0 0 130px;
-}
-
-.yr-cut-img {
-  background: #05070c;
 }
 
 /* AI Artist: the original, two colour tests, and the original again (selected). */

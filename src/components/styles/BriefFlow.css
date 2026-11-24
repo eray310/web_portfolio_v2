@@ -1,0 +1,662 @@
+/* "Projeni anlat": the three-step brief. Dark ground, turquoise accent, the site's own type. */
+
+.bf-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99992;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(3, 5, 9, 0.78);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: bf-fade 0.2s ease both;
+}
+
+.bf-panel {
+  position: relative;
+  box-sizing: border-box;
+  width: min(680px, 100%);
+  max-height: calc(100svh - 32px);
+  padding: 30px 34px 28px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  text-align: left;
+  color: #eae5ec;
+  font-family: "Geist", sans-serif;
+  background:
+    radial-gradient(110% 70% at 0% 0%, rgba(94, 234, 212, 0.1), transparent 58%),
+    radial-gradient(80% 60% at 100% 100%, rgba(244, 114, 182, 0.06), transparent 60%),
+    #0a0e17;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6);
+  animation: bf-rise 0.26s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.bf-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 22px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.bf-close:hover,
+.bf-close:focus-visible {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.bf-kicker {
+  margin: 0 56px 22px 0;
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--accentColor);
+}
+
+/* ── The three steps, joined by a thin line of light ── */
+.bf-steps {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0 0 26px;
+  padding: 0;
+  list-style: none;
+}
+
+.bf-steps::before,
+.bf-steps::after {
+  content: "";
+  position: absolute;
+  top: 15px;
+  left: 16.666%;
+  height: 1px;
+}
+
+.bf-steps::before {
+  right: 16.666%;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.bf-steps::after {
+  width: calc(66.666% * var(--bf-p, 0));
+  background: linear-gradient(90deg, var(--accentColor), #ffffff);
+  box-shadow: 0 0 10px rgba(94, 234, 212, 0.9), 0 0 2px rgba(255, 255, 255, 0.9);
+  transition: width 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.bf-steps li {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.bf-steps button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  font: inherit;
+  color: rgba(234, 229, 236, 0.55);
+  background: none;
+  border: none;
+  cursor: default;
+}
+
+.bf-steps .is-done button {
+  color: rgba(234, 229, 236, 0.85);
+  cursor: pointer;
+}
+
+.bf-steps .is-current button {
+  color: #ffffff;
+}
+
+.bf-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 31px;
+  height: 31px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #0a0e17;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, color 0.25s ease;
+}
+
+.bf-dot svg {
+  font-size: 17px;
+}
+
+.bf-steps .is-done .bf-dot {
+  color: #0a0e17;
+  background: var(--accentColor);
+  border-color: var(--accentColor);
+}
+
+.bf-steps .is-current .bf-dot {
+  color: var(--accentColor);
+  border-color: var(--accentColor);
+  box-shadow: 0 0 14px rgba(94, 234, 212, 0.55);
+}
+
+.bf-step-label {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.bf-steps button:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 6px;
+  border-radius: 6px;
+}
+
+/* ── One step ── */
+.bf-body {
+  animation: bf-step 0.22s ease both;
+}
+
+.bf-body h2 {
+  margin: 0 0 16px;
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  outline: none;
+}
+
+.bf-help {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: rgba(234, 229, 236, 0.65);
+}
+
+.bf-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Kind of work: small cards you can switch on and off. */
+.bf-cards {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.bf-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.bf-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  min-height: 56px;
+  padding: 10px 12px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #eae5ec;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.bf-card:hover {
+  border-color: rgba(94, 234, 212, 0.55);
+  background: rgba(94, 234, 212, 0.06);
+}
+
+.bf-card input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.bf-card-mark {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  font-size: 15px;
+  color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 7px;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.bf-card.is-on {
+  background: rgba(94, 234, 212, 0.12);
+  border-color: var(--accentColor);
+  box-shadow: 0 0 18px rgba(94, 234, 212, 0.18);
+}
+
+.bf-card.is-on .bf-card-mark {
+  color: #0a0e17;
+  background: var(--accentColor);
+  border-color: var(--accentColor);
+}
+
+.bf-card.is-open {
+  border-style: dashed;
+}
+
+.bf-card:focus-within {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 3px;
+}
+
+.bf-cards[data-invalid="true"] .bf-card {
+  border-color: rgba(255, 155, 155, 0.7);
+}
+
+/* Fields */
+.bf-field {
+  display: block;
+  min-width: 0;
+  margin-bottom: 14px;
+}
+
+.bf-field > span:first-child {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: rgba(234, 229, 236, 0.78);
+}
+
+.bf-field em {
+  font-style: normal;
+  opacity: 0.65;
+}
+
+.bf-field input,
+.bf-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 11px 13px;
+  font: inherit;
+  font-size: 15px;
+  color: #eae5ec;
+  color-scheme: dark;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  resize: vertical;
+}
+
+.bf-field textarea {
+  min-height: 118px;
+  line-height: 1.5;
+}
+
+.bf-field input::placeholder {
+  color: rgba(234, 229, 236, 0.35);
+}
+
+.bf-field input:focus-visible,
+.bf-field textarea:focus-visible {
+  outline: none;
+  border-color: var(--accentColor);
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.16);
+}
+
+.bf-field input[aria-invalid="true"],
+.bf-field textarea[aria-invalid="true"] {
+  border-color: #ff9b9b;
+}
+
+.bf-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 14px;
+}
+
+.bf-err {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #ff9b9b;
+}
+
+/* Guiding questions for the chosen services, in one place above the brief. */
+.bf-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.bf-hints li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  background: rgba(94, 234, 212, 0.06);
+  border-left: 2px solid var(--accentColor);
+  border-radius: 0 8px 8px 0;
+}
+
+.bf-hints strong {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accentColor);
+}
+
+.bf-hints span {
+  color: rgba(234, 229, 236, 0.9);
+}
+
+/* Summary before sending */
+.bf-summary {
+  margin: 6px 0 4px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+}
+
+.bf-summary-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(234, 229, 236, 0.6);
+}
+
+.bf-summary dl {
+  margin: 0;
+}
+
+.bf-summary dt {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(234, 229, 236, 0.6);
+}
+
+.bf-summary dt:first-child {
+  margin-top: 0;
+}
+
+.bf-summary dt button {
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--accentColor);
+  background: none;
+  border: none;
+  border-bottom: 1px solid currentColor;
+  cursor: pointer;
+}
+
+.bf-summary dt button:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 3px;
+}
+
+.bf-summary dd {
+  margin: 3px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.bf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bf-chips li {
+  padding: 3px 10px;
+  font-size: 13px;
+  color: #0a0e17;
+  background: var(--accentColor);
+  border-radius: 999px;
+}
+
+.bf-trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.bf-status {
+  min-height: 22px;
+  margin: 12px 0 6px;
+  font-size: 14px;
+  color: rgba(234, 229, 236, 0.8);
+}
+
+.bf-status.is-error {
+  color: #ff9b9b;
+}
+
+/* Buttons */
+.bf-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bf-primary,
+.bf-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 24px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.bf-primary {
+  color: #0a0e17;
+  background: var(--accentColor);
+  border: 1px solid var(--accentColor);
+}
+
+.bf-primary:hover {
+  background: #7ff1df;
+}
+
+.bf-secondary {
+  color: #eae5ec;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.bf-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bf-primary:disabled,
+.bf-secondary:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.bf-primary:focus-visible,
+.bf-secondary:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+.bf-primary svg,
+.bf-secondary svg {
+  font-size: 19px;
+}
+
+/* Thank-you */
+.bf-sent {
+  padding: 24px 0 8px;
+  text-align: center;
+}
+
+.bf-sent h2 {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 700;
+  color: var(--accentColor);
+  outline: none;
+}
+
+.bf-sent p {
+  margin: 0 0 26px;
+  font-size: 17px;
+  line-height: 1.55;
+  color: rgba(234, 229, 236, 0.85);
+}
+
+/* ── Phones: one column, a sheet that flows downwards ── */
+@media only screen and (max-width: 640px) {
+  .bf-backdrop {
+    padding: 8px;
+    align-items: flex-end;
+  }
+
+  .bf-panel {
+    padding: 22px 18px 20px;
+    max-height: calc(100svh - 16px);
+    border-radius: 16px;
+  }
+
+  .bf-kicker {
+    margin-bottom: 16px;
+  }
+
+  .bf-steps {
+    margin-bottom: 20px;
+  }
+
+  /* Only the current step is named; the other two stay as dots. */
+  .bf-steps li:not(.is-current) .bf-step-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .bf-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bf-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* 16px keeps iOS from zooming in on a field. */
+  .bf-field input,
+  .bf-field textarea {
+    font-size: 16px;
+  }
+
+  .bf-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .bf-actions > span {
+    display: none;
+  }
+
+  .bf-primary,
+  .bf-secondary {
+    width: 100%;
+  }
+}
+
+@keyframes bf-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes bf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+}
+
+@keyframes bf-step {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bf-backdrop,
+  .bf-panel,
+  .bf-body {
+    animation: none;
+  }
+
+  .bf-steps::after,
+  .bf-dot,
+  .bf-card,
+  .bf-card-mark,
+  .bf-primary,
+  .bf-secondary {
+    transition: none;
+  }
+}

@@ -44,13 +44,26 @@ a.contact-social {
   white-space: nowrap;
 }
 
-.contact-box h2 {
-  font-weight: 400;
-  font-size: 23px;
-  margin: 0;
+.contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+  margin-top: 10px;
 }
 
-.contact-box h2>span {
+/* The site signature, bottom right on a wide screen. */
+.contact-sign {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.contact-signature {
+  margin: 0;
+  font-weight: 400;
+  font-size: 23px;
+}
+
+.contact-signature>span {
   color: var(--accentColor);
 }
 
@@ -68,7 +81,7 @@ a.contact-social {
     font-size: 50px;
   }
 
-  .contact-box h2 {
+  .contact-signature {
     font-size: 20px;
   }
 
@@ -82,7 +95,7 @@ a.contact-social {
     font-size: 40px;
   }
 
-  .contact-box h2 {
+  .contact-signature {
     font-size: 18px;
   }
 
@@ -107,6 +120,12 @@ a.contact-social {
 
   .contact-flex h4 {
     margin-top: 20px;
+  }
+
+  /* One column on a phone: the links first, the signature below them, never over them. */
+  .contact-sign {
+    align-items: flex-start;
+    text-align: left;
   }
 
   .contact-section {

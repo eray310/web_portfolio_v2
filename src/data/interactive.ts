@@ -1,7 +1,7 @@
 /**
- * Material for the three "choose to open" interactions. Everything here comes from the
- * works themselves: the cover images, colours sampled from those covers, a region of the
- * cover that holds the lettering, and cut times measured in the finished clips.
+ * Material for the "choose to open" interactions. Everything here comes from the works
+ * themselves: the cover images, colours sampled from those covers and a region of the
+ * cover that holds the lettering.
  * The code that uses it is loaded only when a visitor opens an interaction.
  */
 
@@ -19,15 +19,6 @@ export type LayersSpec = {
   title: string;
 };
 
-export type CutSpec = {
-  /** Path inside public/ */
-  src: string;
-  /** Moments (seconds) where the picture really changes in this clip. */
-  cuts: number[];
-  duration: number;
-  title: string;
-};
-
 export type GravitySpec = {
   poster: string;
   palette: string[];
@@ -37,7 +28,6 @@ export type GravitySpec = {
 
 export type ProjectInteractions = {
   layers?: LayersSpec;
-  cut?: CutSpec;
   gravity?: GravitySpec;
 };
 
@@ -49,12 +39,6 @@ export const allesta = {
     type: { x: 8, y: 59, w: 84, h: 15 },
     title: "Allesta",
   } satisfies LayersSpec,
-  cut: {
-    src: "process/allesta/kurgu-final.mp4",
-    cuts: [1.26, 3.1],
-    duration: 4,
-    title: "Allesta · bitmiş kurgu",
-  } satisfies CutSpec,
 };
 
 /** Works in Seçili İşler that get an interaction (chosen for what their covers and clips show). */
@@ -66,15 +50,6 @@ export const projectInteractions: Record<string, ProjectInteractions> = {
       palette: ["#11064f", "#2e086e", "#182f96", "#e8203c"],
       type: { x: 0, y: 22, w: 100, h: 34 },
       title: "Next Telekom",
-    },
-  },
-  // A clip with a hard cut at 1.30 s.
-  PayPal: {
-    cut: {
-      src: "portfolio/previews/paypal.mp4",
-      cuts: [1.3],
-      duration: 3,
-      title: "PayPal",
     },
   },
   // A cover made of clear parts: a pink palette, a character, a logo line.

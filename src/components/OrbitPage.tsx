@@ -9,18 +9,10 @@ const asset = (file: string) => `${BASE}portfolio/${file}`;
 
 // One work carries the whole story: the Allesta ad (an AI-assisted film).
 const POSTER = asset("Allesta_YZReklam.jpg");
-// Moments of the finished edit (4 s) shown as cuts; the last cut is the poster, which then
-// opens into the AI Artist scene. The three moments are plain stills cut from the film
-// (kurgu-final.mp4 at 0.3, 1.3 and 2.6 s). They used to be six <video> elements that
-// were seeked with "#t=": a hidden video can stay black until the browser has decoded
-// it, and browsers cap how many videos they decode at once, so a cut could show nothing.
-// An image is decoded the same way every time and needs no player.
-const CUTS = [
-  { src: `${BASE}process/allesta/kurgu-kesit-1.jpg` },
-  { src: `${BASE}process/allesta/kurgu-kesit-2.jpg` },
-  { src: `${BASE}process/allesta/kurgu-kesit-3.jpg` },
-  { src: POSTER },
-] as const;
+// Kurgu is shown by one still from the finished edit (kurgu-final.mp4 at 1.3 s). It is a plain
+// image on purpose: a hidden <video> can stay black until the browser has decoded it. Towards
+// the end of the scene it dissolves into the poster, which then opens into the AI Artist scene.
+const KURGU_STILL = `${BASE}process/allesta/kurgu-kesit-2.jpg`;
 
 // The CV links are shown only when this file really exists (see the check below).
 const CV_URL = `${BASE}cv/Eray_Omeroglu_CV.pdf`;
@@ -215,27 +207,12 @@ const SetArt = () => (
   </div>
 );
 
-const CutFrame = ({ i, thumb = false }: { i: number; thumb?: boolean }) => {
-  const cls = thumb ? `yr-thumb yr-thumb-${i}` : `yr-cut-img yr-cut-${i}`;
-  return <img className={cls} src={CUTS[i].src} alt="" loading="eager" decoding="async" draggable={false} />;
-};
-
 const SetCut = () => (
   <div className="yr-content yr-k" aria-hidden="true">
     <div className="yr-monitor yr-k-monitor">
-      {CUTS.map((_, i) => (
-        <CutFrame key={i} i={i} />
-      ))}
+      <img className="yr-k-still" src={KURGU_STILL} alt="" loading="eager" decoding="async" draggable={false} />
+      <img className="yr-k-poster" src={POSTER} alt="" loading="eager" decoding="async" draggable={false} />
     </div>
-    <div className="yr-strip">
-      {CUTS.map((_, i) => (
-        <CutFrame key={i} i={i} thumb />
-      ))}
-    </div>
-    <div className="yr-timeline">
-      <span className="yr-playhead" />
-    </div>
-    <span className="yr-cutno" />
   </div>
 );
 
@@ -266,14 +243,12 @@ const BackLink = () => (
   </a>
 );
 
-const CtaLinks = ({ hasCv }: { hasCv: boolean }) => (
+/** The final call: the brief opens on this page (BriefFlow); the CV links appear only when the PDF exists. */
+const CtaLinks = ({ hasCv, onBrief }: { hasCv: boolean; onBrief: () => void }) => (
   <div className="yr-cta-links">
-    <a className="yr-cta-link" href="/#work">
-      Seçili İşler <span aria-hidden="true">→</span>
-    </a>
-    <a className="yr-cta-link" href="/#contact">
-      İletişim <span aria-hidden="true">→</span>
-    </a>
+    <button type="button" className="yr-cta-link" onClick={onBrief}>
+      Projeni anlat <span aria-hidden="true">→</span>
+    </button>
     {hasCv && (
       <>
         <a className="yr-cta-link" href={CV_URL} target="_blank" rel="noopener noreferrer">
@@ -311,10 +286,21 @@ const useReducedMotion = () => {
 
 // The interactions are loaded only when a visitor opens one.
 const CreativeHost = lazy(() => import("./creative/CreativeHost"));
+const BriefFlow = lazy(() => import("./BriefFlow"));
+
+// The page scrolls natively here (no smooth scroller), so stopping it is one style. The
+// scrollbar gutter stays reserved (see OrbitPage.css), so the page does not shift.
+let savedOverflow = "";
+const lockPage = () => {
+  savedOverflow = document.body.style.overflowY;
+  document.body.style.overflowY = "hidden";
+};
+const unlockPage = () => {
+  document.body.style.overflowY = savedOverflow || "auto";
+};
 
 const ACTIONS: Record<number, { label: string; request: CreativeRequest }> = {
   1: { label: "Kareyi aç", request: { kind: "layers", spec: allesta.layers } },
-  3: { label: "Kesme noktasını sen seç", request: { kind: "cut", spec: allesta.cut } },
 };
 
 /** Where the five stars of the final constellation hang (percent of the screen). */
@@ -331,12 +317,13 @@ const finalVars = (scene: number): Vars => {
   const base: Vars = { "--app": 1, "--a": 1, "--g": 0, "--m": 0, "--mx": 0, "--my": 0, "--ms": 1, "--mo": 1, "--open": 0, "--kc": 0.9, "--ai": 1 };
   if (scene === 0) return base;
   if (scene === 1) return { ...base, "--g": 1 };
+  if (scene === 3) return { ...base, "--kc": 0.3 };
   const mp = motionPose(0.45);
   if (scene === 2) return { ...base, "--g": 1, "--m": 0.45, "--mx": `${mp.mx}px`, "--my": `${mp.my}px`, "--ms": mp.ms, "--mo": 1 };
   return base;
 };
 
-const StillOrbit = ({ hasCv }: { hasCv: boolean }) => {
+const StillOrbit = ({ hasCv, onBrief }: { hasCv: boolean; onBrief: () => void }) => {
   const [sc, setSc] = useState(1);
   useEffect(() => {
     const on = () => setSc(Math.min(1, (window.innerWidth - 40) / 560));
@@ -367,7 +354,7 @@ const StillOrbit = ({ hasCv }: { hasCv: boolean }) => {
       {scenes.map((s, i) => (
         <section key={s.title} id={`sahne-${i + 1}`} className="yr-still-scene" aria-labelledby={`yr-st-${i}`}>
           <div className="yr-still-box" style={{ height: 560 * sc }}>
-            <div className="yr-still-set" style={vars({ ...finalVars(i), "--sc": sc })} data-cut="3" data-ai="3">
+            <div className="yr-still-set" style={vars({ ...finalVars(i), "--sc": sc })} data-ai="3">
               {visuals[i]}
             </div>
           </div>
@@ -377,8 +364,8 @@ const StillOrbit = ({ hasCv }: { hasCv: boolean }) => {
         </section>
       ))}
       <section className="yr-still-end">
-        <h2>Bir sonraki kareyi birlikte tasarlayalım.</h2>
-        <CtaLinks hasCv={hasCv} />
+        <h2>İlk kareyi birlikte kuralım.</h2>
+        <CtaLinks hasCv={hasCv} onBrief={onBrief} />
         <ToolsLine />
       </section>
     </main>
@@ -386,7 +373,7 @@ const StillOrbit = ({ hasCv }: { hasCv: boolean }) => {
 };
 
 // ── Live version: a camera moving through one world as the page scrolls ────
-const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
+const LiveOrbit = ({ hasCv, onBrief }: { hasCv: boolean; onBrief: () => void }) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const phone = useIsPhone();
@@ -469,7 +456,6 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
     let vel = 0;
     let raf = 0;
     let last = 0;
-    let lastCut = -1;
     let lastAi = -1;
     let camA0 = 260; // how far the camera has moved in once the frame has become scene one
     let shxPx = 0;
@@ -595,12 +581,6 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
       stage.dataset.nav = P > TL.heroFade[1] && P < W.fin[0] ? "1" : "0";
       stage.classList.toggle("is-const", seg(fin, 0.35, 0.85) > 0.6);
 
-      // Kurgu: hard cuts at uneven moments of the scroll.
-      const cut = kc < 0.2 ? 0 : kc < 0.45 ? 1 : kc < 0.7 ? 2 : 3;
-      if (cut !== lastCut) {
-        lastCut = cut;
-        stage.dataset.cut = String(cut);
-      }
       // AI Artist: which reading is on screen (for the small label).
       const aiState = ai < 0.1 ? 0 : ai < 0.36 ? 1 : ai < 0.62 ? 2 : 3;
       if (aiState !== lastAi) {
@@ -676,7 +656,7 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
 
   return (
     <div className="yr-track" ref={trackRef}>
-      <div className="yr-stage" ref={stageRef} data-cut="0" data-ai="0">
+      <div className="yr-stage" ref={stageRef} data-ai="0">
         <div className="yr-bg" aria-hidden="true">
           <div className="yr-nebula" />
           <div className="yr-sky">
@@ -803,8 +783,8 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
         </div>
 
         <div className="yr-cta">
-          <h2>Bir sonraki kareyi birlikte tasarlayalım.</h2>
-          <CtaLinks hasCv={hasCv} />
+          <h2>İlk kareyi birlikte kuralım.</h2>
+          <CtaLinks hasCv={hasCv} onBrief={onBrief} />
           <ToolsLine />
         </div>
       </div>
@@ -815,6 +795,16 @@ const LiveOrbit = ({ hasCv }: { hasCv: boolean }) => {
 const OrbitPage = () => {
   const reduced = useReducedMotion();
   const [hasCv, setHasCv] = useState(false);
+  const [briefOpen, setBriefOpen] = useState(false);
+  const opener = useRef<HTMLElement | null>(null);
+  const openBrief = useCallback(() => {
+    opener.current = document.activeElement as HTMLElement | null;
+    setBriefOpen(true);
+  }, []);
+  const closeBrief = useCallback(() => {
+    setBriefOpen(false);
+    window.requestAnimationFrame(() => opener.current?.focus?.());
+  }, []);
 
   useEffect(() => {
     document.title = "Hakkımda — Eray Ömeroğlu";
@@ -847,7 +837,12 @@ const OrbitPage = () => {
         </a>
         <BackLink />
       </header>
-      {reduced ? <StillOrbit hasCv={hasCv} /> : <LiveOrbit hasCv={hasCv} />}
+      {reduced ? <StillOrbit hasCv={hasCv} onBrief={openBrief} /> : <LiveOrbit hasCv={hasCv} onBrief={openBrief} />}
+      {briefOpen && (
+        <Suspense fallback={null}>
+          <BriefFlow onClose={closeBrief} lock={lockPage} unlock={unlockPage} />
+        </Suspense>
+      )}
     </div>
   );
 };

@@ -1,0 +1,161 @@
+/* /kvkk, /gizlilik, /cerez-tercihleri: same dark ground and type as the other pages, a calm reading column. */
+.legal-main {
+  width: min(760px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: clamp(28px, 6vh, 64px) 0 clamp(48px, 9vh, 100px);
+}
+
+.legal-main h1 {
+  margin: 0 0 18px;
+  font-size: clamp(34px, 6vw, 56px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.legal-lead {
+  margin: 0 0 28px;
+  font-size: 18px;
+  line-height: 1.6;
+  color: rgba(234, 229, 236, 0.9);
+  text-wrap: pretty;
+}
+
+.legal-main section {
+  margin-top: 36px;
+}
+
+.legal-main h2 {
+  margin: 0 0 12px;
+  font-size: clamp(21px, 2.4vw, 26px);
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.legal-main p,
+.legal-main li {
+  font-size: 16.5px;
+  line-height: 1.7;
+  color: rgba(234, 229, 236, 0.88);
+  text-wrap: pretty;
+}
+
+.legal-main p {
+  margin: 0 0 12px;
+}
+
+.legal-main ul {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+
+.legal-main li {
+  margin-bottom: 6px;
+}
+
+.legal-main a {
+  color: var(--accentColor);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legal-main strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Draft markers: an unverified fact is highlighted so it cannot be missed before publishing. */
+.legal-draft {
+  padding: 12px 16px;
+  border: 1px solid rgba(250, 204, 21, 0.6);
+  border-radius: 12px;
+  background: rgba(250, 204, 21, 0.1);
+  color: #fde68a !important;
+}
+
+.legal-todo {
+  padding: 1px 6px;
+  color: #1c1400;
+  background: #fde68a;
+  border-radius: 4px;
+  font-size: 0.92em;
+}
+
+/* Cookie table */
+.legal-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.legal-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.legal-table th,
+.legal-table td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(234, 229, 236, 0.9);
+}
+
+.legal-table thead th {
+  color: var(--accentColor);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.legal-table tbody th {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.legal-btn {
+  min-height: 44px;
+  padding: 0 22px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0a0e17;
+  background: var(--accentColor);
+  border: 0;
+  border-radius: 24px;
+  cursor: pointer;
+}
+
+.legal-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.legal-status {
+  margin-top: 10px;
+}
+
+/* Footer links */
+.legal-foot nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+  margin-bottom: 10px;
+}
+
+.legal-foot nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: rgba(234, 229, 236, 0.9);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legal-foot nav a:hover {
+  color: var(--accentColor);
+}

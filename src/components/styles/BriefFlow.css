@@ -675,3 +675,19 @@
     transition: none;
   }
 }
+
+/* Information about personal data, beside the send button. A link only: not a consent box. */
+.bf-legal {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(234, 229, 236, 0.85);
+}
+
+.bf-legal a {
+  display: inline-block;
+  padding: 10px 0;
+  color: var(--accentColor);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

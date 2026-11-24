@@ -10,3 +10,18 @@
   from = "/ai-isler"
   to = "/ai-isler/index.html"
   status = 200
+
+[[redirects]]
+  from = "/kvkk"
+  to = "/kvkk/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/gizlilik"
+  to = "/gizlilik/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cerez-tercihleri"
+  to = "/cerez-tercihleri/index.html"
+  status = 200

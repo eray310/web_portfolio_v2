@@ -523,6 +523,16 @@ const BriefFlow = ({ initialServices, onClose, lock, unlock }: Props) => {
               {status === "sending" ? "Gönderiliyor…" : status === "error" ? message : ""}
             </p>
 
+            {step === 2 && (
+              <p className="bf-legal">
+                Kişisel verilerinin nasıl işlendiğini{" "}
+                <a href="/kvkk" target="_blank" rel="noopener noreferrer" data-cursor="disable">
+                  KVKK Aydınlatma Metni
+                </a>
+                'nde okuyabilirsin.
+              </p>
+            )}
+
             <div className="bf-actions">
               {step > 0 ? (
                 <button type="button" className="bf-secondary" onClick={back} disabled={status === "sending"} data-cursor="disable">

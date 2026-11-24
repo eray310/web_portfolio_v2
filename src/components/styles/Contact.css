@@ -139,3 +139,32 @@ a.contact-social {
     width: calc(100% - 25px);
   }
 }
+/* Footer: legal links beside the signature */
+.contact-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+  margin-top: 6px;
+}
+
+.contact-legal a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 15px;
+  color: rgba(234, 229, 236, 0.9);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.contact-legal a:hover {
+  color: var(--accentColor);
+}
+
+.contact-box .contact-copy {
+  display: block;
+  margin: 6px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  opacity: 0.85;
+}

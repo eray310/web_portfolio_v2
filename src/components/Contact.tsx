@@ -1,4 +1,4 @@
-import { MdArrowOutward, MdCopyright } from "react-icons/md";
+import { MdArrowOutward } from "react-icons/md";
 import "./styles/Contact.css";
 
 const Contact = () => {
@@ -34,9 +34,12 @@ const Contact = () => {
             <p className="contact-signature">
               Tasarım ve motion — <span>Eray Ömeroğlu</span>
             </p>
-            <p className="contact-copy">
-              <MdCopyright aria-hidden="true" /> 2026
-            </p>
+            <nav className="contact-legal" aria-label="Yasal sayfalar">
+              <a href="/gizlilik">Gizlilik</a>
+              <a href="/kvkk">KVKK Aydınlatma Metni</a>
+              <a href="/cerez-tercihleri">Çerez Tercihleri</a>
+            </nav>
+            <p className="contact-copy">© {new Date().getFullYear()} Eray Ömeroğlu. Tüm hakları saklıdır.</p>
           </footer>
         </div>
       </div>

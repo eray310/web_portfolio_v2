@@ -5,7 +5,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import Loading from "../components/Loading";
 
 interface LoadingType {
   isLoading: boolean;
@@ -18,7 +17,7 @@ export const LoadingContext = createContext<LoadingType | null>(null);
 export const LoadingProvider = ({ children }: PropsWithChildren) => {
   // The page is usable from the first frame; `loading` only drives the small status note.
   const [isLoading, setIsLoading] = useState(false);
-  const [loading, setLoading] = useState(0);
+  const [, setLoading] = useState(0);
 
   const value = {
     isLoading,
@@ -32,7 +31,6 @@ export const LoadingProvider = ({ children }: PropsWithChildren) => {
 
   return (
     <LoadingContext.Provider value={value as LoadingType}>
-      <Loading percent={loading} />
       <main className="main-body" id="main" tabIndex={-1}>{children}</main>
     </LoadingContext.Provider>
   );

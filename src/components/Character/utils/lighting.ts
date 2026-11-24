@@ -18,14 +18,26 @@ const setLighting = (scene: THREE.Scene) => {
   pointLight.castShadow = true;
   scene.add(pointLight);
 
-  new RGBELoader()
-    .setPath(`${import.meta.env.BASE_URL}models/`)
-    .load("char_enviorment.hdr?v=2", function (texture) {
-      texture.mapping = THREE.EquirectangularReflectionMapping;
-      scene.environment = texture;
-      scene.environmentIntensity = 0;
-      scene.environmentRotation.set(5.76, 85.85, 1);
-    });
+  // The reflections come from an environment picture that loads on its own. Until it is in,
+  // and the lights are on, the character is unlit and shows as a black silhouette, so the
+  // scene reports when it is really ready (see envReady and Scene.tsx).
+  let envIntensity = 0;
+  const envReady = new Promise<void>((resolve) => {
+    new RGBELoader()
+      .setPath(`${import.meta.env.BASE_URL}models/`)
+      .load(
+        "char_enviorment.hdr?v=2",
+        function (texture) {
+          texture.mapping = THREE.EquirectangularReflectionMapping;
+          scene.environment = texture;
+          scene.environmentIntensity = envIntensity;
+          scene.environmentRotation.set(5.76, 85.85, 1);
+          resolve();
+        },
+        undefined,
+        () => resolve() // a missing picture must not keep the character hidden for ever
+      );
+  });
 
   function setPointLight(screenLight: any) {
     if (screenLight.material.opacity > 0.9) {
@@ -38,6 +50,7 @@ const setLighting = (scene: THREE.Scene) => {
   const ease = "power2.inOut";
   function turnOnLights(instant = false) {
     if (instant) {
+      envIntensity = 0.64;
       scene.environmentIntensity = 0.64;
       directionalLight.intensity = 1;
       gsap.set(".character-rim", { y: "55%", opacity: 1 });
@@ -61,7 +74,7 @@ const setLighting = (scene: THREE.Scene) => {
     });
   }
 
-  return { setPointLight, turnOnLights };
+  return { setPointLight, turnOnLights, envReady };
 };
 
 export default setLighting;

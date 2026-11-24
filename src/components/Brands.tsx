@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from "react";
-import { MdPause, MdPlayArrow } from "react-icons/md";
 import { brands, type Brand } from "../data/brands";
 import { brandVideos } from "../data/brandVideos";
 import BrandGallery from "./BrandGallery";
@@ -17,8 +16,8 @@ const Brands = () => {
   // The brand whose video window is open, and the logo to give focus back to.
   const [openBrand, setOpenBrand] = useState<Brand | null>(null);
   const opener = useRef<HTMLElement | null>(null);
-  // The visitor can stop the strip (it also stops by itself on hover and keyboard focus).
-  const [paused, setPaused] = useState(false);
+  // The strip does not move by itself: it is scrolled by hand (finger, trackpad, wheel, drag, keyboard).
+  const drag = useRef({ id: -1, x: 0, left: 0, moved: false });
   const close = useCallback(() => {
     setOpenBrand(null);
     opener.current?.focus?.();
@@ -27,12 +26,10 @@ const Brands = () => {
   const preview = shown.length === 0 && import.meta.env.DEV;
   if (shown.length === 0 && !preview) return null;
 
-  const count = preview ? PREVIEW_SLOTS.length : shown.length;
-  // Enough copies that one half of the strip is wider than any screen.
-  const copies = Math.max(1, Math.ceil(10 / count));
+  const copies = 1;
 
   const renderSet = (hidden: boolean) => (
-    <ul className="brands-set" aria-hidden={hidden || undefined}>
+    <ul className="brands-set" aria-label="Markalar">
       {Array.from({ length: copies }).flatMap((_, copy) =>
         (preview ? PREVIEW_SLOTS : shown).map((item, i) => {
           const brand = typeof item === "string" ? null : item;
@@ -96,29 +93,46 @@ const Brands = () => {
 
   return (
     <section className="brands-section" aria-labelledby="brands-title">
-      <div className="brands-head">
-        <h2 id="brands-title">
-          Çalıştığım <span>Markalar</span>
-        </h2>
-        <button
-          type="button"
-          className="brands-pause"
-          aria-pressed={paused}
-          onClick={() => setPaused((p) => !p)}
-          data-cursor="disable"
-        >
-          {paused ? <MdPlayArrow aria-hidden="true" /> : <MdPause aria-hidden="true" />}
-          {paused ? "Şeridi oynat" : "Şeridi durdur"}
-        </button>
-      </div>
-      <div className={`brands-marquee${paused ? " is-paused" : ""}`}>
-        <div
-          className="brands-track"
-          style={{ ["--brands-count" as string]: count * copies }}
-        >
-          {renderSet(false)}
-          {renderSet(true)}
-        </div>
+      <h2 id="brands-title">
+        Çalıştığım <span>Markalar</span>
+      </h2>
+      <div
+        className="brands-marquee"
+        role="region"
+        aria-label="Çalıştığım markalar, yatay kaydırılır"
+        tabIndex={0}
+        onFocusCapture={(e) => {
+          // A logo that gets the keyboard focus is brought into view.
+          const t = e.target as HTMLElement;
+          if (t !== e.currentTarget) t.scrollIntoView?.({ inline: "center", block: "nearest" });
+        }}
+        onPointerDown={(e) => {
+          if (e.pointerType !== "mouse" || e.button !== 0) return;
+          drag.current = { id: e.pointerId, x: e.clientX, left: e.currentTarget.scrollLeft, moved: false };
+        }}
+        onPointerMove={(e) => {
+          const d = drag.current;
+          if (d.id !== e.pointerId) return;
+          const dx = e.clientX - d.x;
+          if (Math.abs(dx) > 5) d.moved = true;
+          if (d.moved) e.currentTarget.scrollLeft = d.left - dx;
+        }}
+        onPointerUp={(e) => {
+          if (drag.current.id === e.pointerId) drag.current.id = -1;
+        }}
+        onPointerCancel={() => {
+          drag.current.id = -1;
+        }}
+        onClickCapture={(e) => {
+          // A drag that ends over a logo is not a click on it.
+          if (drag.current.moved) {
+            e.preventDefault();
+            e.stopPropagation();
+            drag.current.moved = false;
+          }
+        }}
+      >
+        <div className="brands-track">{renderSet(false)}</div>
       </div>
       {preview && (
         <p className="brands-note">

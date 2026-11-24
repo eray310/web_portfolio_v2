@@ -87,18 +87,17 @@ const Scene = () => {
           scene.add(character);
           headBone = character.getObjectByName("spine006") || null;
           screenLight = character.getObjectByName("screenlight") || null;
-          if (still) {
-            // Static character: lit at once, no intro, no waiting for the loading count.
+          // Lit and played from the first visible frame: the character is revealed only when its
+          // lights and reflections are in, so it never shows as a black silhouette. Until then it
+          // stays hidden in its (fixed-size) place; the heading and menu do not wait for it.
+          Promise.race([light.envReady, new Promise((r) => window.setTimeout(r, 6000))]).then(() => {
+            if (cancelled) return;
             light.turnOnLights(true);
+            if (!still) animations.startIntro();
             progress.clear();
-          } else {
-            progress.loaded().then(() => {
-              setTimeout(() => {
-                light.turnOnLights();
-                animations.startIntro();
-              }, 2500);
-            });
-          }
+            renderer.render(scene, camera);
+            window.requestAnimationFrame(() => canvasDiv.current?.classList.add("char-lit"));
+          });
           onResize = () => handleResize(renderer, camera, canvasDiv, character);
           window.addEventListener("resize", onResize);
         }

@@ -20,41 +20,20 @@
   color: var(--accentColor);
 }
 
-/* One row of logos, scrolled by hand: finger swipe, trackpad, Shift + wheel, drag, scrollbar, keyboard. */
+/* One row of logos moving left at a slow, constant speed. */
 .brands-marquee {
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: hidden;
   width: 100%;
-  padding: 6px 0 14px;
-  scroll-snap-type: x proximity;
-  scroll-padding-inline: 24px;
-  overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(94, 234, 212, 0.5) transparent;
-  cursor: grab;
-}
-
-.brands-marquee:active {
-  cursor: grabbing;
-}
-
-.brands-marquee:focus-visible {
-  outline: 2px solid var(--accentColor);
-  outline-offset: -2px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
 }
 
 .brands-track {
   display: flex;
   width: max-content;
-  min-width: 100%;
-  justify-content: center;
-  padding: 0 24px;
-  box-sizing: border-box;
-}
-
-.brands-item {
-  scroll-snap-align: center;
+  /* About 20px per second: (item width + gap) per logo / speed. */
+  animation: brandsScroll calc(var(--brands-count, 8) * 10.8s) linear infinite;
+  will-change: transform;
 }
 
 .brands-set {
@@ -121,6 +100,11 @@
   color: var(--accentColor);
 }
 
+@keyframes brandsScroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
 
 @media only screen and (max-width: 767px) {
   .brands-section {
@@ -138,6 +122,43 @@
     padding: 10px 14px;
   }
 
+  /* Same ~20px per second with the narrower plates. */
+  .brands-track {
+    animation-duration: calc(var(--brands-count, 8) * 8.2s);
+  }
+}
+
+/* Reduced motion: the strip stands still, one row, scrolled by hand (finger, drag, Shift + wheel,
+   keys). No scroll bar; the copies made for the loop are not shown. */
+@media (prefers-reduced-motion: reduce) {
+  .brands-marquee {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+    scrollbar-width: none;
+    cursor: grab;
+  }
+
+  .brands-marquee::-webkit-scrollbar {
+    display: none;
+  }
+
+  .brands-marquee:focus-visible {
+    outline: 2px solid var(--accentColor);
+    outline-offset: -2px;
+  }
+
+  .brands-track {
+    min-width: 100%;
+    justify-content: center;
+    animation: none;
+    transform: none;
+  }
+
+  .brands-repeat,
+  .brands-set[aria-hidden="true"] {
+    display: none;
+  }
 }
 
 /* ── Logos open the brand's video window ── */
@@ -163,6 +184,13 @@
 .brands-open:focus-visible {
   outline: 2px solid var(--accentColor);
   outline-offset: 2px;
+}
+
+/* A moving logo is hard to click: the strip stands still under a real mouse. */
+@media (hover: hover) and (pointer: fine) {
+  .brands-marquee:hover .brands-track {
+    animation-play-state: paused;
+  }
 }
 
 /* ── Brand video window ── */
@@ -363,6 +391,39 @@
   }
 }
 
+/* ── Pause: hover, keyboard focus, and a small play/pause button under the strip ── */
+.brands-stage {
+  position: relative;
+}
+.brands-marquee.is-paused .brands-track,
+.brands-marquee:focus-within .brands-track {
+  animation-play-state: paused;
+}
+.brands-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: 6px max(15px, calc((100% - 1240px) / 2)) 0 auto;
+  padding: 0;
+  color: #eae5ec;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.brands-toggle svg {
+  font-size: 22px;
+  color: var(--accentColor);
+}
+.brands-toggle:hover {
+  border-color: var(--accentColor);
+}
+.brands-toggle:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 3px;
+}
 .brands-static {
   cursor: default;
 }

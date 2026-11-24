@@ -15,6 +15,7 @@ import {
 import setAnimations from "./utils/animationUtils";
 import { setProgress } from "../Loading";
 import { startWithout3D } from "../NoWebGLBoot";
+import { prefersReducedMotion } from "../../utils/motion";
 
 const Scene = () => {
   const canvasDiv = useRef<HTMLDivElement | null>(null);
@@ -63,6 +64,7 @@ const Scene = () => {
       let mixer: THREE.AnimationMixer;
 
       const clock = new THREE.Clock();
+      const still = prefersReducedMotion();
 
       const light = setLighting(scene);
       let progress = setProgress((value) => setLoading(value));
@@ -85,12 +87,18 @@ const Scene = () => {
           scene.add(character);
           headBone = character.getObjectByName("spine006") || null;
           screenLight = character.getObjectByName("screenlight") || null;
-          progress.loaded().then(() => {
-            setTimeout(() => {
-              light.turnOnLights();
-              animations.startIntro();
-            }, 2500);
-          });
+          if (still) {
+            // Static character: lit at once, no intro, no waiting for the loading count.
+            light.turnOnLights(true);
+            progress.clear();
+          } else {
+            progress.loaded().then(() => {
+              setTimeout(() => {
+                light.turnOnLights();
+                animations.startIntro();
+              }, 2500);
+            });
+          }
           onResize = () => handleResize(renderer, camera, canvasDiv, character);
           window.addEventListener("resize", onResize);
         }
@@ -150,9 +158,9 @@ const Scene = () => {
         });
       };
 
-      document.addEventListener("mousemove", onMouseMove);
+      if (!still) document.addEventListener("mousemove", onMouseMove);
       const landingDiv = document.getElementById("landingDiv");
-      if (landingDiv) {
+      if (landingDiv && !still) {
         landingDiv.addEventListener("touchstart", onTouchStart);
         landingDiv.addEventListener("touchend", onTouchEnd);
       }

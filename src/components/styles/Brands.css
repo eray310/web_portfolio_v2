@@ -392,3 +392,47 @@
     --bgH: 230px;
   }
 }
+
+/* ── Pause control, keyboard pause, logos without videos ── */
+.brands-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 0 auto 26px;
+}
+.brands-head h2 {
+  margin: 0;
+}
+.brands-pause {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 14px;
+  color: #eae5ec;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.brands-pause svg {
+  font-size: 20px;
+  color: var(--accentColor);
+}
+.brands-pause:hover {
+  border-color: var(--accentColor);
+}
+.brands-pause:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 3px;
+}
+.brands-marquee.is-paused .brands-track,
+.brands-marquee:focus-within .brands-track {
+  animation-play-state: paused;
+}
+.brands-static {
+  cursor: default;
+}

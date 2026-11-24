@@ -12,6 +12,9 @@
   top: 0;
   z-index: 9999;
 }
+.header nav {
+  display: flex;
+}
 .header ul {
   font-size: 12px;
   display: flex;
@@ -41,6 +44,10 @@
   font-weight: 500;
 }
 .navbar-title {
+  display: inline-flex;
+  align-items: center;
+  min-width: 44px;
+  min-height: 44px;
   font-weight: 700;
   font-size: 14px;
   letter-spacing: 0.2px;
@@ -61,7 +68,7 @@
     font-size: 16px;
   }
 }
-@media only screen and (min-width: 900px) {
+@media only screen and (min-width: 1600px) {
   .navbar-connect {
     display: block;
   }
@@ -71,7 +78,7 @@
     padding: 35px 0px;
   }
   .header ul {
-    column-gap: 80px;
+    column-gap: 56px;
     font-size: 16px;
   }
   .navbar-connect {
@@ -91,11 +98,11 @@
   .header ul {
     flex-direction: row;
     align-items: center;
-    column-gap: 6px;
-    font-size: 11.5px;
+    column-gap: 0;
+    font-size: 11px;
   }
   .header ul li {
-    letter-spacing: 0.8px;
+    letter-spacing: 0.3px;
     color: #eae5ec;
   }
   /* 44px tall touch targets */
@@ -104,7 +111,7 @@
     display: flex;
     align-items: center;
     min-height: 44px;
-    padding: 0 5px;
+    padding: 0 4px;
   }
   .navbar-title {
     padding-left: 0;

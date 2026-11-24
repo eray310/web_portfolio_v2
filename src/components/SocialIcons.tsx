@@ -1,9 +1,6 @@
 import { FaBehance } from "react-icons/fa6";
 import "./styles/SocialIcons.css";
-import { TbNotes } from "react-icons/tb";
 import { useEffect } from "react";
-import HoverLinks from "./HoverLinks";
-import { scrollToSection } from "./utils/scrollToSection";
 
 const SocialIcons = () => {
   useEffect(() => {
@@ -66,19 +63,6 @@ const SocialIcons = () => {
           </a>
         </span>
       </div>
-      <a
-        className="resume-button"
-        href="#experience"
-        onClick={(e) => {
-          e.preventDefault();
-          scrollToSection("#experience");
-        }}
-      >
-        <HoverLinks text="Deneyimimi Gör" />
-        <span>
-          <TbNotes />
-        </span>
-      </a>
     </div>
   );
 };

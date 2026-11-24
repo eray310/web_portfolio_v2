@@ -3,25 +3,36 @@ import gsap from "gsap";
 import { smoother } from "../Navbar";
 import { watchNameGradient } from "./nameGradient";
 import { scrollToSection, sectionGap } from "./scrollToSection";
+import { prefersReducedMotion } from "../../utils/motion";
 import { deepLinkHash, restoreDeepLink } from "../../utils/deepLink";
 
 export function initialFX() {
+  const calm = prefersReducedMotion();
   document.body.style.overflowY = "auto";
-  smoother.paused(false);
-  document.getElementsByTagName("main")[0].classList.add("main-active");
-  gsap.to("body", {
-    backgroundColor: "#0a0e17",
-    duration: 0.5,
-    delay: 1,
-  });
+  smoother?.paused(false);
+  document.documentElement.classList.add("fx-ready");
+  if (calm) {
+    gsap.set("body", { backgroundColor: "#0a0e17" });
+  } else {
+    document.getElementsByTagName("main")[0].classList.add("main-active");
+    gsap.to("body", {
+      backgroundColor: "#0a0e17",
+      duration: 0.5,
+      delay: 1,
+    });
+  }
 
   var landingText = new SplitText([".landing-intro h2", ".landing-intro h1"], {
     type: "chars,lines",
     linesClass: "split-line",
     charsClass: "split-char",
   });
+  // SplitText labels the heading with its letters run together ("ERAYÖMEROĞLU"); say it properly.
+  document.querySelector(".landing-intro h1")?.setAttribute("aria-label", "Eray Ömeroğlu");
   // Colour fade on the name; must be in place before the letters start moving.
   watchNameGradient();
+  // "Hareketi azalt": the heading is simply there; no letter or fade animations.
+  if (calm) return followHash();
   gsap.fromTo(
     landingText.chars,
     { opacity: 0, y: 80, filter: "blur(5px)" },
@@ -68,6 +79,10 @@ export function initialFX() {
     }
   );
 
+  followHash();
+}
+
+function followHash() {
   // A link such as /#work or /#contact (for example from the About page): once the
   // intro is over and the smooth scroller is running, go to that section. The page
   // can still grow while the 3D scene finishes setting up (its pinned scroll

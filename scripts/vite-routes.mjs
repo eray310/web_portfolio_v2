@@ -1,4 +1,4 @@
-// Dev / preview server routes: two real pages ("/" and "/hakkimda"), the form endpoint in
+// Dev / preview server routes: the real pages ("/", "/hakkimda", "/ai-isler"), the form endpoint in
 // api/idea.js, and a proper 404 for every other page-like address. On the host the same
 // is done by vercel.json (rewrite for /hakkimda) and public/404.html.
 import { readFileSync } from "node:fs";
@@ -40,8 +40,9 @@ export default function pageRoutes() {
       });
       return;
     }
-    if (path === "/hakkimda" || path === "/hakkimda/") {
-      req.url = "/hakkimda/index.html" + (query ? "?" + query : "");
+    const page = { "/hakkimda": "/hakkimda/index.html", "/ai-isler": "/ai-isler/index.html" }[path.replace(/\/$/, "")];
+    if (page) {
+      req.url = page + (query ? "?" + query : "");
       return next();
     }
     const pageLike =

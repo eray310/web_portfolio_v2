@@ -5,3 +5,8 @@
   from = "/hakkimda"
   to = "/hakkimda/index.html"
   status = 200
+
+[[redirects]]
+  from = "/ai-isler"
+  to = "/ai-isler/index.html"
+  status = 200

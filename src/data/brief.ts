@@ -14,6 +14,10 @@ export const SERVICES: readonly Service[] = [
   { label: "AI Artist", hint: "Hangi görsel dünyayı veya sahneyi keşfetmek istiyorsun?" },
   { label: "Art Direction", hint: "Markanın ya da kampanyanın nasıl hissettirmesini istiyorsun?" },
   { label: "Grafik Tasarım", hint: "Neyi tasarlıyoruz ve nerede kullanılacak?" },
+  // The three "AI İşler" services (see src/data/aiWorks.ts).
+  { label: "Web Sitesi", hint: "Nasıl bir site düşünüyorsun ve ziyaretçiler orada ne yapabilmeli?" },
+  { label: "Reklam Filmi ve Video", hint: "Hangi ürünü ya da mesajı nasıl bir filmle anlatmak istiyorsun?" },
+  { label: "Uygulama Geliştirme", hint: "Nasıl bir uygulama düşünüyorsun ve kimler kullanacak?" },
   { label: "Birlikte belirleyelim", hint: "Neyi, kimin için ve nerede kullanacağını kısaca anlat; gerisini birlikte belirleriz." },
 ];
 

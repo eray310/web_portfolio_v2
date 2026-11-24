@@ -163,3 +163,86 @@ body {
     top: 12px;
   }
 }
+/* ── Accessibility: skip link, first screen while 3D loads, reduced motion ── */
+.skip-link {
+  position: fixed;
+  left: 12px;
+  top: -80px;
+  z-index: 100000;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0a0e17;
+  background: var(--accentColor);
+  border-radius: 24px;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: 12px;
+  color: #0a0e17;
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+main:focus {
+  outline: none;
+}
+
+/* While the 3D scene is still loading the cards that the scene reveals are already readable. */
+.char-pending .what-box-in {
+  display: flex;
+}
+
+/* "Hareketi azalt": native scrolling, the character rests in the first screen only, cards are plain content. */
+.reduce-motion,
+.reduce-motion :root {
+  scroll-behavior: auto;
+}
+.reduce-motion .what-box-in {
+  display: flex;
+}
+@media screen and (min-width: 1025px) {
+  .reduce-motion .character-model {
+    position: absolute;
+    top: 0;
+    bottom: auto;
+    height: var(--vh);
+  }
+  .reduce-motion .character-container {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: var(--vh);
+    overflow: hidden;
+    pointer-events: none;
+  }
+}
+.reduce-motion .main-active {
+  animation: none;
+  opacity: 1;
+}
+/* "Hareketi azalt": decorative CSS animations and slides finish at once and nothing loops. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

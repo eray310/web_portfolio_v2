@@ -16,8 +16,13 @@ function topOffset() {
  */
 export function scrollToSection(selector: string) {
   const smoother = ScrollSmoother.get();
-  if (!smoother) return;
   const offset = topOffset();
+  if (!smoother) {
+    // Native scrolling ("Hareketi azalt"): jump, no animation.
+    const el = document.querySelector(selector);
+    if (el) window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top - offset, behavior: "auto" });
+    return;
+  }
   smoother.scrollTo(selector, true, offset ? `top ${offset}px` : "top top");
 }
 
@@ -30,8 +35,9 @@ export function scrollToSection(selector: string) {
 export function sectionGap(selector: string): number | null {
   const smoother = ScrollSmoother.get();
   const el = document.querySelector(selector);
-  if (!smoother || !el) return null;
+  if (!el || (!smoother && !document.documentElement.classList.contains("fx-ready"))) return null;
   const gap = el.getBoundingClientRect().top - topOffset();
-  const atEnd = smoother.scrollTop() >= ScrollTrigger.maxScroll(window) - 6;
+  const top = smoother ? smoother.scrollTop() : window.scrollY;
+  const atEnd = top >= ScrollTrigger.maxScroll(window) - 6;
   return atEnd && gap > 0 ? 0 : gap;
 }

@@ -150,10 +150,16 @@ const Work = () => {
       if (t?.closest('[role="dialog"]')) return;
       if (e.key === "ArrowLeft") prev();
       else if (e.key === "ArrowRight") next();
+      else if ((e.key === "Home" || e.key === "End") && stageRef.current?.contains(t)) {
+        // First / last card, only while the gallery itself has the focus.
+        e.preventDefault();
+        setIndex(e.key === "Home" ? 0 : count - 1);
+        setDrag(0);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [panelOpen, creative, prev, next]);
+  }, [panelOpen, creative, prev, next, count]);
 
   // Mouse wheel over the gallery: down = next card, up = previous card. One card
   // per step, whatever the spin speed. At either end the wheel goes to the page.

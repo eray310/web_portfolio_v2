@@ -68,6 +68,10 @@ html {
 }
 
 .yr-logo {
+  display: inline-flex;
+  align-items: center;
+  min-width: 44px;
+  min-height: 44px;
   font-size: 16px;
   font-weight: 700;
 }
@@ -693,7 +697,7 @@ html {
 .yr-ai-credit {
   width: 130px;
   margin: -30px 0 0 130px;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -1268,7 +1272,7 @@ html {
 
 .yr-ai-tag {
   margin: -264px 0 0 -110px;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 3px;
   text-transform: uppercase;
   color: var(--accentColor);
@@ -1367,12 +1371,15 @@ html {
   z-index: 8;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  visibility: hidden; /* hidden controls take no keyboard focus */
+  transition: opacity 0.3s ease, visibility 0s 0.3s;
 }
 
 .yr-stage[data-nav="1"] .yr-nav {
   opacity: 1;
   pointer-events: auto;
+  visibility: visible;
+  transition: opacity 0.3s ease, visibility 0s;
 }
 
 .yr-nav-btn {
@@ -1419,7 +1426,7 @@ html {
 }
 
 .yr-nav li button span {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 3px;
   color: var(--accentColor);
 }
@@ -1537,7 +1544,7 @@ html {
   top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 2px;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1594,7 +1601,79 @@ html {
   }
 
   .yr-star-label {
-    font-size: 9px;
+    font-size: 11px;
     letter-spacing: 1.2px;
+  }
+}
+
+/* ── Header menu, background pause, scene counter as a control ── */
+.yr-topnav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 14px;
+  pointer-events: none;
+}
+.yr-topnav > * {
+  pointer-events: auto;
+}
+.yr a.yr-toplink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #eae5ec;
+}
+.yr a.yr-toplink:hover {
+  color: var(--accentColor);
+}
+.yr-bgtoggle {
+  min-height: 44px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 14px;
+  color: #eae5ec;
+  background: rgba(8, 11, 17, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.yr-bgtoggle:hover {
+  border-color: var(--accentColor);
+}
+.yr-bgtoggle:focus-visible,
+.yr-nav-btn:focus-visible,
+.yr button:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 3px;
+}
+.yr[data-bg="paused"] .yr-bg,
+.yr[data-bg="paused"] .yr-bg *,
+.yr[data-bg="paused"] .yr-bg *::before,
+.yr[data-bg="paused"] .yr-bg *::after {
+  animation-play-state: paused !important;
+}
+/* The counter reads and behaves like a button: a visible outline and a clear name. */
+.yr-nav-btn {
+  padding: 0 16px !important;
+  font-size: 13px !important;
+  letter-spacing: 2px !important;
+  background: rgba(8, 11, 17, 0.72) !important;
+  border: 1px solid rgba(94, 234, 212, 0.55) !important;
+  border-radius: 999px !important;
+}
+@media only screen and (max-width: 560px) {
+  .yr-topnav {
+    gap: 0 8px;
+  }
+  .yr-bgtoggle {
+    padding: 0 10px;
+    font-size: 12.5px;
+  }
+  .yr a.yr-toplink,
+  .yr a.yr-back {
+    font-size: 14px;
   }
 }

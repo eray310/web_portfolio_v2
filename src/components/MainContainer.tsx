@@ -14,6 +14,9 @@ import setSplitText from "./utils/splitText";
 import ErrorBoundary from "./ErrorBoundary";
 import ToolsFallback from "./ToolsFallback";
 import { hasWebGL } from "../utils/webgl";
+import { initialFX } from "./utils/initialFX";
+
+let fxStarted = false;
 
 const TechStack = lazy(() => import("./TechStack"));
 
@@ -34,8 +37,39 @@ const MainContainer = ({ children }: PropsWithChildren) => {
     };
   }, [isDesktopView]);
 
+  // The first screen does not wait for the 3D scene: once the fonts are in (or after 1.2 s at
+  // most) the heading is revealed and scrolling is on, whatever the character is doing.
+  useEffect(() => {
+    if (fxStarted) return;
+    fxStarted = true;
+    let ran = false;
+    const start = () => {
+      if (ran) return;
+      ran = true;
+      initialFX();
+    };
+    const fonts = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts;
+    let t = 0;
+    const once = () => {
+      window.clearTimeout(t);
+      start();
+    };
+    t = window.setTimeout(once, 1200);
+    if (fonts?.ready) fonts.ready.then(() => window.setTimeout(once, 0));
+  }, []);
+
   return (
     <div className="container-main">
+      <a
+        className="skip-link"
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById("main")?.focus({ preventScroll: true });
+        }}
+      >
+        İçeriğe geç
+      </a>
       <Cursor />
       <Navbar />
       <SocialIcons />

@@ -1,93 +1,32 @@
 import { useEffect, useState } from "react";
 import "./styles/Loading.css";
-import { useLoading } from "../context/LoadingProvider";
 
-import Marquee from "react-fast-marquee";
-
+/**
+ * A small status note while the 3D scene downloads. It never covers the page: the heading,
+ * the menu and the scroll are usable from the first moment (the old full-screen loader is gone).
+ */
 const Loading = ({ percent }: { percent: number }) => {
-  const { setIsLoading } = useLoading();
-  const [loaded, setLoaded] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [clicked, setClicked] = useState(false);
-
-  if (percent >= 100) {
-    setTimeout(() => {
-      setLoaded(true);
-      setTimeout(() => {
-        setIsLoaded(true);
-      }, 1000);
-    }, 600);
-  }
+  const [gone, setGone] = useState(false);
+  const done = percent >= 100;
 
   useEffect(() => {
-    import("./utils/initialFX").then((module) => {
-      if (isLoaded) {
-        setClicked(true);
-        setTimeout(() => {
-          if (module.initialFX) {
-            module.initialFX();
-          }
-          setIsLoading(false);
-        }, 900);
-      }
-    });
-  }, [isLoaded]);
+    if (!done) return;
+    const t = window.setTimeout(() => setGone(true), 1600);
+    return () => window.clearTimeout(t);
+  }, [done]);
 
-  function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
-    const { currentTarget: target } = e;
-    const rect = target.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    target.style.setProperty("--mouse-x", `${x}px`);
-    target.style.setProperty("--mouse-y", `${y}px`);
-  }
+  // If the scene never arrives the page simply stays in its static view; do not leave a note up.
+  useEffect(() => {
+    const t = window.setTimeout(() => setGone(true), 30000);
+    return () => window.clearTimeout(t);
+  }, []);
 
+  if (gone) return null;
   return (
-    <>
-      <div className="loading-header">
-        <a href="/#" className="loader-title" data-cursor="disable">
-          EÖ
-        </a>
-        <div className={`loaderGame ${clicked && "loader-out"}`}>
-          <div className="loaderGame-container">
-            <div className="loaderGame-in">
-              {[...Array(27)].map((_, index) => (
-                <div className="loaderGame-line" key={index}></div>
-              ))}
-            </div>
-            <div className="loaderGame-ball"></div>
-          </div>
-        </div>
-      </div>
-      <div className="loading-screen">
-        <div className="loading-marquee">
-          <Marquee>
-            <span>Motion Designer</span> <span>Art Director</span>
-            <span>Video Editor</span> <span>AI Artist</span>
-          </Marquee>
-        </div>
-        <div
-          className={`loading-wrap ${clicked && "loading-clicked"}`}
-          onMouseMove={(e) => handleMouseMove(e)}
-        >
-          <div className="loading-hover"></div>
-          <div className={`loading-button ${loaded && "loading-complete"}`}>
-            <div className="loading-container">
-              <div className="loading-content">
-                <div className="loading-content-in">
-                  <span className="loading-text">Yükleniyor…</span>
-                  <span className="loading-percent">{percent}%</span>
-                </div>
-              </div>
-              <div className="loading-box"></div>
-            </div>
-            <div className="loading-content2">
-              <span>Hoş geldiniz</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+    <div className={`load-chip${done ? " load-chip-done" : ""}`} role="status" aria-live="polite">
+      <span className="load-chip-dot" aria-hidden="true" />
+      <span>{done ? "3D sahne hazır" : `3D sahne hazırlanıyor · ${percent}%`}</span>
+    </div>
   );
 };
 

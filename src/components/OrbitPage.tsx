@@ -333,7 +333,7 @@ const StillOrbit = ({ hasCv, onBrief }: { hasCv: boolean; onBrief: () => void })
   }, []);
   const visuals = [<SetArt />, <SetArt />, <SetArt />, <SetCut />, <SetAi />];
   return (
-    <main className="yr-still">
+    <div className="yr-still">
       <nav className="yr-still-nav" aria-label="Sahneler">
         <ul>
           {scenes.map((s, i) => (
@@ -368,7 +368,7 @@ const StillOrbit = ({ hasCv, onBrief }: { hasCv: boolean; onBrief: () => void })
         <CtaLinks hasCv={hasCv} onBrief={onBrief} />
         <ToolsLine />
       </section>
-    </main>
+    </div>
   );
 };
 
@@ -744,7 +744,7 @@ const LiveOrbit = ({ hasCv, onBrief }: { hasCv: boolean; onBrief: () => void }) 
 
         <nav className="yr-nav" ref={navRef} aria-label="Sahneler">
           <button type="button" className="yr-nav-btn" aria-expanded={navOpen} aria-controls="yr-nav-list" onClick={() => setNavOpen((o) => !o)}>
-            <span>{scene >= 0 ? `${scenes[scene].n} / 05` : "Sahneler"}</span>
+            <span>{scene >= 0 ? `Sahneler · ${scenes[scene].n} / 05` : "Sahneler"}</span>
             <span aria-hidden="true">{navOpen ? "▴" : "▾"}</span>
           </button>
           <ul id="yr-nav-list" hidden={!navOpen}>
@@ -796,6 +796,8 @@ const OrbitPage = () => {
   const reduced = useReducedMotion();
   const [hasCv, setHasCv] = useState(false);
   const [briefOpen, setBriefOpen] = useState(false);
+  // The animated sky can be stopped (WCAG 2.2.2); the choice is kept for this visit only.
+  const [bgPaused, setBgPaused] = useState(false);
   const opener = useRef<HTMLElement | null>(null);
   const openBrief = useCallback(() => {
     opener.current = document.activeElement as HTMLElement | null;
@@ -830,14 +832,36 @@ const OrbitPage = () => {
   }, []);
 
   return (
-    <div className="yr" data-mode={reduced ? "still" : "live"} style={vars({ "--poster": `url("${POSTER}")` })}>
+    <div className="yr" data-mode={reduced ? "still" : "live"} data-bg={bgPaused ? "paused" : undefined} style={vars({ "--poster": `url("${POSTER}")` })}>
+      <a
+        className="skip-link"
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById("main")?.focus();
+        }}
+      >
+        İçeriğe geç
+      </a>
       <header className="yr-top">
         <a className="yr-logo" href="/" aria-label="Eray Ömeroğlu, ana sayfa">
           EÖ
         </a>
-        <BackLink />
+        <nav className="yr-topnav" aria-label="Ana menü">
+          {!reduced && (
+            <button type="button" className="yr-bgtoggle" aria-pressed={bgPaused} onClick={() => setBgPaused((p) => !p)}>
+              {bgPaused ? "Arka planı oynat" : "Arka planı durdur"}
+            </button>
+          )}
+          <a className="yr-toplink" href="/ai-isler">
+            AI İşler
+          </a>
+          <BackLink />
+        </nav>
       </header>
-      {reduced ? <StillOrbit hasCv={hasCv} onBrief={openBrief} /> : <LiveOrbit hasCv={hasCv} onBrief={openBrief} />}
+      <main id="main" tabIndex={-1}>
+        {reduced ? <StillOrbit hasCv={hasCv} onBrief={openBrief} /> : <LiveOrbit hasCv={hasCv} onBrief={openBrief} />}
+      </main>
       {briefOpen && (
         <Suspense fallback={null}>
           <BriefFlow onClose={closeBrief} lock={lockPage} unlock={unlockPage} />

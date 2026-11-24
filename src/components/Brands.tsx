@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { MdPause, MdPlayArrow } from "react-icons/md";
 import { brands, type Brand } from "../data/brands";
 import { brandVideos } from "../data/brandVideos";
 import BrandGallery from "./BrandGallery";
@@ -16,6 +17,8 @@ const Brands = () => {
   // The brand whose video window is open, and the logo to give focus back to.
   const [openBrand, setOpenBrand] = useState<Brand | null>(null);
   const opener = useRef<HTMLElement | null>(null);
+  // The visitor can stop the strip (it also stops by itself on hover and keyboard focus).
+  const [paused, setPaused] = useState(false);
   const close = useCallback(() => {
     setOpenBrand(null);
     opener.current?.focus?.();
@@ -40,7 +43,23 @@ const Brands = () => {
                 brand ? "" : " brands-placeholder"
               }${brand?.wide ? " brands-item--wide" : ""}`}
             >
-              {brand ? (
+              {brand && !(brandVideos[brand.name]?.length) ? (
+                // No videos for this brand yet: the logo stays visible, but opens nothing.
+                <span className="brands-open brands-static">
+                  <img
+                    src={logoUrl(brand.logo)}
+                    alt={hidden || copy > 0 ? "" : brand.name}
+                    loading="lazy"
+                    decoding="async"
+                    draggable={false}
+                    onError={() =>
+                      setFailed((list) =>
+                        list.includes(brand.logo) ? list : [...list, brand.logo]
+                      )
+                    }
+                  />
+                </span>
+              ) : brand ? (
                 <button
                   type="button"
                   className="brands-open"
@@ -77,10 +96,22 @@ const Brands = () => {
 
   return (
     <section className="brands-section" aria-labelledby="brands-title">
-      <h2 id="brands-title">
-        Çalıştığım <span>Markalar</span>
-      </h2>
-      <div className="brands-marquee">
+      <div className="brands-head">
+        <h2 id="brands-title">
+          Çalıştığım <span>Markalar</span>
+        </h2>
+        <button
+          type="button"
+          className="brands-pause"
+          aria-pressed={paused}
+          onClick={() => setPaused((p) => !p)}
+          data-cursor="disable"
+        >
+          {paused ? <MdPlayArrow aria-hidden="true" /> : <MdPause aria-hidden="true" />}
+          {paused ? "Şeridi oynat" : "Şeridi durdur"}
+        </button>
+      </div>
+      <div className={`brands-marquee${paused ? " is-paused" : ""}`}>
         <div
           className="brands-track"
           style={{ ["--brands-count" as string]: count * copies }}

@@ -43,35 +43,6 @@
   will-change: left, top;
   transition: transform 0.3s ease-out;
 }
-.resume-button {
-  position: absolute;
-  z-index: 99;
-  display: flex;
-  gap: 5px;
-  bottom: 40px;
-  right: 0;
-  width: auto;
-  text-wrap: nowrap;
-  letter-spacing: 4px;
-  font-size: 15px;
-  line-height: 15px;
-  font-weight: 600;
-  color: #5e5e5e;
-  cursor: pointer;
-  transition: 0.5s;
-  transform-origin: left bottom;
-  transform: translateX(100%) rotateZ(-90deg);
-}
-.resume-button:hover {
-  color: #fff;
-}
-div.resume-button span {
-  color: #fff;
-  font-size: 17px;
-  margin-top: -1px;
-  display: flex;
-  align-items: center;
-}
 .check-line {
   position: fixed;
   top: 655px;
@@ -90,21 +61,9 @@ div.resume-button span {
     font-size: 28px;
   }
 }
-@media only screen and (min-width: 768px) {
-  .resume-button {
-    transform: none;
-    font-size: 20px;
-    line-height: 20px;
-  }
-  div.resume-button span {
-    font-size: 23px;
-    margin-top: -1.5px;
-  }
-}
 
-/* Phones: the link moves under the intro text (.landing-cta). */
-@media only screen and (max-width: 767px) {
-  .resume-button {
-    display: none;
-  }
+/* Steps aside while it would cover content; a keyboard focus brings it back. */
+.icons-section.is-tucked:not(:focus-within) .social-icons {
+  opacity: 0;
+  pointer-events: none;
 }

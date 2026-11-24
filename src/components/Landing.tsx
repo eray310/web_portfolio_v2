@@ -12,7 +12,7 @@ const Landing = ({ children }: PropsWithChildren) => {
         <div className="landing-container">
           <div className="landing-intro">
             <h2>Merhaba, ben</h2>
-            <h1>
+            <h1 aria-label="Eray Ömeroğlu">
               ERAY
               <br />
               <span>ÖMEROĞLU</span>

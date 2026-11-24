@@ -16,7 +16,8 @@ interface LoadingType {
 export const LoadingContext = createContext<LoadingType | null>(null);
 
 export const LoadingProvider = ({ children }: PropsWithChildren) => {
-  const [isLoading, setIsLoading] = useState(true);
+  // The page is usable from the first frame; `loading` only drives the small status note.
+  const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(0);
 
   const value = {
@@ -24,12 +25,15 @@ export const LoadingProvider = ({ children }: PropsWithChildren) => {
     setIsLoading,
     setLoading,
   };
-  useEffect(() => {}, [loading]);
+  // Until the 3D character is ready the page shows its readable static view (see index.css).
+  useEffect(() => {
+    document.documentElement.classList.add("char-pending");
+  }, []);
 
   return (
     <LoadingContext.Provider value={value as LoadingType}>
-      {isLoading && <Loading percent={loading} />}
-      <main className="main-body">{children}</main>
+      <Loading percent={loading} />
+      <main className="main-body" id="main" tabIndex={-1}>{children}</main>
     </LoadingContext.Provider>
   );
 };

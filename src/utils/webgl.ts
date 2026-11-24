@@ -8,6 +8,7 @@ let supported: boolean | undefined;
 export function markNoWebGL() {
   supported = false;
   document.documentElement.classList.add("no-webgl");
+  document.documentElement.classList.remove("char-pending");
 }
 
 /**
@@ -17,6 +18,7 @@ export function markNoWebGL() {
  */
 export function markNoCharacter() {
   document.documentElement.classList.add("no-character");
+  document.documentElement.classList.remove("char-pending");
 }
 
 /** True when the browser can create a WebGL context (checked once). */

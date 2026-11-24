@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import gsap from "gsap";
+import { prefersReducedMotion } from "../../utils/motion";
 
 // Horizontal extent of the seated character (chair to desk edge) measured from
 // the canvas centre, as a fraction of canvas height, at the default camera
@@ -88,11 +89,36 @@ function aboutRise() {
   return Math.max(0, Math.min(me.offsetHeight * 0.5, room));
 }
 
+/** The first-screen look of the scene (screen and monitor hidden) without any timeline. */
+function restPose(character: THREE.Object3D<THREE.Object3DEventMap> | null) {
+  character?.children.forEach((object: any) => {
+    if (object.name === "Plane004") {
+      object.children.forEach((child: any) => {
+        child.material.transparent = true;
+        child.material.opacity = 0;
+        if (child.material.name === "Material.018") {
+          child.material.color.set("#FFFFFF");
+          child.position.set(child.position.x, -10, 2);
+        }
+      });
+    }
+    if (object.name === "screenlight") {
+      object.material.transparent = true;
+      object.material.opacity = 0;
+      object.material.emissive.set("#B0F5EA");
+    }
+  });
+}
+
 export function setCharTimeline(
   character: THREE.Object3D<THREE.Object3DEventMap> | null,
   camera: THREE.PerspectiveCamera
 ) {
   clearCharTimeline();
+  document.documentElement.classList.remove("char-pending");
+  // "Hareketi azalt": no scroll-driven scene. The character stays in the first screen in
+  // its finished pose and the cards are plain content (see the reduce-motion rules in CSS).
+  if (prefersReducedMotion()) return restPose(character);
   // The canvas box is centred by CSS (left: 50% + translateX(-50%)). GSAP reads
   // that translation from the element when the first tween starts, and on some
   // machines (real Chrome at 125% scale, a resize mid-start) it reads it as a
@@ -163,7 +189,7 @@ export function setCharTimeline(
         .fromTo(character.rotation, { y: 0 }, { y: 0.7, duration: 1 }, 0)
         .to(camera.position, { z: 22 }, 0)
         .fromTo(".character-model", { x: 0 }, { x: "-25%", duration: 1 }, 0)
-        .to(".landing-container", { opacity: 0, duration: 0.4 }, 0)
+        .to(".landing-container", { autoAlpha: 0, duration: 0.4 }, 0)
         .to(".landing-container", { y: "40%", duration: 0.8 }, 0)
         // The About text starts half a block higher and slides into place as the
         // landing scrolls away. It must never start high enough to rise into the
@@ -184,7 +210,8 @@ export function setCharTimeline(
           0
         )
         .to(".about-section", { y: "30%", duration: 6 }, 0)
-        .to(".about-section", { opacity: 0, delay: 3, duration: 2 }, 0)
+        // autoAlpha: once it is gone its link (and everything else in it) leaves the tab order too.
+        .to(".about-section", { autoAlpha: 0, delay: 3, duration: 2 }, 0)
         // The fixed model layer never takes clicks (see Landing.css); only the small
         // hover circle over the face does, until the section has scrolled away.
         .fromTo(

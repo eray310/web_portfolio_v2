@@ -11,7 +11,17 @@
 //   IDEA_ORIGINS    optional, comma separated allowed origins besides the site's own host
 
 // Services of the brief form (keep in step with src/data/brief.ts).
-const SERVICES = ["Motion Design", "Video Kurgu", "AI Artist", "Art Direction", "Grafik Tasarım", "Birlikte belirleyelim"];
+const SERVICES = [
+  "Motion Design",
+  "Video Kurgu",
+  "AI Artist",
+  "Art Direction",
+  "Grafik Tasarım",
+  "Web Sitesi",
+  "Reklam Filmi ve Video",
+  "Uygulama Geliştirme",
+  "Birlikte belirleyelim",
+];
 // Types of the older "Bir fikrim var" panel.
 const TYPES = ["Reklam Videosu", "Motion Design", "Video Kurgu", "Henüz Net Değil"];
 const MIN_FILL_MS = 1500; // a person needs more than this to fill the form

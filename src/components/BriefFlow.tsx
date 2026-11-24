@@ -196,6 +196,14 @@ const BriefFlow = ({ initialServices, onClose, lock, unlock }: Props) => {
     set("services", SERVICES.map((s) => s.label).filter((l) => next.includes(l)));
   };
 
+  // Checks one field when the visitor leaves it, but only if something was typed: an empty
+  // required field is reported when the step is submitted, not while the visitor is still passing through.
+  const blur = (key: Field) => {
+    if (!String(draft[key as keyof Draft] ?? "").trim()) return;
+    const e = validate(step, draft);
+    if (e[key]) setErrors((p) => ({ ...p, [key]: e[key] }));
+  };
+
   const focusInvalid = () =>
     window.requestAnimationFrame(() =>
       panel.current?.querySelector<HTMLElement>("[aria-invalid='true'], [data-invalid='true'] input")?.focus()
@@ -331,10 +339,10 @@ const BriefFlow = ({ initialServices, onClose, lock, unlock }: Props) => {
               </h2>
 
               {step === 0 && (
-                <fieldset className="bf-cards" data-invalid={errors.services ? "true" : undefined} aria-describedby="bf-help-0">
+                <fieldset className="bf-cards" data-invalid={errors.services ? "true" : undefined} aria-describedby={errors.services ? "bf-help-0 bf-err-services" : "bf-help-0"}>
                   <legend className="bf-sr">İşin türü</legend>
                   <p className="bf-help" id="bf-help-0">
-                    İstediğin kadar seçebilirsin.
+                    En az bir tane seç (zorunlu); istediğin kadar seçebilirsin.
                   </p>
                   <div className="bf-card-grid">
                     {SERVICES.map((s) => {
@@ -351,7 +359,7 @@ const BriefFlow = ({ initialServices, onClose, lock, unlock }: Props) => {
                     })}
                   </div>
                   {errors.services && (
-                    <span className="bf-err" role="alert">
+                    <span className="bf-err" id="bf-err-services" role="alert">
                       {errors.services}
                     </span>
                   )}
@@ -369,18 +377,21 @@ const BriefFlow = ({ initialServices, onClose, lock, unlock }: Props) => {
                     ))}
                   </ul>
                   <label className="bf-field">
-                    <span>Projenin kısa tarifi</span>
+                    <span>
+                      Projenin kısa tarifi <em className="bf-req">(zorunlu)</em>
+                    </span>
                     <textarea
                       rows={5}
                       maxLength={2000}
                       value={draft.brief}
                       onChange={(e) => set("brief", e.target.value)}
                       aria-invalid={invalid("brief")}
-                      aria-describedby="bf-hints"
+                      aria-describedby={errors.brief ? "bf-hints bf-err-brief" : "bf-hints"}
+                      onBlur={() => blur("brief")}
                       required
                     />
                     {errors.brief && (
-                      <span className="bf-err" role="alert">
+                      <span className="bf-err" id="bf-err-brief" role="alert">
                         {errors.brief}
                       </span>
                     )}
@@ -390,9 +401,9 @@ const BriefFlow = ({ initialServices, onClose, lock, unlock }: Props) => {
                       <span>
                         Hedef teslim tarihi <em>(isteğe bağlı)</em>
                       </span>
-                      <input type="date" min={today()} value={draft.deadline} onChange={(e) => set("deadline", e.target.value)} aria-invalid={invalid("deadline")} />
+                      <input type="date" min={today()} value={draft.deadline} onChange={(e) => set("deadline", e.target.value)} aria-invalid={invalid("deadline")} aria-describedby={errors.deadline ? "bf-err-deadline" : undefined} onBlur={() => blur("deadline")} />
                       {errors.deadline && (
-                        <span className="bf-err" role="alert">
+                        <span className="bf-err" id="bf-err-deadline" role="alert">
                           {errors.deadline}
                         </span>
                       )}
@@ -414,11 +425,11 @@ const BriefFlow = ({ initialServices, onClose, lock, unlock }: Props) => {
                       autoComplete="off"
                       value={draft.reference}
                       onChange={(e) => set("reference", e.target.value)}
-                      aria-invalid={invalid("reference")}
+                      aria-invalid={invalid("reference")} aria-describedby={errors.reference ? "bf-err-reference" : undefined} onBlur={() => blur("reference")}
                       placeholder="https://"
                     />
                     {errors.reference && (
-                      <span className="bf-err" role="alert">
+                      <span className="bf-err" id="bf-err-reference" role="alert">
                         {errors.reference}
                       </span>
                     )}
@@ -430,19 +441,23 @@ const BriefFlow = ({ initialServices, onClose, lock, unlock }: Props) => {
                 <>
                   <div className="bf-row">
                     <label className="bf-field">
-                      <span>Ad</span>
-                      <input type="text" autoComplete="name" value={draft.name} onChange={(e) => set("name", e.target.value)} aria-invalid={invalid("name")} required />
+                      <span>
+                        Ad <em className="bf-req">(zorunlu)</em>
+                      </span>
+                      <input type="text" autoComplete="name" value={draft.name} onChange={(e) => set("name", e.target.value)} aria-invalid={invalid("name")} aria-describedby={errors.name ? "bf-err-name" : undefined} onBlur={() => blur("name")} required />
                       {errors.name && (
-                        <span className="bf-err" role="alert">
+                        <span className="bf-err" id="bf-err-name" role="alert">
                           {errors.name}
                         </span>
                       )}
                     </label>
                     <label className="bf-field">
-                      <span>E-posta</span>
-                      <input type="email" autoComplete="email" value={draft.email} onChange={(e) => set("email", e.target.value)} aria-invalid={invalid("email")} required />
+                      <span>
+                        E-posta <em className="bf-req">(zorunlu)</em>
+                      </span>
+                      <input type="email" autoComplete="email" value={draft.email} onChange={(e) => set("email", e.target.value)} aria-invalid={invalid("email")} aria-describedby={errors.email ? "bf-err-email" : undefined} onBlur={() => blur("email")} required />
                       {errors.email && (
-                        <span className="bf-err" role="alert">
+                        <span className="bf-err" id="bf-err-email" role="alert">
                           {errors.email}
                         </span>
                       )}

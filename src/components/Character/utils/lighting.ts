@@ -36,7 +36,13 @@ const setLighting = (scene: THREE.Scene) => {
   }
   const duration = 2;
   const ease = "power2.inOut";
-  function turnOnLights() {
+  function turnOnLights(instant = false) {
+    if (instant) {
+      scene.environmentIntensity = 0.64;
+      directionalLight.intensity = 1;
+      gsap.set(".character-rim", { y: "55%", opacity: 1 });
+      return;
+    }
     gsap.to(scene, {
       environmentIntensity: 0.64,
       duration: duration,

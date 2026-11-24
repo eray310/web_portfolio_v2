@@ -1,10 +1,12 @@
 import * as THREE from "three";
 import { GLTF } from "three-stdlib";
+import { prefersReducedMotion } from "../../../utils/motion";
 import { eyebrowBoneNames, typingBoneNames } from "../../../data/boneData";
 
 const setAnimations = (gltf: GLTF) => {
   let character = gltf.scene;
   let mixer = new THREE.AnimationMixer(character);
+  const still = prefersReducedMotion();
   if (gltf.animations) {
     const introClip = gltf.animations.find(
       (clip) => clip.name === "introAnimation"
@@ -13,6 +15,13 @@ const setAnimations = (gltf: GLTF) => {
     introAction.setLoop(THREE.LoopOnce, 1);
     introAction.clampWhenFinished = true;
     introAction.play();
+    if (still) {
+      // "Hareketi azalt": the character rests in the finished pose; no typing or key loops.
+      introAction.paused = true;
+      introAction.time = introClip!.duration;
+      mixer.update(0);
+      return { mixer, startIntro: () => {}, hover };
+    }
     const clipNames = ["key1", "key2", "key5", "key6"];
     clipNames.forEach((name) => {
       const clip = THREE.AnimationClip.findByName(gltf.animations, name);

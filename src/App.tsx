@@ -4,16 +4,25 @@ import "./App.css";
 const CharacterModel = lazy(() => import("./components/Character"));
 const MainContainer = lazy(() => import("./components/MainContainer"));
 const OrbitPage = lazy(() => import("./components/OrbitPage"));
+const AiWorksPage = lazy(() => import("./components/AiWorksPage"));
 import { LoadingProvider } from "./context/LoadingProvider";
 import NoWebGLBoot from "./components/NoWebGLBoot";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { hasWebGL } from "./utils/webgl";
 
-// The site is a single page plus one standalone page. There is no router: the
+// The site is a single page plus standalone pages. There is no router: the
 // path is read once, and the host rewrites every path to index.html.
 const isAboutPage = () => /^\/hakkimda\/?$/i.test(window.location.pathname);
+const isAiWorksPage = () => /^\/ai-isler\/?$/i.test(window.location.pathname);
 
 const App = () => {
+  if (isAiWorksPage()) {
+    return (
+      <Suspense>
+        <AiWorksPage />
+      </Suspense>
+    );
+  }
   if (isAboutPage()) {
     return (
       <Suspense>

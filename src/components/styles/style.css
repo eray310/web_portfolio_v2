@@ -8,7 +8,7 @@
   position: relative;
   transition: 0.3s;
 }
-.hover-in div {
+.hover-in span[aria-hidden] {
   display: flex;
   position: absolute;
   top: 100%;

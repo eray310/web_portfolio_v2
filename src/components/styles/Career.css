@@ -119,7 +119,7 @@ h2.career-title > span {
 
 .career-date {
   padding: 3px 11px;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.06em;
   white-space: nowrap;
   color: rgba(234, 229, 236, 0.75);
@@ -176,6 +176,12 @@ h2.career-title > span {
   padding-top: 12px;
 }
 
+/* Collapsed text is not read out or reachable while it is closed. */
+.career-row:not(.is-open) .career-desc p {
+  visibility: hidden;
+  transition: padding-top 0.4s ease, visibility 0s 0.4s;
+}
+
 /* ── First view: the line is drawn top to bottom, each row rises into focus
    when the line reaches it, and the current role's point glows once. ── */
 .career-wait .career-line {
@@ -183,6 +189,7 @@ h2.career-title > span {
 }
 
 .career-wait .career-row {
+  visibility: hidden;
   opacity: 0;
 }
 
@@ -218,11 +225,13 @@ h2.career-title > span {
 
 @keyframes careerRise {
   from {
+    visibility: hidden;
     opacity: 0;
     transform: translateY(16px);
     filter: blur(4px);
   }
   to {
+    visibility: visible;
     opacity: 1;
     transform: none;
     filter: none;
@@ -314,7 +323,7 @@ h2.career-title > span {
 
 .starter-service {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accentColor);

@@ -30,14 +30,14 @@ const Contact = () => {
               </a>
             </div>
           </div>
-          <div className="contact-box contact-sign">
+          <footer className="contact-box contact-sign">
             <p className="contact-signature">
               Tasarım ve motion — <span>Eray Ömeroğlu</span>
             </p>
-            <h5>
-              <MdCopyright /> 2026
-            </h5>
-          </div>
+            <p className="contact-copy">
+              <MdCopyright aria-hidden="true" /> 2026
+            </p>
+          </footer>
         </div>
       </div>
     </div>

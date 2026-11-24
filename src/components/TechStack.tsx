@@ -428,6 +428,12 @@ const TechStack = () => {
   return (
     <div className="techstack" ref={sectionRef}>
       <h2>Kullandığım Araçlar</h2>
+      {/* The balls are a picture; the same names as a plain list for screen readers. */}
+      <ul className="sr-only" aria-label="Kullandığım araçlar">
+        {tools.map((tool) => (
+          <li key={tool.name}>{tool.name}</li>
+        ))}
+      </ul>
 
       <Canvas
         shadows
@@ -436,6 +442,7 @@ const TechStack = () => {
         dpr={[1, 1.75]}
         onCreated={(state) => (state.gl.toneMappingExposure = 1.5)}
         className="tech-canvas"
+        aria-hidden="true"
       >
         <FitCamera />
         <ambientLight intensity={1} />

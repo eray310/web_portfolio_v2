@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MdClose, MdPlayArrow, MdArrowBack, MdArrowForward } from "react-icons/md";
-import { fileUrl, type Project } from "../data/projects";
+import { completeStory, fileUrl, type Project } from "../data/projects";
 import { projectInteractions } from "../data/interactive";
 import type { CreativeRequest } from "./creative/CreativeHost";
 import { lockScroll, unlockScroll } from "./utils/scrollLock";
@@ -150,6 +150,20 @@ const ProjectPanel = ({
             <h4>Proje Özeti</h4>
             <p>{project.description}</p>
           </section>
+
+          {completeStory(project) && (
+            <section className="project-panel-story">
+              <h4>Proje Hikâyesi</h4>
+              <dl>
+                <dt>Projenin odağı</dt>
+                <dd>{completeStory(project)!.focus}</dd>
+                <dt>Katkım</dt>
+                <dd>{completeStory(project)!.did}</dd>
+                <dt>Teslim</dt>
+                <dd>{completeStory(project)!.delivered}</dd>
+              </dl>
+            </section>
+          )}
 
           {project.contribution && project.contribution.length > 0 && (
             <section>

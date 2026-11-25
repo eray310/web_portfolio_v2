@@ -3,6 +3,7 @@ import About from "./About";
 import Brands from "./Brands";
 import Career from "./Career";
 import Contact from "./Contact";
+import Faq from "./Faq";
 import Cursor from "./Cursor";
 import Landing from "./Landing";
 import Navbar from "./Navbar";
@@ -72,6 +73,7 @@ const MainContainer = ({ children }: PropsWithChildren) => {
             ) : (
               <ToolsFallback />
             )}
+            <Faq />
             <Contact />
           </div>
         </div>

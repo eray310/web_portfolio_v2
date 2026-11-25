@@ -434,16 +434,30 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
   let ema = 16;
   let frames = 0;
 
+  const goal = { far: 1, mid: 1, near: 1, dust: 1 };
+  const drawFrac = { far: 1, mid: 1, near: 1, dust: 1 };
+  const easeCounts = (k: number) => {
+    for (const key of ["far", "mid", "near", "dust"] as const) {
+      const d = goal[key] - drawFrac[key];
+      if (Math.abs(d) < 0.004) drawFrac[key] = goal[key];
+      else drawFrac[key] += d * k;
+    }
+    far.geo.setDrawRange(0, Math.round(far.base * drawFrac.far));
+    mid.geo.setDrawRange(0, Math.round(mid.base * drawFrac.mid));
+    near.geo.setDrawRange(0, Math.round(near.base * drawFrac.near));
+    dust.geo.setDrawRange(0, Math.round(dust.base * drawFrac.dust));
+  };
+
   const applyQuality = () => {
     const dpr = Math.min(window.devicePixelRatio || 1, dprMax());
     renderer.setPixelRatio(dpr);
     renderer.setSize(w, h, false);
     shared.uPR.value = dpr;
-    const f = level === 0 ? 1 : level === 1 ? 0.6 : 0.2;
-    far.geo.setDrawRange(0, Math.round(far.base * (level === 2 ? 0.45 : level === 1 ? 0.8 : 1)));
-    mid.geo.setDrawRange(0, Math.round(mid.base * (level === 2 ? 0.55 : level === 1 ? 0.85 : 1)));
-    near.geo.setDrawRange(0, near.base);
-    dust.geo.setDrawRange(0, Math.round(dust.base * f));
+    // the counts are only targets: drawFrac eases toward them frame by frame (no sudden thinning)
+    goal.far = level === 2 ? 0.45 : level === 1 ? 0.8 : 1;
+    goal.mid = level === 2 ? 0.55 : level === 1 ? 0.85 : 1;
+    goal.near = light && level >= 1 ? 0.6 : 1;
+    goal.dust = level === 0 ? 1 : level === 1 ? 0.6 : 0.2;
     bgMat.uniforms.uQ.value = light || level >= 1 ? 0 : 1;
     trails.visible = level < 2;
   };
@@ -567,6 +581,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     }
     const hasBox = pick ? 1 : 0;
 
+    easeCounts(1 - Math.exp(-dt * 3));
     shared.uTravel.value = travel;
     shared.uTime.value = time;
     shared.uClearC.value.copy(clearC);
@@ -584,7 +599,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     bgMat.uniforms.uCalm.value = cur.calm;
     // soft background into the small picture: it only drifts slowly, so every third frame is enough,
     // every second one while the scroll is changing the look
-    if (frames <= 3 || still || frames % 3 === 0 || (Math.abs(sCur - prev) > 0.0005 && frames % 2 === 0)) {
+    if (frames <= 3 || still || frames % (light || level >= 2 ? 4 : 3) === 0 || (Math.abs(sCur - prev) > 0.0005 && frames % (light ? 3 : 2) === 0)) {
       renderer.setRenderTarget(rt);
       renderer.render(bgScene, camera);
       renderer.setRenderTarget(null);

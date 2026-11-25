@@ -21,6 +21,17 @@ export type Project = {
    * section is then not shown (nothing is guessed).
    */
   contribution?: string[];
+  /**
+   * "Projenin odağı / Katkım / Teslim": three short confirmed lines (the client's exact request is not known, so it is not claimed). The block is shown
+   * only when ALL THREE are filled in (nothing is guessed, no half-finished text is shown).
+   */
+  story?: { focus: string; did: string; delivered: string };
+};
+
+/** The story block of a project, or null while it is not complete. */
+export const completeStory = (p: Project) => {
+  const s = p.story;
+  return s && s.focus.trim() && s.did.trim() && s.delivered.trim() ? s : null;
 };
 
 /** Encodes each path segment so names with spaces or apostrophes still load. */
@@ -44,6 +55,11 @@ export const projects: Project[] = [
     poster: "voop-karikatur.jpg",
     preview: "voop-karikatur.mp4",
     categories: ["Yapay Zekâ", "Kurgu"],
+    story: {
+      focus: "Voop ürünlerini ve evcil dostlara yönelik yaklaşımını, karikatür tarzı bir karakterin anlatımıyla tanıtmak.",
+      did: "Videoyu baştan sona ben yaptım. Karakteri ve mağaza, depo, bahçe sahnelerini yapay zekâ destekli görsellerle kurdum, kurguyu yaptım, altyazıları konuşmayı kelime kelime takip edecek şekilde işledim.",
+      delivered: "26 saniyelik, sesli ve altyazılı dikey (9:16) video.",
+    },
   },
   {
     title: "Motosan",
@@ -53,6 +69,11 @@ export const projects: Project[] = [
     poster: "motosan.jpg",
     preview: "motosan.mp4",
     categories: ["Motion Graphics"],
+    story: {
+      focus: "Mototaş için bir kaskı, yapısı ve öne çıkan özellikleriyle tanıtmak.",
+      did: "Videoyu ben yaptım. Kaskı parçalara ayrılıp yeniden birleşen bir akışa dönüştürdüm; “Aerodinamik Full-Face Tasarım”, “Geniş Vizör Açısı” gibi özellikleri oklu yazılarla gösterdim ve Mototaş logosu ile web adresiyle bitirdim.",
+      delivered: "15 saniyelik, sesli dikey (9:16) video.",
+    },
   },
   {
     title: "RES360 | Proje Tanıtım Videosu",
@@ -72,6 +93,11 @@ export const projects: Project[] = [
     poster: "next-telekom.jpg",
     preview: "next-telekom.mp4",
     categories: ["Motion Graphics", "Kurgu"],
+    story: {
+      focus: "İnternet hızını, simetrik hızı, uydu interneti seçeneğini ve dijital sözleşmeyle hızlı başvuruyu anlatmak.",
+      did: "Videoyu ben yaptım. Her mesaja ayrı bir görsel dünya kurguladım: neon bir açılış, kod ekranında hız yazıları, uzayda uydu interneti, roketli başvuru çağrısı. Yazıları hareketlendirip “Next Telekom’a gel” çağrısıyla kapattım.",
+      delivered: "30 saniyelik, sesli dikey (9:16) video.",
+    },
   },
   {
     title: "Fidan Properties",
@@ -81,6 +107,11 @@ export const projects: Project[] = [
     poster: "fidan-properties.jpg",
     preview: "fidan-properties.mp4",
     categories: ["Motion Graphics", "Kurgu"],
+    story: {
+      focus: "Fidan Properties'in bölgelerini ve konumlarını uydu görüntüsü üzerinde göstermek.",
+      did: "Videoyu ben yaptım. Türkiye haritasından bölge haritasına yaklaşan akışı kurdum, bölgeleri renkli alanlarla ayırdım, konum işaretlerini ve etiketlerini hareketlendirdim, kapanışta marka yazısını getirdim.",
+      delivered: "53 saniyelik, sesli dikey (9:16) video.",
+    },
   },
   {
     title: "PayPal",

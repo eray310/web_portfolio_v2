@@ -663,3 +663,22 @@
     padding: 0 6px;
   }
 }
+
+.project-panel-story dl {
+  margin: 0;
+}
+
+.project-panel-story dt {
+  margin-top: 10px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--accentColor);
+}
+
+.project-panel-story dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.7;
+  color: rgba(234, 229, 236, 0.9);
+}

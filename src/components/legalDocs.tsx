@@ -3,10 +3,11 @@ import type { ReactNode } from "react";
 /**
  * Texts of the legal pages (/kvkk, /gizlilik, /cerez-tercihleri).
  *
- * DRAFT: these are drafts written from what the site really does. Anything that could not be
- * checked from the code is wrapped in <Todo> and shows as a highlighted "to be confirmed" note
- * on the page. When every <Todo> is settled: replace each one with the real text, then set
- * DRAFT to false (that also hides the draft notice on the pages).
+ * DRAFT: these are drafts written from what the site really does and from what the owner has
+ * stated. Anything that could not be checked (from the code, from an account setting or from an
+ * official source) is wrapped in <Todo> and shows as a highlighted "to be confirmed" note on the
+ * page. When every <Todo> is settled: replace each one with the real text, then set DRAFT to
+ * false (that also hides the draft notice on the pages).
  */
 export const DRAFT = true;
 
@@ -28,8 +29,13 @@ export type LegalDoc = {
   body: ReactNode;
 };
 
+/** The owner's contact address (also where the briefs arrive). */
+export const CONTACT_EMAIL = "omerogluuerayy@gmail.com";
+
 const year = new Date().getFullYear();
 export const copyright = `© ${year} Eray Ömeroğlu. Tüm hakları saklıdır.`;
+
+const Mail = () => <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>;
 
 const Rights = () => (
   <ul>
@@ -52,16 +58,19 @@ export const docs: Record<LegalKey, LegalDoc> = {
     body: (
       <>
         <section>
-          <h2>1. Veri sorumlusu</h2>
+          <h2>1. Veri sorumlusu ve iletişim</h2>
           <p>
-            Veri sorumlusu <strong>Eray Ömeroğlu</strong>'dur. <Todo>[Unvan: gerçek kişi mi şirket mi, doğrulanmadı]</Todo>
+            Siteyi kendi adıma işletiyorum; veri sorumlusu <strong>Eray Ömeroğlu</strong>'dur.
           </p>
           <ul>
             <li>
-              Adres: <Todo>[adres: sizden gerekli]</Todo>
+              E-posta: <Mail />
             </li>
             <li>
-              Başvuru kanalı: <Todo>[e-posta adresi ve varsa KEP adresi: sizden gerekli]</Todo>
+              Posta adresi: <Todo>[posta adresi henüz eklenmedi: sizden gerekli]</Todo>
+            </li>
+            <li>
+              KEP adresi: <Todo>[KEP adresi doğrulanmadı: varsa sizden gerekli, yoksa bu satır kaldırılacak]</Todo>
             </li>
           </ul>
         </section>
@@ -77,11 +86,11 @@ export const docs: Record<LegalKey, LegalDoc> = {
           <p>Siteyi yalnızca ziyaret edersen:</p>
           <ul>
             <li>
-              Barındırma sağlayıcısının sunucu kayıtlarında tutulabilen teknik bilgiler: IP adresi, tarayıcı ve cihaz bilgisi, istek zamanı ve istenen adres.{" "}
-              <Todo>[Kayıtların tam kapsamı ve süresi üretim ayarlarında doğrulanmadı]</Todo>
+              Barındırma sağlayıcısının (Vercel) sunucu kayıtlarında tutulabilen teknik bilgiler: IP adresi, tarayıcı ve cihaz bilgisi, istek zamanı ve istenen adres.{" "}
+              <Todo>[Kayıtların tam kapsamı bu projenin ayarlarında doğrulanmadı]</Todo>
             </li>
-            <li>Yazı tiplerini yüklemek için tarayıcın Google'ın sunucularına istek gönderir; bu istekte IP adresin ve tarayıcı bilgin Google'a ulaşır.</li>
           </ul>
+          <p>Site yazı tiplerini bir yazı tipi sunucusundan değil, senin cihazındaki sistem yazı tiplerinden alır; bu yüzden böyle bir sunucuya istek gitmez.</p>
           <p>Lütfen proje tarifine özel nitelikli kişisel veri (sağlık, din, dernek üyeliği gibi) yazma; projen için gerekmiyor.</p>
         </section>
 
@@ -93,24 +102,18 @@ export const docs: Record<LegalKey, LegalDoc> = {
             <li>Sitenin çalışması için gerekli teknik işlemleri yürütmek.</li>
             <li>Hukuki yükümlülükleri yerine getirmek.</li>
           </ul>
-          <p>
-            Verilerin pazarlama listesi oluşturmak ya da brief dışı bir amaçla kullanılmaz.{" "}
-            <Todo>[Bu cümle sizin uygulamanıza göre doğrulanmalı]</Todo>
-          </p>
+          <p>Brief bilgilerin pazarlama, bülten veya kampanya için kullanılmaz ve bu amaçla bir listeye eklenmez.</p>
         </section>
 
         <section>
           <h2>4. Toplama yöntemi ve hukuki sebep</h2>
-          <p>
-            <Todo>[Hukuki sebepler taslaktır, onayınız gerekli]</Todo>
-          </p>
           <p>Veriler, sitedeki formu doldurman ve tarayıcının sunucuya yaptığı istekler yoluyla elektronik ortamda toplanır.</p>
+          <p>
+            <Todo>[Aşağıdaki hukuki sebepler taslaktır; yayından önce onayınız gerekli]</Todo>
+          </p>
           <ul>
-            <li>
-              Brief'in değerlendirilmesi ve sana dönülmesi: bir sözleşmenin kurulmasına yönelik talebin gereği olarak (KVKK m.5/2-c).</li>
-            <li>
-              Form güvenliği, kötüye kullanımın önlenmesi ve sunucu kayıtları: veri sorumlusunun meşru menfaati (KVKK m.5/2-f).
-            </li>
+            <li>Brief'in değerlendirilmesi ve sana dönülmesi: bir sözleşmenin kurulmasına yönelik talebin gereği olarak (KVKK m.5/2-c).</li>
+            <li>Form güvenliği, kötüye kullanımın önlenmesi ve sunucu kayıtları: veri sorumlusunun meşru menfaati (KVKK m.5/2-f).</li>
             <li>Kanunda açıkça öngörülen ve hukuki yükümlülüğün gerektirdiği işlemler (KVKK m.5/2-a ve 5/2-ç).</li>
           </ul>
         </section>
@@ -125,32 +128,69 @@ export const docs: Record<LegalKey, LegalDoc> = {
               <strong>Resend:</strong> brief'in e-posta olarak bana iletilmesini sağlayan e-posta gönderim hizmeti. Amaç: gönderdiğin brief'in tarafıma ulaşması.
             </li>
             <li>
-              <strong>E-posta kutusu sağlayıcım:</strong> brief'in ulaştığı posta kutusunu işleten hizmet. <Todo>[Sağlayıcı: sizden gerekli]</Todo>
-            </li>
-            <li>
-              <strong>Google:</strong> yazı tiplerinin sunulması (IP adresi ve tarayıcı bilgisi).
+              <strong>Google (Gmail):</strong> brief'in ulaştığı <Mail /> posta kutusunu işleten e-posta sağlayıcısı. Amaç: brief'i okuyup yanıtlayabilmem.
             </li>
             <li>Yasal bir yükümlülük doğarsa yetkili kamu kurum ve kuruluşları, yalnızca talep edilen kapsamda.</li>
           </ul>
           <p>
-            Bu hizmet sağlayıcıların sunucuları yurt dışında olabilir; bu durumda aktarım KVKK m.9 çerçevesinde yapılır.{" "}
-            <Todo>[Vercel ve Resend hesap bölgesi ile aktarımın dayanağı (yeterlilik kararı, uygun güvenceler vb.): üretim ayarlarında doğrulanmadı]</Todo>
+            Bu hizmet sağlayıcıların sunucuları yurt dışındadır. Vercel kendi sözleşme metninde birincil işleme tesislerinin ABD'de olduğunu belirtir; yeni projelerde fonksiyonlar varsayılan olarak ABD'de Washington, D.C. bölgesinde (iad1) çalışır. Resend, işlemenin ABD'de yapıldığını ve gönderim için AWS'yi (ABD) kullandığını belirtir. Bu nedenle brief bilgilerin yurt dışına aktarılır ve aktarım KVKK m.9 kapsamındadır.
+          </p>
+          <p>
+            <Todo>
+              [Doğrulanamadı: (1) bu projenin Vercel fonksiyon bölgesi ve hesabın planı; (2) Resend hesabının veri bölgesi; (3) KVKK m.9'a göre bu aktarımın dayanağı (yeterlilik kararı, uygun güvenceler veya arızi hâl) ve 2024 değişikliğinin yürürlük tarihi. Sağlayıcıların kendi metinlerinde Avrupa Komisyonu'nun standart sözleşme maddelerine ve (Resend için) AB-ABD Veri Gizliliği Çerçevesi'ne atıf vardır; bunlar Türkiye'deki aktarım dayanağının yerine geçmez.]
+            </Todo>
           </p>
         </section>
 
         <section>
           <h2>6. Saklama süresi</h2>
-          <p>
-            <Todo>[Brief e-postalarının ve sunucu kayıtlarının saklama süresi: sizden gerekli]</Todo> Amaç ortadan kalktığında veriler silinir, yok edilir veya anonim hâle getirilir.
-          </p>
+          <ul>
+            <li>
+              <strong>Brief e-postaları:</strong> brief'in ulaştığı Gmail kutumda brief'i ve ilgili e-postaları en fazla 1 gün saklıyorum; bu benim kendi kutumdaki uygulamamdır.{" "}
+              <Todo>[Bir günlük silmenin nasıl uygulandığı (elle mi, otomatik kural mı) doğrulanmadı; Gmail çöp kutusu, yedekler ve sağlayıcı kayıtları için süre bilinmiyor]</Todo>
+            </li>
+            <li>
+              <strong>Vercel sunucu kayıtları:</strong> süre Vercel hesabının planına göre değişir (Vercel belgelerinde Hobby için 1 saat, Pro için 1 gün, Observability Plus ile 30 güne kadar).{" "}
+              <Todo>[Bu sitenin planı ve gerçek süre doğrulanmadı]</Todo>
+            </li>
+            <li>
+              <strong>Resend:</strong> <Todo>[Resend'de gönderilen e-postanın içeriğinin ve kayıtlarının ne kadar süre tutulduğu doğrulanmadı]</Todo>
+            </li>
+            <li>
+              <strong>Form hız sınırı:</strong> IP adresin yalnızca sunucu fonksiyonunun belleğinde, birkaç dakikalık bir pencere için sayılır; ayrı bir kayıt tutulmaz.
+            </li>
+          </ul>
+          <p>1 günlük süre, saydığım diğer sağlayıcıların ve yedeklerin sürelerini kapsamaz. Amaç ortadan kalktığında veriler silinir, yok edilir veya anonim hâle getirilir.</p>
         </section>
 
         <section>
           <h2>7. İlgili kişi olarak haklarınız</h2>
           <p>KVKK'nın 11. maddesi uyarınca veri sorumlusuna başvurarak şunları isteyebilirsin:</p>
           <Rights />
+        </section>
+
+        <section>
+          <h2>8. Başvuru usulü</h2>
           <p>
-            Başvurunu, yukarıdaki başvuru kanalından yazılı olarak veya (varsa) KEP adresi ya da daha önce bildirdiğin e-posta adresi üzerinden iletebilirsin. Başvurunda kimliğini, talebini ve yanıtın nereye gönderileceğini açıkça yazman gerekir. Başvuruların, talebin niteliğine göre en geç otuz gün içinde sonuçlandırılır. Yanıttan memnun kalmazsan ya da yanıt alamazsan Kişisel Verileri Koruma Kurulu'na şikâyette bulunma hakkın saklıdır (KVKK m.13 ve m.14).
+            Başvurunu “Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ”in 5. maddesinde sayılan yollardan biriyle yapabilirsin: yazılı olarak; kayıtlı elektronik posta (KEP) adresi, güvenli elektronik imza veya mobil imza ile; ya da daha önce veri sorumlusuna bildirdiğin ve veri sorumlusunun sisteminde kayıtlı e-posta adresinden.
+          </p>
+          <ul>
+            <li>
+              <strong>Normal e-posta:</strong> brief'te bildirdiğin e-posta adresinden <Mail /> adresine yazarak başvurabilirsin. Tebliğ'e göre bu yol, adresin veri sorumlusunun sisteminde kayıtlı olmasına bağlıdır. Brief e-postaları 1 gün sonra silindiği için, silindikten sonra gelen bir e-posta bu yola girmeyebilir; bu durumda yazılı başvuru, KEP veya imza ile başvuru gerekir ya da kimliğini doğrulamak için ek bilgi isteyebilirim.{" "}
+              <Todo>[Bu yorum yayından önce sizin tarafınızdan ve gerekirse bir hukukçu tarafından doğrulanmalı]</Todo>
+            </li>
+            <li>
+              <strong>Yazılı:</strong> <Todo>[posta adresi eklendiğinde buraya yazılacak]</Todo>
+            </li>
+            <li>
+              <strong>KEP, güvenli elektronik imza veya mobil imza:</strong> <Todo>[KEP adresi doğrulanmadı; imzalı e-posta kabul edilip edilmeyeceği sizden gerekli]</Todo>
+            </li>
+          </ul>
+          <p>
+            Başvuruda şunlar bulunmalıdır: adın ve soyadın; yazılı başvuruda imzan; T.C. kimlik numaran (yabancıysan uyruğun ve pasaport ya da kimlik numaran); yanıtın gönderileceği yerleşim yeri veya iş yeri adresin; varsa e-posta, telefon ve faks bilgilerin; talebinin konusu. İstersen belge de ekleyebilirsin.
+          </p>
+          <p>
+            Başvurun, talebin niteliğine göre en geç otuz gün içinde ve ücretsiz olarak sonuçlandırılır; işlemin ayrı bir maliyeti varsa Kurul'un belirlediği tarifedeki ücret istenebilir. Yanıt yazılı veya elektronik ortamda verilir. Başvurun reddedilirse, yanıtı yetersiz bulursan ya da süresinde yanıt alamazsan, yanıtı öğrendiğin tarihten itibaren otuz gün içinde ve her hâlde başvuru tarihinden itibaren altmış gün içinde Kişisel Verileri Koruma Kurulu'na şikâyette bulunabilirsin (KVKK m.13 ve m.14).
           </p>
         </section>
       </>
@@ -165,10 +205,10 @@ export const docs: Record<LegalKey, LegalDoc> = {
         <section>
           <h2>Kısaca</h2>
           <ul>
-            <li>
-              Sitede çerez, reklam veya ziyaretçi takip aracı kullanılmıyor.
-            </li>
+            <li>Sitede çerez, reklam veya ziyaretçi takip aracı kullanılmıyor.</li>
+            <li>Sayfalar hiçbir yazı tipi sunucusuna istek göndermez; senin cihazındaki sistem yazı tipleri kullanılır.</li>
             <li>Yalnızca brief formunu gönderirsen adını, e-postanı ve projeni anlatan bilgileri alıyorum.</li>
+            <li>Brief bilgilerin pazarlama, bülten veya kampanya için kullanılmaz.</li>
             <li>Formu yazarken girdiklerin gönderene kadar yalnızca tarayıcında durur.</li>
           </ul>
         </section>
@@ -177,9 +217,11 @@ export const docs: Record<LegalKey, LegalDoc> = {
           <h2>Siteyi gezerken</h2>
           <ul>
             <li>
-              <strong>Sunucu kayıtları.</strong> Siteyi barındıran Vercel, her istekte IP adresi, tarayıcı bilgisi ve istenen adres gibi teknik bilgileri sunucu kayıtlarında tutabilir.</li>
+              <strong>Sunucu kayıtları.</strong> Siteyi barındıran Vercel, her istekte IP adresi, tarayıcı bilgisi ve istenen adres gibi teknik bilgileri sunucu kayıtlarında tutabilir.{" "}
+              <Todo>[Kapsam ve süre bu projenin ayarlarında doğrulanmadı]</Todo>
+            </li>
             <li>
-              <strong>Yazı tipleri.</strong> Sayfalar Google'ın yazı tipi hizmetinden yazı tiplerini yükler. Bu sırada IP adresin ve tarayıcı bilgin Google'a ulaşır. Google'ın bu verileri nasıl kullandığı kendi politikasına bağlıdır.
+              <strong>Yazı tipleri.</strong> Dış bir yazı tipi hizmeti kullanılmaz; metinler cihazındaki sistem yazı tipleriyle gösterilir.
             </li>
             <li>
               <strong>Videolar, görseller ve 3D sahne</strong> sitenin kendi sunucusundan gelir.
@@ -196,29 +238,28 @@ export const docs: Record<LegalKey, LegalDoc> = {
             <li>“Gönder”e basınca bilgilerin sitenin form uç noktasına (/api/idea) gider. Orada kontrol edilir ve e-posta servisi (Resend) aracılığıyla bana iletilir. “Gönderildi” mesajı yalnızca e-posta servisi gönderimi kabul ettiğinde görünür.</li>
             <li>Spam'i ayıklamak için formun doldurulma süresine ve gizli bir kontrol alanına bakılır. Kısa süreli hız sınırı için IP adresin geçici olarak sunucunun belleğinde sayılır.</li>
           </ul>
-          <p>
-            Bu bilgileri seninle iletişime geçmek, projeni değerlendirmek ve teklif hazırlamak için kullanırım.
-          </p>
+          <p>Bu bilgileri seninle iletişime geçmek, projeni değerlendirmek ve teklif hazırlamak için kullanırım; başka bir amaçla kullanmam.</p>
         </section>
 
         <section>
           <h2>Bilgiler kimlerle paylaşılır?</h2>
           <p>
-            Siteyi ve form uç noktasını barındıran Vercel, e-postayı ileten Resend ve brief'in ulaştığı e-posta kutusunu işleten sağlayıcı bu bilgilere teknik olarak erişebilir. Bunun dışında bilgilerin kimseyle paylaşılmaz; yasal bir zorunluluk doğarsa yetkili kurumlar bunun istisnasıdır.
+            Siteyi ve form uç noktasını barındıran Vercel, e-postayı ileten Resend ve brief'in ulaştığı Gmail kutusunu işleten Google bu bilgilere teknik olarak erişebilir. Bu sağlayıcıların sunucuları yurt dışındadır (ayrıntı için KVKK Aydınlatma Metni, 5. bölüm). Bunun dışında bilgilerin kimseyle paylaşılmaz; yasal bir zorunluluk doğarsa yetkili kurumlar bunun istisnasıdır.
           </p>
         </section>
 
         <section>
           <h2>Ne kadar süre saklanır?</h2>
           <p>
-            <Todo>[Saklama süresi: sizden gerekli]</Todo>
+            Brief ve ilgili e-postaları Gmail kutumda 1 gün saklıyorum; bu benim kendi kutumdaki uygulamamdır.{" "}
+            <Todo>[Silmenin nasıl uygulandığı doğrulanmadı; Gmail çöp kutusu, yedekler, Vercel ve Resend kayıtları için süre bilinmiyor ve 1 gün olarak varsayılmıyor]</Todo>
           </p>
         </section>
 
         <section>
           <h2>Haklarınız ve başvuru</h2>
           <p>
-            Verilerine erişmek, düzeltilmesini ya da silinmesini istemek veya bir sorunu bildirmek için bana yazabilirsin: <Todo>[e-posta adresi: sizden gerekli]</Todo>. Haklarının tam listesi ve başvuru usulü <a href="/kvkk">KVKK Aydınlatma Metni</a>'nde yer alır. Kişisel Verileri Koruma Kurulu'na şikâyet hakkın da saklıdır.
+            Verilerine erişmek, düzeltilmesini ya da silinmesini istemek veya bir sorunu bildirmek için bana yazabilirsin: <Mail />. Haklarının tam listesi ve resmî başvuru usulü <a href="/kvkk">KVKK Aydınlatma Metni</a>'nde yer alır. Kişisel Verileri Koruma Kurulu'na şikâyet hakkın da saklıdır.
           </p>
         </section>
 

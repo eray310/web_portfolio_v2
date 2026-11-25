@@ -22,7 +22,7 @@ function drawLabel(canvas: HTMLCanvasElement, name: string, color: string) {
   ctx.fillStyle = "#ffffff";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = "700 76px Montserrat, Arial, sans-serif";
+  ctx.font = "700 76px system-ui, \"Segoe UI\", Roboto, Arial, sans-serif";
   const words = name.split(" ");
   // The sphere wraps the texture around once, so the label is drawn twice
   // to stay readable from either side.
@@ -41,7 +41,7 @@ const textures = tools.map(({ name, color }) => {
   drawLabel(canvas, name, color);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  // Redraw once the web font is ready so the labels use Montserrat.
+  // Redraw once the fonts are ready so the labels use the system font.
   document.fonts?.ready.then(() => {
     drawLabel(canvas, name, color);
     texture.needsUpdate = true;

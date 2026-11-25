@@ -159,3 +159,39 @@
 .legal-foot nav a:hover {
   color: var(--accentColor);
 }
+
+/* Narrow screens: every row of the technologies table becomes a small block, so nothing needs to
+   scroll sideways. */
+@media (max-width: 640px) {
+  .legal-table {
+    min-width: 0;
+  }
+  .legal-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+  .legal-table,
+  .legal-table tbody,
+  .legal-table tr,
+  .legal-table th,
+  .legal-table td {
+    display: block;
+  }
+  .legal-table tr {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  }
+  .legal-table th,
+  .legal-table td {
+    padding: 2px 0;
+    border-bottom: 0;
+  }
+  .legal-table td::before {
+    content: attr(data-label) ": ";
+    color: var(--accentColor);
+    font-size: 13px;
+  }
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { copyright, DRAFT, docs, Todo, type LegalKey } from "./legalDocs";
+import { copyright, DRAFT, docs, type LegalKey } from "./legalDocs";
 import "./styles/AiWorksPage.css";
 import "./styles/LegalPage.css";
 
@@ -31,7 +31,7 @@ const CookiePrefs = () => {
       <section>
         <h2>Şu anki durum</h2>
         <p>
-          Bu sitede <strong>çerez kullanılmıyor</strong>; reklam, analitik veya ziyaretçi takibi için izleyici de yok. Rıza gerektiren isteğe bağlı bir teknoloji olmadığı için çerez bandı göstermiyoruz ve açıp kapatabileceğin bir seçenek yok. İleride böyle bir teknoloji eklenirse varsayılan olarak kapalı gelir ve tercihini buradan değiştirebilirsin.
+          Bu sitede <strong>çerez kullanılmıyor</strong>; reklam, analitik veya ziyaretçi takibi için izleyici de yok. Sayfalar üçüncü taraf bir yazı tipi sunucusuna da istek göndermez. Rıza gerektiren isteğe bağlı bir teknoloji olmadığı için çerez bandı göstermiyoruz ve açıp kapatabileceğin bir seçenek yok. İleride böyle bir teknoloji eklenirse varsayılan olarak kapalı gelir ve tercihini buradan değiştirebilirsin.
         </p>
       </section>
 
@@ -52,35 +52,33 @@ const CookiePrefs = () => {
             <tbody>
               <tr>
                 <th scope="row">Çerez</th>
-                <td>Kullanılmıyor.</td>
-                <td>—</td>
-                <td>—</td>
-                <td>—</td>
+                <td data-label="Amaç">Kullanılmıyor.</td>
+                <td data-label="Süre">—</td>
+                <td data-label="Kimin">—</td>
+                <td data-label="Rıza gerekir mi?">—</td>
               </tr>
               <tr>
                 <th scope="row">Oturum depolaması (brief-draft-v1)</th>
-                <td>Brief formunu yazarken sayfa yenilense bile taslağının kaybolmaması. Sunucuya gönderilmez.</td>
-                <td>Sekme kapanana kadar</td>
-                <td>Bu site (birinci taraf)</td>
-                <td>
+                <td data-label="Amaç">Brief formunu yazarken sayfa yenilense bile taslağının kaybolmaması. Sunucuya gönderilmez.</td>
+                <td data-label="Süre">Sekme kapanana kadar</td>
+                <td data-label="Kimin">Bu site (birinci taraf)</td>
+                <td data-label="Rıza gerekir mi?">
                   Hayır, istediğin hizmetin (formun) çalışması için gerekli.
                 </td>
               </tr>
               <tr>
-                <th scope="row">Google yazı tipleri (fonts.googleapis.com, fonts.gstatic.com)</th>
-                <td>Sayfaların yazı tipini yüklemek. Çerez değildir; ama istek sırasında IP adresin ve tarayıcı bilgin Google'a ulaşır.</td>
-                <td>Her sayfa yüklemesinde</td>
-                <td>Google (üçüncü taraf)</td>
-                <td>
-                  <Todo>[Rıza gerekip gerekmediği ve yazı tiplerini kendi sunucumuza alma kararı: sizden gerekli]</Todo>
-                </td>
+                <th scope="row">Yazı tipleri</th>
+                <td data-label="Amaç">Sistem yazı tipleri kullanılır (senin cihazında kurulu olanlar). Hiçbir yazı tipi sunucusuna istek gitmez.</td>
+                <td data-label="Süre">—</td>
+                <td data-label="Kimin">—</td>
+                <td data-label="Rıza gerekir mi?">—</td>
               </tr>
               <tr>
                 <th scope="row">Analitik, reklam, sosyal medya izleyicileri</th>
-                <td>Kullanılmıyor.</td>
-                <td>—</td>
-                <td>—</td>
-                <td>—</td>
+                <td data-label="Amaç">Kullanılmıyor.</td>
+                <td data-label="Süre">—</td>
+                <td data-label="Kimin">—</td>
+                <td data-label="Rıza gerekir mi?">—</td>
               </tr>
             </tbody>
           </table>

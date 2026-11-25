@@ -37,6 +37,10 @@ html {
   color: #ffffff;
 }
 
+.ai-top nav {
+  position: relative;
+}
+
 .ai-top nav ul {
   display: flex;
   flex-wrap: wrap;
@@ -68,6 +72,12 @@ html {
   box-shadow: inset 0 -2px 0 var(--accentColor);
 }
 
+/* The Menü button and the section links exist only on the narrowest screens. */
+.ai-menu-btn,
+.ai-menu-sec {
+  display: none;
+}
+
 .ai a:focus-visible,
 .ai button:focus-visible,
 .ai summary:focus-visible {
@@ -92,24 +102,36 @@ main:focus {
   border: 0;
 }
 
-/* ── Intro ── */
+/* ── Opening: title and one line on the left, the showreel on the right ── */
 .ai-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  grid-template-areas:
+    "text media"
+    "cta media";
+  grid-template-rows: auto auto;
+  align-content: center;
+  column-gap: clamp(28px, 6vw, 96px);
+  row-gap: 32px;
   width: min(1240px, calc(100% - 40px));
+  min-height: min(calc(100svh - 96px), 820px);
   margin: 0 auto;
-  padding: clamp(36px, 8vh, 90px) 0 clamp(28px, 5vh, 56px);
+  padding: clamp(20px, 4vh, 48px) 0 clamp(28px, 5vh, 56px);
 }
 
-.ai-kicker {
-  margin: 0 0 14px;
-  font-size: 13px;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--accentColor);
+.ai-hero-text {
+  grid-area: text;
+  align-self: end;
+}
+
+.ai-hero-cta {
+  grid-area: cta;
+  align-self: start;
 }
 
 .ai-hero h1 {
   margin: 0;
-  font-size: clamp(48px, 9vw, 120px);
+  font-size: clamp(52px, 9vw, 124px);
   font-weight: 700;
   line-height: 1.02;
   letter-spacing: -0.03em;
@@ -125,50 +147,91 @@ main:focus {
 }
 
 .ai-lead {
-  max-width: 640px;
-  margin: 22px 0 0;
-  font-size: clamp(17px, 1.6vw, 21px);
-  line-height: 1.55;
-  color: rgba(234, 229, 236, 0.88);
+  max-width: 560px;
+  margin: 24px 0 0;
+  font-size: clamp(18px, 1.7vw, 23px);
+  line-height: 1.5;
+  color: rgba(234, 229, 236, 0.92);
   text-wrap: pretty;
 }
 
-/* Links to the three areas below */
-.ai-jump ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 30px 0 0;
-  padding: 0;
-  list-style: none;
+/* The showreel: a vertical frame with its own visible play / pause button */
+.ai-hero-video {
+  grid-area: media;
+  justify-self: center;
+  align-self: center;
+  width: min(100%, 340px, calc((100svh - 150px) * 0.5625));
+  margin: 0;
 }
 
-.ai-jump a {
+.ai-hero-frame {
+  position: relative;
+  overflow: hidden;
+  background: #05070c;
+  border: 1px solid rgba(94, 234, 212, 0.28);
+  border-radius: 22px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 90px rgba(94, 234, 212, 0.12);
+}
+
+.ai-hero-frame video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ai-hero-ctl {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
+  gap: 6px;
+  min-width: 44px;
   min-height: 44px;
-  padding: 0 20px;
-  font-size: 15px;
-  font-weight: 500;
-  color: #eae5ec;
-  border: 1px solid rgba(94, 234, 212, 0.45);
+  padding: 0 14px 0 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(8, 11, 17, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 999px;
-  background: rgba(94, 234, 212, 0.06);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background-color 0.16s cubic-bezier(0.23, 1, 0.32, 1), transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-.ai-jump a:hover {
-  color: #ffffff;
-  border-color: var(--accentColor);
-  background: rgba(94, 234, 212, 0.14);
+.ai-hero-ctl svg {
+  font-size: 24px;
+  color: var(--accentColor);
+}
+
+.ai-hero-ctl:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ai-hero-ctl:hover {
+    background: rgba(8, 11, 17, 0.9);
+    border-color: var(--accentColor);
+  }
 }
 
 /* ── One wide section per area ── */
 .ai-sec {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: clamp(28px, 5vw, 72px);
-  align-items: center;
+  grid-template-areas:
+    "head media"
+    "scope media";
+  grid-template-rows: auto auto;
+  align-content: center;
+  column-gap: clamp(28px, 5vw, 72px);
+  row-gap: 8px;
   width: min(1240px, calc(100% - 40px));
   margin: 0 auto;
   padding: clamp(44px, 9vh, 96px) 0;
@@ -176,8 +239,27 @@ main:focus {
   scroll-margin-top: 8px;
 }
 
-.ai-sec-flip .ai-sec-text {
-  order: 2;
+.ai-sec-flip {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  grid-template-areas:
+    "media head"
+    "media scope";
+}
+
+.ai-sec-head {
+  grid-area: head;
+  align-self: end;
+}
+
+.ai-sec-media {
+  grid-area: media;
+  align-self: center;
+  min-width: 0;
+}
+
+.ai-sec-scope {
+  grid-area: scope;
+  align-self: start;
 }
 
 .ai-sec-kicker {
@@ -248,50 +330,6 @@ main:focus {
   height: 7px;
   border-radius: 50%;
   background: var(--accentColor);
-}
-
-/* Stages: numbered rows */
-.ai-stages {
-  display: grid;
-  gap: 10px;
-  margin: 0 0 24px;
-  padding: 0;
-  list-style: none;
-  counter-reset: stage;
-}
-
-.ai-stages li {
-  position: relative;
-  display: grid;
-  gap: 2px;
-  padding: 2px 0 2px 46px;
-  counter-increment: stage;
-  font-size: 16px;
-  line-height: 1.5;
-  color: rgba(234, 229, 236, 0.88);
-}
-
-.ai-stages li::before {
-  content: counter(stage);
-  position: absolute;
-  left: 0;
-  top: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #0a0e17;
-  background: var(--accentColor);
-  border-radius: 50%;
-}
-
-.ai-stages strong {
-  font-size: 17px;
-  font-weight: 600;
-  color: #ffffff;
 }
 
 /* Folded box with the fuller scope */
@@ -529,88 +567,234 @@ main:focus {
   transform: translate(-50%, -50%) scale(1.08);
 }
 
-/* Drawn concept (not a real app) */
-.ai-concept {
-  width: min(270px, 70%);
-  margin: 0 auto;
+/* Label above an example, and the facts under it */
+.ai-ex-label {
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--accentColor);
 }
 
-.ai-phone-sketch {
-  position: relative;
-  display: flex;
-  flex-direction: column;
+.ai-facts {
+  display: grid;
+  gap: 10px;
+  max-width: 460px;
+  margin: 20px auto 0;
+}
+
+.ai-facts div {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
   gap: 12px;
-  padding: 44px 16px 14px;
-  background:
-    radial-gradient(90% 40% at 50% 0%, rgba(13, 148, 136, 0.25), transparent 70%),
-    #060a11;
-  border: 5px solid #121823;
-  border-radius: 34px;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.ai-facts dt {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accentColor);
+}
+
+.ai-facts dd {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: rgba(234, 229, 236, 0.92);
+}
+
+/* Concept prototype: hizmet seç, saat seç, onayla (drawn, not a real app) */
+.ai-flow3 {
+  position: relative;
+  margin: 0;
+  padding: 52px 14px 16px;
+  border: 1px dashed rgba(94, 234, 212, 0.45);
+  border-radius: 24px;
+  background: radial-gradient(90% 50% at 50% 0%, rgba(13, 148, 136, 0.18), transparent 70%), rgba(255, 255, 255, 0.02);
 }
 
 .ai-badge {
   position: absolute;
   top: 14px;
   left: 50%;
-  padding: 4px 14px;
+  padding: 5px 16px;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  white-space: nowrap;
   color: #0a0e17;
   background: var(--accentColor);
   border-radius: 999px;
   transform: translateX(-50%);
 }
 
-.ai-phone-sketch .sk-bar,
-.ai-phone-sketch .sk-card,
-.ai-phone-sketch .sk-line {
-  border: 1px solid rgba(94, 234, 212, 0.35);
-  border-radius: 10px;
-  background: rgba(94, 234, 212, 0.06);
-}
-
-.sk-bar {
-  height: 14%;
-}
-
-.sk-wide {
-  height: 28%;
-}
-
-.sk-row {
+.ai-flow3-row {
   display: flex;
   gap: 12px;
-  height: 18%;
+  padding-bottom: 6px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
 }
 
-.sk-row .sk-card {
-  flex: 1;
+.ai-screen {
+  flex: 1 0 min(150px, 46%);
+  min-width: 132px;
+  scroll-snap-align: center;
 }
 
-.sk-line {
-  height: 9px;
-}
-
-.sk-short {
-  width: 60%;
-}
-
-.sk-tabs {
+.ai-phone {
   display: flex;
-  justify-content: space-around;
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  flex-direction: column;
+  gap: 8px;
+  aspect-ratio: 9 / 17;
+  padding: 14px 10px 10px;
+  font-size: 11.5px;
+  line-height: 1.2;
+  color: #eae5ec;
+  background: #060a11;
+  border: 4px solid #121823;
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  user-select: none;
 }
 
-.sk-tabs i {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  background: rgba(94, 234, 212, 0.35);
+.ai-phone > b {
+  margin-bottom: 2px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.ai-opt {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 9px 26px 9px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ai-opt small {
+  color: rgba(234, 229, 236, 0.7);
+}
+
+.ai-opt.is-on {
+  border-color: var(--accentColor);
+  background: rgba(94, 234, 212, 0.12);
+}
+
+.ai-opt svg {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  font-size: 16px;
+  color: var(--accentColor);
+  transform: translateY(-50%);
+}
+
+.ai-days,
+.ai-times {
+  display: grid;
+  gap: 6px;
+}
+
+.ai-days {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.ai-times {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.ai-days span,
+.ai-times span {
+  padding: 8px 2px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ai-days .is-on,
+.ai-times .is-on {
+  color: #0a0e17;
+  font-weight: 700;
+  border-color: var(--accentColor);
+  background: var(--accentColor);
+}
+
+.ai-sum {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ai-ok {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin: 6px auto 0;
+  font-size: 26px;
+  color: #0a0e17;
+  background: var(--accentColor);
+  border-radius: 50%;
+}
+
+.ai-btn {
+  margin-top: auto;
+  padding: 9px 0;
+  font-weight: 600;
+  text-align: center;
+  border: 1px solid rgba(94, 234, 212, 0.5);
+  border-radius: 999px;
+}
+
+.ai-btn.is-main {
+  color: #0a0e17;
+  background: var(--accentColor);
+}
+
+.ai-step-cap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 10px;
+  font-size: 14px;
+  color: rgba(234, 229, 236, 0.92);
+}
+
+.ai-step-cap i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 12.5px;
+  font-style: normal;
+  font-weight: 700;
+  color: #0a0e17;
+  background: var(--accentColor);
+  border-radius: 50%;
+}
+
+.ai-flow3-row:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 4px;
+  border-radius: 16px;
 }
 
 /* ── Working together ── */
@@ -632,7 +816,7 @@ main:focus {
 
 .ai-steps {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: clamp(14px, 2vw, 24px);
   margin: 0 0 34px;
   padding: 0;
@@ -691,8 +875,8 @@ main:focus {
 /* ── Sections rise into place (switched on by the page script only when motion is welcome) ── */
 .ai[data-motion="on"] .ai-reveal {
   opacity: 0;
-  transform: translateY(22px);
-  transition: opacity 0.7s ease, transform 0.7s ease;
+  transform: translateY(10px);
+  transition: opacity 0.26s cubic-bezier(0.23, 1, 0.32, 1), transform 0.26s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .ai[data-motion="on"] .ai-reveal.in {
@@ -702,41 +886,137 @@ main:focus {
 
 /* ── Narrower screens ── */
 @media only screen and (max-width: 1000px) {
-  .ai-sec {
+  .ai-hero {
     grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
+    grid-template-areas:
+      "text"
+      "media"
+      "cta";
+    min-height: 0;
+    row-gap: 26px;
   }
 
-  .ai-sec-flip .ai-sec-text {
-    order: 0;
+  .ai-hero-text,
+  .ai-hero-cta {
+    align-self: auto;
+  }
+
+  .ai-hero-video {
+    width: min(100%, 300px);
+  }
+
+  /* One column, always in this order: title, short description, example, scope. */
+  .ai-sec,
+  .ai-sec-flip {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "head"
+      "media"
+      "scope";
+    row-gap: 28px;
+  }
+
+  .ai-sec-head,
+  .ai-sec-media,
+  .ai-sec-scope {
+    align-self: auto;
   }
 
   .ai-steps {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .ai-sec-media {
+    width: 100%;
     max-width: 640px;
   }
 }
 
 @media only screen and (max-width: 560px) {
-  /* Logo on its own line, the four links in one row below it. */
+  /* Logo on the left, one Menü button on the right; the links open below it. */
   .ai-top {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0;
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 0;
+  }
+
+  .ai-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 18px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #eae5ec;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .ai-top nav.is-open .ai-menu-btn {
+    border-color: var(--accentColor);
+    color: var(--accentColor);
   }
 
   .ai-top nav ul {
-    justify-content: flex-start;
-    margin-left: -8px;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 20;
+    display: none;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0;
+    min-width: 220px;
+    padding: 8px;
+    background: #0d121b;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  }
+
+  .ai-top nav.is-open ul {
+    display: flex;
   }
 
   .ai-top nav a {
-    padding: 0 8px;
-    font-size: 12.5px;
-    letter-spacing: 0.04em;
+    width: 100%;
+    padding: 0 12px;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+  }
+
+  .ai-menu-sec {
+    display: block;
+  }
+
+  .ai-menu-sec:first-of-type {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .ai-menu-sec a {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+    color: rgba(234, 229, 236, 0.9);
+  }
+
+  .ai-hero h1 {
+    font-size: clamp(46px, 15vw, 64px);
+  }
+
+  .ai-hero-video {
+    width: min(100%, 250px);
+  }
+
+  .ai-hero-cta .ai-cta {
+    width: 100%;
   }
 
   .ai-cta {
@@ -751,12 +1031,31 @@ main:focus {
   .ai-shot-phone {
     width: 30%;
   }
+
+  .ai-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ai-facts div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ai-cta,
-  .ai-jump a,
+  .ai-hero-ctl,
   .ai-play-icon {
     transition: none;
   }
+
+  .ai-hero-ctl:active {
+    transform: none;
+  }
+}
+
+/* The example video sits in the middle of its column (the figure reset above has higher weight). */
+.ai-sec .ai-video {
+  margin-left: auto;
+  margin-right: auto;
 }

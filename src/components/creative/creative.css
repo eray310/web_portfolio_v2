@@ -21,7 +21,7 @@
   border-radius: 16px;
   background: #0b0f17;
   color: #eae5ec;
-  font-family: "Geist", sans-serif;
+  font-family: var(--ui-font);
   -webkit-user-select: none;
   user-select: none;
 }

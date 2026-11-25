@@ -278,9 +278,6 @@
   object-fit: cover;
 }
 .st-open {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
   display: inline-flex;
   align-items: center;
   gap: 6px;

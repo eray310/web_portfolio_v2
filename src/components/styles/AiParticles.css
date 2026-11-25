@@ -1,0 +1,14 @@
+/* Web Sitesi, particle version: the box the points are drawn into, and the real picture laid inside the frame */
+.stp {
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  margin-inline: auto;
+}
+.stp-img {
+  position: absolute;
+  object-fit: cover;
+  object-position: top;
+  pointer-events: none;
+  user-select: none;
+}

@@ -6,6 +6,10 @@ import SpaceBackground from "./ai/SpaceBackground";
 import SpaceToggle from "./ai/SpaceToggle";
 import { spaceBus } from "./ai/spaceBus";
 import { AppStage, VideoStage, WebStage } from "./ai/stages";
+import { AiWebParticles } from "./ai/AiWebParticles";
+
+// ?prototip=parcacik: the particle version of the Web Sitesi loop (design prototype)
+const particlePrototype = new URLSearchParams(window.location.search).get("prototip") === "parcacik";
 import { videoBudget } from "./ai/videoBudget";
 import "./styles/AiWorksPage.css";
 
@@ -103,7 +107,7 @@ const HeroVideo = () => {
 /** The live loop of a section (see ai/stages.tsx). */
 const Stage = ({ work }: { work: AiWork }) => {
   const st = work.stage;
-  if (st.kind === "web") return <WebStage s={st} />;
+  if (st.kind === "web") return particlePrototype ? <AiWebParticles s={st} /> : <WebStage s={st} />;
   if (st.kind === "video") return <VideoStage s={st} id={work.id} />;
   return <AppStage s={st} />;
 };

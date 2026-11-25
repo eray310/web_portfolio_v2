@@ -586,7 +586,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     }
     const reading = performance.now() - lastScrollT > 300;
     const flowing = !!flow && flow.energy > 0.02; // the pointer is moving things: draw every frame
-    const every = level >= 3 ? 2 : reading && !flowing ? 2 : 1;
+    const every = level >= 3 ? 2 : reading && !flowing && !spaceBus.stageLive ? 2 : 1;
     if (every > 1 && last && tick % every !== 0 && !paused && !document.hidden && !spaceBus.briefOpen) {
       raf = requestAnimationFrame(frame);
       return;
@@ -669,6 +669,25 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
       renderer.setRenderTarget(null);
     }
     renderer.render(scene, camera);
+    // the particle stage (prototype): drawn by the same renderer into its own box, only while the box is on screen
+    const stage = spaceBus.stage;
+    if (stage) {
+      const r = stage.rect();
+      if (r && r.bottom > 0 && r.top < h && r.right > 0 && r.left < w && r.width > 8 && r.height > 8) {
+        stage.step(dt);
+        const vy = h - r.bottom;
+        const sx = Math.max(0, r.left);
+        const sy = Math.max(0, vy);
+        renderer.autoClear = false;
+        renderer.setScissorTest(true);
+        renderer.setViewport(r.left, vy, r.width, r.height);
+        renderer.setScissor(sx, sy, Math.min(w, r.right) - sx, Math.min(h, vy + r.height) - sy);
+        stage.render(renderer, renderer.getPixelRatio());
+        renderer.setScissorTest(false);
+        renderer.setViewport(0, 0, w, h);
+        renderer.autoClear = true;
+      }
+    }
     // read-only state for tests and debugging
     if (frames % 5 === 0 || still || paused) {
       canvas.dataset.s = sCur.toFixed(2);

@@ -130,24 +130,25 @@ export const VideoStage = ({ s, id }: { s: Vid; id: string }) => {
           {open ? (
             <video ref={full} src={url(s.src)} poster={url(s.poster)} controls autoPlay playsInline preload="none" aria-label={s.caption} />
           ) : (
-            <>
-              <video ref={vid} src={url(s.preview)} poster={url(s.poster)} muted loop playsInline preload={motion ? "metadata" : "none"} aria-hidden="true" tabIndex={-1} />
-              <button
-                type="button"
-                className="st-open"
-                onClick={() => {
-                  videoBudget.claim(id + "-full");
-                  setOpen(true);
-                }}
-                data-cursor="disable"
-              >
-                <MdPlayArrow aria-hidden="true" />
-                <span>Tam videoyu aç</span>
-                <span className="ai-sr">: {s.caption}</span>
-              </button>
-            </>
+            <video ref={vid} src={url(s.preview)} poster={url(s.poster)} muted loop playsInline preload={motion ? "metadata" : "none"} aria-hidden="true" tabIndex={-1} />
           )}
         </div>
+        {/* The button sits under the picture, so it never covers the words inside the clip */}
+        {!open && (
+          <button
+            type="button"
+            className="st-open"
+            onClick={() => {
+              videoBudget.claim(id + "-full");
+              setOpen(true);
+            }}
+            data-cursor="disable"
+          >
+            <MdPlayArrow aria-hidden="true" />
+            <span>Tam videoyu aç</span>
+            <span className="ai-sr">: {s.caption}</span>
+          </button>
+        )}
         <div className="st-timeline" aria-hidden="true">
           <div className="st-track">
             <b>Konsept</b>

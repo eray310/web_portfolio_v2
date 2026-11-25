@@ -13,7 +13,7 @@ import {
   handleTouchMove,
 } from "./utils/mouseUtils";
 import setAnimations from "./utils/animationUtils";
-import { setProgress } from "../Loading";
+import { setProgress, whenIntro } from "../Loading";
 import { startWithout3D } from "../NoWebGLBoot";
 import { prefersReducedMotion } from "../../utils/motion";
 
@@ -87,16 +87,20 @@ const Scene = () => {
           scene.add(character);
           headBone = character.getObjectByName("spine006") || null;
           screenLight = character.getObjectByName("screenlight") || null;
-          // Lit and played from the first visible frame: the character is revealed only when its
-          // lights and reflections are in, so it never shows as a black silhouette. Until then it
-          // stays hidden in its (fixed-size) place; the heading and menu do not wait for it.
+          // The scene is "ready" when the lights and reflections are in (or after 6 s at most): the
+          // opening screen is told so (the count runs to 100 %). The lights are already on and one
+          // frame is drawn behind it, so when the screen goes the character is shown at once, with
+          // its normal light and colours, never as a black silhouette; its intro starts then.
           Promise.race([light.envReady, new Promise((r) => window.setTimeout(r, 6000))]).then(() => {
             if (cancelled) return;
             light.turnOnLights(true);
-            if (!still) animations.startIntro();
-            progress.clear();
             renderer.render(scene, camera);
-            window.requestAnimationFrame(() => canvasDiv.current?.classList.add("char-lit"));
+            void progress.loaded();
+            whenIntro(() => {
+              if (cancelled) return;
+              if (!still) animations.startIntro();
+              window.requestAnimationFrame(() => canvasDiv.current?.classList.add("char-lit"));
+            });
           });
           onResize = () => handleResize(renderer, camera, canvasDiv, character);
           window.addEventListener("resize", onResize);

@@ -142,14 +142,15 @@ export const docs: Record<LegalKey, LegalDoc> = {
           <ul>
             <li>
               <strong>Brief e-postaları:</strong>{" "}
-              <Todo>[Saklama süresi taslakta bekleyen bilgi: belirlenip doğrulanınca yazılacak. Gmail çöp kutusu, Google'ın sağlayıcı kayıtları ve yedekler için süre de doğrulanmadı]</Todo>
+              Brief ve ilgili e-postalar bir gün sonra elle silinir.{" "}
+              <Todo>[Silinen iletiler Gmail çöp kutusunda kalır: Google'ın yardım sayfasına göre kişisel hesapta 30 gün (Workspace'te yöneticiye ek 25 gün). Bu hesabın türü, çöp kutusunun boşaltılıp boşaltılmayacağı, yedekler ve Google'ın sağlayıcı kayıtlarının süresi doğrulanmadı]</Todo>
             </li>
             <li>
               <strong>Vercel sunucu kayıtları:</strong> süre Vercel hesabının planına göre değişir (Vercel belgelerinde Hobby için 1 saat, Pro için 1 gün, Observability Plus ile 30 güne kadar).{" "}
               <Todo>[Bu sitenin planı ve gerçek süre doğrulanmadı]</Todo>
             </li>
             <li>
-              <strong>Resend:</strong> <Todo>[Resend'de gönderilen e-postanın içeriğinin ve kayıtlarının ne kadar süre tutulduğu doğrulanmadı]</Todo>
+              <strong>Resend:</strong> <Todo>[Resend belgelerine göre gönderilen e-postanın içeriği ve kayıtları Free, Pro ve Scale planlarında 30 gün tutulur, yedekler 7 gün, saklanan veri ABD'dedir; tek tek silme için Resend destek ekibine başvurulur. Bu hesabın planı doğrulanmadı]</Todo>
             </li>
             <li>
               <strong>Form hız sınırı:</strong> IP adresin yalnızca sunucu fonksiyonunun belleğinde, birkaç dakikalık bir pencere için sayılır; ayrı bir kayıt tutulmaz.
@@ -244,7 +245,7 @@ export const docs: Record<LegalKey, LegalDoc> = {
         <section>
           <h2>Ne kadar süre saklanır?</h2>
           <p>
-            <Todo>[Saklama süresi taslakta bekleyen bilgi: belirlenip doğrulanınca yazılacak. Gmail, Vercel ve Resend kayıtları için süre doğrulanmadı]</Todo>
+            Brief ve ilgili e-postalar bir gün sonra elle silinir. <Todo>[Gmail çöp kutusu, yedekler, Vercel ve Resend kayıtlarının süreleri bu hesaplar için doğrulanmadı (bkz. Bölüm 6)]</Todo>
           </p>
         </section>
 

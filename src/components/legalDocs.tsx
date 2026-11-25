@@ -66,12 +66,7 @@ export const docs: Record<LegalKey, LegalDoc> = {
             <li>
               E-posta: <Mail />
             </li>
-            <li>
-              Posta adresi: <Todo>[posta adresi henüz eklenmedi: sizden gerekli]</Todo>
-            </li>
-            <li>
-              KEP adresi: <Todo>[KEP adresi taslakta bekleyen bilgi: sizden gerekli]</Todo>
-            </li>
+            <li>KVKK başvuruları: sitedeki KVKK Başvuru Formu (ayrıntı 8. bölümde).</li>
           </ul>
         </section>
 
@@ -172,25 +167,20 @@ export const docs: Record<LegalKey, LegalDoc> = {
         <section>
           <h2>8. Başvuru usulü</h2>
           <p>
-            Başvuru, “Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ”in 5. maddesinde sayılan yollarla yapılır: yazılı olarak; KEP adresi, güvenli elektronik imza veya mobil imza ile; ya da daha önce veri sorumlusuna bildirilen ve veri sorumlusunun sisteminde kayıtlı e-posta adresinden. Hangi yolların benim için kullanılabilir olduğunu aşağıda yazdım.
+            Başvuru, “Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ”in 5. maddesinde sayılan yollarla yapılır. Tebliğ, başvurunun başvuru amacına yönelik geliştirilmiş bir yazılım ya da uygulama vasıtasıyla yapılmasına da izin verir; bu sitede başvuru için ayrı bir <strong>KVKK Başvuru Formu</strong> hazırlanmaktadır. Başvuruyu şu iki yoldan yapabilirsin:
           </p>
           <ul>
             <li>
-              <strong>Normal e-posta:</strong> brief'te bildirdiğin e-posta adresinden <Mail /> adresine yazarak başvurabilirsin. Tebliğ'e göre bu yol, adresin veri sorumlusunun sisteminde kayıtlı olmasına bağlıdır. Adresin kayıtlı değilse yazılı ya da imzalı başvuru gerekir veya kimliğini doğrulamak için ek bilgi isteyebilirim.{" "}
+              <strong>KVKK Başvuru Formu:</strong> kimliğini ve talebini form üzerinden gönderirsin. Form, başvurunu brief formundan ayrı tutar; başvuru bilgilerin Türkiye'deki bir sunucuya iletilir ve şifrelenerek saklanır; başvurunu aldığımda sana bir başvuru numarası gösterilir.{" "}
+              <Todo>[KVKK Başvuru Formu henüz yapılmadı; hazır olunca bağlantısı buraya eklenecek. Türkiye'deki sunucu ve şifreli saklama cümlesi de kurulum yapılınca doğrulanacak]</Todo>
+            </li>
+            <li>
+              <strong>Normal e-posta:</strong> daha önce veri sorumlusuna bildirdiğin ve sistemde kayıtlı e-posta adresinden <Mail /> adresine yazarak başvurabilirsin. Tebliğ'e göre bu yol, adresin veri sorumlusunun sisteminde kayıtlı olmasına bağlıdır; adresin kayıtlı değilse KVKK Başvuru Formu'nu kullan veya kimliğini doğrulamak için ek bilgi isteyebilirim.{" "}
               <Todo>[Bu yorum yayından önce sizin tarafınızdan ve gerekirse bir hukukçu tarafından doğrulanmalı]</Todo>
-            </li>
-            <li>
-              <strong>Yazılı:</strong> <Todo>[posta adresi eklendiğinde buraya yazılacak]</Todo>
-            </li>
-            <li>
-              <strong>KEP:</strong> <Todo>[KEP adresi taslakta bekleyen bilgi: sizden gerekli]</Todo>
-            </li>
-            <li>
-              <strong>Güvenli elektronik imza veya mobil imza:</strong> <Todo>[Bu yollarla gelen başvurunun nasıl kabul edileceği sizden gerekli]</Todo>
             </li>
           </ul>
           <p>
-            Başvuruda şunlar bulunmalıdır: adın ve soyadın; yazılı başvuruda imzan; T.C. kimlik numaran (yabancıysan uyruğun ve pasaport ya da kimlik numaran); yanıtın gönderileceği yerleşim yeri veya iş yeri adresin; varsa e-posta, telefon ve faks bilgilerin; talebinin konusu. İstersen belge de ekleyebilirsin.
+            Başvuruda şunlar bulunmalıdır: adın ve soyadın; T.C. kimlik numaran (yabancıysan uyruğun ve pasaport ya da kimlik numaran); yanıtın gönderileceği yerleşim yeri veya iş yeri adresin; varsa e-posta, telefon ve faks bilgilerin; talebinin konusu. İstersen belge de ekleyebilirsin.
           </p>
           <p>
             Başvurun, talebin niteliğine göre en geç otuz gün içinde ve ücretsiz olarak sonuçlandırılır; işlemin ayrı bir maliyeti varsa Kurul'un belirlediği tarifedeki ücret istenebilir. Yanıt yazılı veya elektronik ortamda verilir. Başvurun reddedilirse, yanıtı yetersiz bulursan ya da süresinde yanıt alamazsan, yanıtı öğrendiğin tarihten itibaren otuz gün içinde ve her hâlde başvuru tarihinden itibaren altmış gün içinde Kişisel Verileri Koruma Kurulu'na şikâyette bulunabilirsin (KVKK m.13 ve m.14).

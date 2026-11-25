@@ -9,10 +9,7 @@ html {
   min-height: 100svh;
   color: #eae5ec;
   font-family: var(--ui-font);
-  background:
-    radial-gradient(70% 50% at 82% 0%, rgba(13, 148, 136, 0.16), transparent 70%),
-    radial-gradient(60% 45% at 8% 30%, rgba(64, 52, 140, 0.12), transparent 70%),
-    #080b11;
+  background: #05070c; /* the space background (see ai/SpaceBackground.tsx) draws over this */
 }
 
 /* ── Header ── */
@@ -1058,4 +1055,111 @@ main:focus {
 .ai-sec .ai-video {
   margin-left: auto;
   margin-right: auto;
+}
+
+/* ── Space background: one fixed, decorative WebGL canvas; the page content sits above it ── */
+.ai-space {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The still starry picture: the first paint, the no-WebGL picture. */
+.ai-space-still {
+  position: absolute;
+  inset: 0;
+  background-color: #05070c;
+  background-size: 900px 900px, auto, auto;
+  background-repeat: repeat, no-repeat, no-repeat;
+}
+
+.ai-space-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  pointer-events: none;
+}
+
+.ai-space-canvas.is-live {
+  opacity: 1;
+}
+
+/* A dark layer under the text: keeps the contrast of the writing on the left and over the content. */
+.ai-space-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(5, 8, 14, 0.7) 0%, rgba(5, 8, 14, 0.46) 36%, rgba(5, 8, 14, 0.12) 62%, rgba(5, 8, 14, 0) 80%);
+}
+
+/* Outside the background layer so that it sits above the page content and can be clicked. */
+.ai-space-ctl {
+  position: fixed;
+  left: 14px;
+  bottom: 14px;
+  z-index: 50;
+  min-height: 44px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #eae5ec;
+  background: rgba(8, 11, 17, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.16s cubic-bezier(0.23, 1, 0.32, 1), transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.ai-space-ctl:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ai-space-ctl:hover {
+    border-color: var(--accentColor);
+  }
+}
+
+.ai-space-ctl:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 3px;
+}
+
+/* The page content stays above the canvas. */
+.ai-top,
+.ai main,
+.ai-foot {
+  position: relative;
+  z-index: 1;
+}
+
+@media only screen and (max-width: 767px) {
+  .ai-space-shade {
+    background: rgba(5, 8, 14, 0.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-space-canvas,
+  .ai-space-ctl {
+    transition: none;
+  }
+
+  .ai-space-ctl:active {
+    transform: none;
+  }
+}
+
+/* With a mouse the control can be smaller (28 px is enough); touch keeps the 44 px target. */
+@media (hover: hover) and (pointer: fine) {
+  .ai-space-ctl {
+    min-height: 32px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
 }

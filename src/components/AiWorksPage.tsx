@@ -2,6 +2,8 @@ import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useSta
 import { MdArrowForward, MdCheck, MdPause, MdPlayArrow } from "react-icons/md";
 import { aiHero, aiSteps, aiWorks, type AiMedia, type AiWork } from "../data/aiWorks";
 import { prefersReducedMotion } from "../utils/motion";
+import SpaceBackground from "./ai/SpaceBackground";
+import { spaceBus } from "./ai/spaceBus";
 import "./styles/AiWorksPage.css";
 
 // The brief form is loaded only when a visitor opens it.
@@ -112,6 +114,11 @@ const VideoCover = ({ m }: { m: AiMedia }) => {
   const ratio = m.ratio ?? 9 / 16;
   useEffect(() => {
     if (playing) player.current?.focus();
+    // an open player calms the space background so it does not compete with the video
+    spaceBus.playerOpen = playing;
+    return () => {
+      spaceBus.playerOpen = false;
+    };
   }, [playing]);
   return (
     <figure className="ai-video">
@@ -295,6 +302,14 @@ const AiWorksPage = () => {
     };
   }, []);
 
+  // The brief form covers the page: the space background stops drawing while it is open.
+  useEffect(() => {
+    spaceBus.briefOpen = brief !== null;
+    return () => {
+      spaceBus.briefOpen = false;
+    };
+  }, [brief]);
+
   const open = (services: string[], el: HTMLElement) => {
     opener.current = el;
     setBrief(services);
@@ -311,6 +326,7 @@ const AiWorksPage = () => {
 
   return (
     <div className="ai" ref={root}>
+      <SpaceBackground rootRef={root} />
       <a className="skip-link" href="#main" onClick={skip}>
         İçeriğe geç
       </a>

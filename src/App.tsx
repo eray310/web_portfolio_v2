@@ -5,6 +5,7 @@ const CharacterModel = lazy(() => import("./components/Character"));
 const MainContainer = lazy(() => import("./components/MainContainer"));
 const OrbitPage = lazy(() => import("./components/OrbitPage"));
 const AiWorksPage = lazy(() => import("./components/AiWorksPage"));
+const LegalPage = lazy(() => import("./components/LegalPage"));
 import { LoadingProvider } from "./context/LoadingProvider";
 import NoWebGLBoot from "./components/NoWebGLBoot";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -15,7 +16,16 @@ import { hasWebGL } from "./utils/webgl";
 const isAboutPage = () => /^\/hakkimda\/?$/i.test(window.location.pathname);
 const isAiWorksPage = () => /^\/ai-isler\/?$/i.test(window.location.pathname);
 
+const isCookiePage = () => /^\/cerez-tercihleri\/?$/i.test(window.location.pathname);
+
 const App = () => {
+  if (isCookiePage()) {
+    return (
+      <Suspense>
+        <LegalPage />
+      </Suspense>
+    );
+  }
   if (isAiWorksPage()) {
     return (
       <Suspense>

@@ -5,12 +5,12 @@ import pageRoutes from "./scripts/vite-routes.mjs";
 // https://vitejs.dev/config/
 export default defineConfig({
   base: "/",
-  // Real pages ("/", "/hakkimda" and "/ai-isler"), each with its own HTML head; see scripts/vite-routes.mjs.
+  // Real pages ("/", "/hakkimda", "/ai-isler" and "/cerez-tercihleri"), each with its own HTML head; see scripts/vite-routes.mjs.
   appType: "mpa",
   plugins: [react(), pageRoutes()],
   build: {
     rollupOptions: {
-      input: { main: "index.html", hakkimda: "hakkimda/index.html", aiIsler: "ai-isler/index.html" },
+      input: { main: "index.html", hakkimda: "hakkimda/index.html", aiIsler: "ai-isler/index.html", cerez: "cerez-tercihleri/index.html" },
     },
   },
 });

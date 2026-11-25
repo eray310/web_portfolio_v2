@@ -40,7 +40,7 @@ export default function pageRoutes() {
       });
       return;
     }
-    const page = { "/hakkimda": "/hakkimda/index.html", "/ai-isler": "/ai-isler/index.html" }[path.replace(/\/$/, "")];
+    const page = Object.fromEntries(["hakkimda", "ai-isler", "cerez-tercihleri"].map((p) => ["/" + p, `/${p}/index.html`]))[path.replace(/\/$/, "")];
     if (page) {
       req.url = page + (query ? "?" + query : "");
       return next();

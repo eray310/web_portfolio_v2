@@ -223,15 +223,15 @@ main:focus {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   grid-template-areas:
-    "head media"
-    "scope media";
+    "head stage"
+    "scope stage";
   grid-template-rows: auto auto;
   align-content: center;
-  column-gap: clamp(28px, 5vw, 72px);
+  column-gap: clamp(32px, 6vw, 96px);
   row-gap: 8px;
   width: min(1240px, calc(100% - 40px));
   margin: 0 auto;
-  padding: clamp(44px, 9vh, 96px) 0;
+  padding: clamp(56px, 11vh, 120px) 0;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   scroll-margin-top: 8px;
 }
@@ -239,38 +239,8 @@ main:focus {
 .ai-sec-flip {
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
   grid-template-areas:
-    "media head"
-    "media scope";
-}
-
-.ai-sec-head {
-  grid-area: head;
-  align-self: end;
-}
-
-.ai-sec-media {
-  grid-area: media;
-  align-self: center;
-  min-width: 0;
-}
-
-.ai-sec-scope {
-  grid-area: scope;
-  align-self: start;
-}
-
-.ai-sec-kicker {
-  margin: 0 0 12px;
-  font-size: 14px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(234, 229, 236, 0.85);
-}
-
-.ai-sec-kicker span {
-  margin-right: 8px;
-  color: var(--accentColor);
-  font-weight: 600;
+    "stage head"
+    "stage scope";
 }
 
 .ai-sec h2 {
@@ -289,15 +259,6 @@ main:focus {
   line-height: 1.6;
   color: rgba(234, 229, 236, 0.9);
   text-wrap: pretty;
-}
-
-.ai-h3 {
-  margin: 0 0 12px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--accentColor);
 }
 
 .ai-outputs {
@@ -408,19 +369,6 @@ main:focus {
   font-size: 18px;
 }
 
-/* ── Media ── */
-.ai-sec-media {
-  min-width: 0;
-}
-
-.ai-media-note {
-  margin: 14px 0 0;
-  font-size: 14.5px;
-  line-height: 1.5;
-  text-align: center;
-  color: rgba(234, 229, 236, 0.82);
-}
-
 .ai-sec figure {
   margin: 0;
 }
@@ -430,368 +378,6 @@ main:focus {
   font-size: 14.5px;
   text-align: center;
   color: rgba(234, 229, 236, 0.82);
-}
-
-/* Screenshots: a browser frame with a phone frame overlapping its corner */
-.ai-devices {
-  position: relative;
-  padding-bottom: 14%;
-}
-
-.ai-frame {
-  overflow: hidden;
-  background: #05070c;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 14px;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), 0 0 60px rgba(94, 234, 212, 0.08);
-}
-
-.ai-frame img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.ai-browser {
-  display: flex;
-  gap: 6px;
-  padding: 9px 12px;
-  background: #0f141d;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.ai-browser i {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.ai-shot-phone {
-  position: absolute;
-  right: -1%;
-  bottom: 0;
-  width: 27%;
-}
-
-.ai-shot-phone .ai-frame {
-  border: 5px solid #121823;
-  border-radius: 22px;
-}
-
-.ai-shot-phone figcaption {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-}
-
-/* A single phone shot on its own */
-.ai-devices:not(:has(.ai-shot-desktop)) {
-  padding-bottom: 0;
-}
-
-.ai-devices:not(:has(.ai-shot-desktop)) .ai-shot-phone {
-  position: static;
-  width: min(280px, 70%);
-  margin: 0 auto;
-}
-
-.ai-devices:not(:has(.ai-shot-phone)) {
-  padding-bottom: 0;
-}
-
-/* Video cover */
-.ai-video {
-  width: min(340px, 78%);
-  margin: 0 auto;
-}
-
-.ai-video-box {
-  position: relative;
-  overflow: hidden;
-  background: #05070c;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 18px;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), 0 0 60px rgba(94, 234, 212, 0.08);
-}
-
-.ai-video-box video,
-.ai-video-play,
-.ai-video-play img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.ai-video-play {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-.ai-video-play::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(5, 8, 15, 0.55), rgba(5, 8, 15, 0) 55%);
-}
-
-.ai-play-icon {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 76px;
-  height: 76px;
-  font-size: 44px;
-  color: #0a0e17;
-  background: var(--accentColor);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 10px rgba(94, 234, 212, 0.2);
-  transition: transform 0.25s ease;
-}
-
-.ai-video-play:hover .ai-play-icon {
-  transform: translate(-50%, -50%) scale(1.08);
-}
-
-/* Label above an example, and the facts under it */
-.ai-ex-label {
-  margin: 0 0 14px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-align: center;
-  text-transform: uppercase;
-  color: var(--accentColor);
-}
-
-.ai-facts {
-  display: grid;
-  gap: 10px;
-  max-width: 460px;
-  margin: 20px auto 0;
-}
-
-.ai-facts div {
-  display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
-  gap: 12px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.ai-facts dt {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accentColor);
-}
-
-.ai-facts dd {
-  margin: 0;
-  font-size: 15.5px;
-  line-height: 1.5;
-  color: rgba(234, 229, 236, 0.92);
-}
-
-/* Concept prototype: hizmet seç, saat seç, onayla (drawn, not a real app) */
-.ai-flow3 {
-  position: relative;
-  margin: 0;
-  padding: 52px 14px 16px;
-  border: 1px dashed rgba(94, 234, 212, 0.45);
-  border-radius: 24px;
-  background: radial-gradient(90% 50% at 50% 0%, rgba(13, 148, 136, 0.18), transparent 70%), rgba(255, 255, 255, 0.02);
-}
-
-.ai-badge {
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  padding: 5px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: #0a0e17;
-  background: var(--accentColor);
-  border-radius: 999px;
-  transform: translateX(-50%);
-}
-
-.ai-flow3-row {
-  display: flex;
-  gap: 12px;
-  padding-bottom: 6px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: thin;
-}
-
-.ai-screen {
-  flex: 1 0 min(150px, 46%);
-  min-width: 132px;
-  scroll-snap-align: center;
-}
-
-.ai-phone {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  aspect-ratio: 9 / 17;
-  padding: 14px 10px 10px;
-  font-size: 11.5px;
-  line-height: 1.2;
-  color: #eae5ec;
-  background: #060a11;
-  border: 4px solid #121823;
-  border-radius: 24px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
-  user-select: none;
-}
-
-.ai-phone > b {
-  margin-bottom: 2px;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.ai-opt {
-  position: relative;
-  display: grid;
-  gap: 2px;
-  padding: 9px 26px 9px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.ai-opt small {
-  color: rgba(234, 229, 236, 0.7);
-}
-
-.ai-opt.is-on {
-  border-color: var(--accentColor);
-  background: rgba(94, 234, 212, 0.12);
-}
-
-.ai-opt svg {
-  position: absolute;
-  right: 7px;
-  top: 50%;
-  font-size: 16px;
-  color: var(--accentColor);
-  transform: translateY(-50%);
-}
-
-.ai-days,
-.ai-times {
-  display: grid;
-  gap: 6px;
-}
-
-.ai-days {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.ai-times {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.ai-days span,
-.ai-times span {
-  padding: 8px 2px;
-  text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.ai-days .is-on,
-.ai-times .is-on {
-  color: #0a0e17;
-  font-weight: 700;
-  border-color: var(--accentColor);
-  background: var(--accentColor);
-}
-
-.ai-sum {
-  display: grid;
-  gap: 6px;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.ai-ok {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  margin: 6px auto 0;
-  font-size: 26px;
-  color: #0a0e17;
-  background: var(--accentColor);
-  border-radius: 50%;
-}
-
-.ai-btn {
-  margin-top: auto;
-  padding: 9px 0;
-  font-weight: 600;
-  text-align: center;
-  border: 1px solid rgba(94, 234, 212, 0.5);
-  border-radius: 999px;
-}
-
-.ai-btn.is-main {
-  color: #0a0e17;
-  background: var(--accentColor);
-}
-
-.ai-step-cap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  margin-top: 10px;
-  font-size: 14px;
-  color: rgba(234, 229, 236, 0.92);
-}
-
-.ai-step-cap i {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  font-size: 12.5px;
-  font-style: normal;
-  font-weight: 700;
-  color: #0a0e17;
-  background: var(--accentColor);
-  border-radius: 50%;
-}
-
-.ai-flow3-row:focus-visible {
-  outline: 2px solid var(--accentColor);
-  outline-offset: 4px;
-  border-radius: 16px;
 }
 
 /* ── Working together ── */
@@ -908,24 +494,13 @@ main:focus {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "head"
-      "media"
+      "stage"
       "scope";
     row-gap: 28px;
   }
 
-  .ai-sec-head,
-  .ai-sec-media,
-  .ai-sec-scope {
-    align-self: auto;
-  }
-
   .ai-steps {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .ai-sec-media {
-    width: 100%;
-    max-width: 640px;
   }
 }
 
@@ -1025,36 +600,16 @@ main:focus {
     font-size: 15px;
   }
 
-  .ai-shot-phone {
-    width: 30%;
-  }
-
   .ai-steps {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .ai-facts div {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ai-cta,
-  .ai-hero-ctl,
-  .ai-play-icon {
-    transition: none;
-  }
 
   .ai-hero-ctl:active {
     transform: none;
   }
-}
-
-/* The example video sits in the middle of its column (the figure reset above has higher weight). */
-.ai-sec .ai-video {
-  margin-left: auto;
-  margin-right: auto;
 }
 
 /* ── Space background: one fixed, decorative WebGL canvas; the page content sits above it ── */

@@ -1,10 +1,12 @@
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { MdArrowForward, MdCheck, MdPause, MdPlayArrow } from "react-icons/md";
-import { aiHero, aiSteps, aiWorks, type AiMedia, type AiWork } from "../data/aiWorks";
+import { MdArrowForward, MdPause, MdPlayArrow } from "react-icons/md";
+import { aiHero, aiSteps, aiWorks, type AiWork } from "../data/aiWorks";
 import { prefersReducedMotion } from "../utils/motion";
 import SpaceBackground from "./ai/SpaceBackground";
 import SpaceToggle from "./ai/SpaceToggle";
 import { spaceBus } from "./ai/spaceBus";
+import { AppStage, VideoStage, WebStage } from "./ai/stages";
+import { videoBudget } from "./ai/videoBudget";
 import "./styles/AiWorksPage.css";
 
 // The brief form is loaded only when a visitor opens it.
@@ -43,8 +45,10 @@ const HeroVideo = () => {
     const io = new IntersectionObserver(
       ([e]) => {
         if (chosen.current) return;
-        if (e.isIntersecting) void el.play().catch(() => {});
-        else el.pause();
+        if (e.isIntersecting) {
+          videoBudget.claim("hero");
+          void el.play().catch(() => {});
+        } else el.pause();
       },
       { threshold: 0.25 }
     );
@@ -52,12 +56,20 @@ const HeroVideo = () => {
     return () => io.disconnect();
   }, []);
 
+  // one video decodes at a time (the preview further down pauses this one, and the other way round)
+  useEffect(() => {
+    const el = ref.current;
+    return el ? videoBudget.register("hero", () => el.pause()) : undefined;
+  }, []);
+
   const toggle = () => {
     const el = ref.current;
     if (!el) return;
     chosen.current = true;
-    if (el.paused) void el.play().catch(() => {});
-    else el.pause();
+    if (el.paused) {
+      videoBudget.claim("hero");
+      void el.play().catch(() => {});
+    } else el.pause();
   };
 
   return (
@@ -88,156 +100,12 @@ const HeroVideo = () => {
   );
 };
 
-/** A screenshot in a browser or phone frame. */
-const Shot = ({ m }: { m: AiMedia }) => (
-  <figure className={`ai-shot ai-shot-${m.kind}`}>
-    <div className="ai-frame">
-      {m.kind === "desktop" && (
-        <div className="ai-browser" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </div>
-      )}
-      <img src={url(m.src ?? "")} alt={m.alt} loading="lazy" decoding="async" draggable={false} />
-    </div>
-    {m.caption && <figcaption>{m.caption}</figcaption>}
-  </figure>
-);
-
-/**
- * A cover picture; the video itself is fetched only when it is played. When the player opens, the
- * keyboard focus moves into it (its own controls), so a keyboard user does not have to look for it.
- */
-const VideoCover = ({ m }: { m: AiMedia }) => {
-  const [playing, setPlaying] = useState(false);
-  const player = useRef<HTMLVideoElement>(null);
-  const ratio = m.ratio ?? 9 / 16;
-  useEffect(() => {
-    if (playing) player.current?.focus();
-    // an open player calms the space background so it does not compete with the video
-    spaceBus.playerOpen = playing;
-    return () => {
-      spaceBus.playerOpen = false;
-    };
-  }, [playing]);
-  return (
-    <figure className="ai-video">
-      <div className="ai-video-box" style={{ aspectRatio: String(ratio) }}>
-        {playing ? (
-          <video ref={player} src={url(m.src ?? "")} poster={m.poster ? url(m.poster) : undefined} controls autoPlay playsInline preload="none" aria-label={m.caption || m.alt} />
-        ) : (
-          <button type="button" className="ai-video-play" onClick={() => setPlaying(true)}>
-            {m.poster && <img src={url(m.poster)} alt="" loading="lazy" decoding="async" draggable={false} />}
-            <span className="ai-play-icon" aria-hidden="true">
-              <MdPlayArrow />
-            </span>
-            <span className="ai-sr">Videoyu oynat: {m.caption || m.alt}</span>
-          </button>
-        )}
-      </div>
-      {m.caption && <figcaption>{m.caption}</figcaption>}
-    </figure>
-  );
-};
-
-/** Three drawn phone screens: choose a service, choose a time, confirm. Always marked as a concept. */
-const AppFlow = ({ m }: { m: AiMedia }) => (
-  <figure className="ai-flow3" role="group" aria-label={m.alt}>
-    <span className="ai-badge">Konsept prototip</span>
-    <div className="ai-flow3-row" role="region" aria-label="Konsept prototipin üç ekranı, yana kaydırılır" tabIndex={0}>
-      <div className="ai-screen">
-        <div className="ai-phone" aria-hidden="true">
-          <b>Hizmet seç</b>
-          <div className="ai-opt is-on">
-            <span>Hizmet 1</span>
-            <small>30 dk</small>
-            <MdCheck />
-          </div>
-          <div className="ai-opt">
-            <span>Hizmet 2</span>
-            <small>45 dk</small>
-          </div>
-          <div className="ai-opt">
-            <span>Hizmet 3</span>
-            <small>60 dk</small>
-          </div>
-          <div className="ai-btn">Devam</div>
-        </div>
-        <span className="ai-step-cap">
-          <i>1</i> Hizmet seç
-        </span>
-      </div>
-      <div className="ai-screen">
-        <div className="ai-phone" aria-hidden="true">
-          <b>Saat seç</b>
-          <div className="ai-days">
-            <span>Pzt</span>
-            <span className="is-on">Sal</span>
-            <span>Çar</span>
-          </div>
-          <div className="ai-times">
-            <span>10:00</span>
-            <span>11:00</span>
-            <span>13:00</span>
-            <span className="is-on">14:00</span>
-            <span>15:00</span>
-            <span>16:00</span>
-          </div>
-          <div className="ai-btn">Devam</div>
-        </div>
-        <span className="ai-step-cap">
-          <i>2</i> Saat seç
-        </span>
-      </div>
-      <div className="ai-screen">
-        <div className="ai-phone" aria-hidden="true">
-          <b>Onayla</b>
-          <div className="ai-sum">
-            <span>Hizmet 1</span>
-            <span>Salı</span>
-            <span>14:00</span>
-          </div>
-          <div className="ai-ok">
-            <MdCheck />
-          </div>
-          <div className="ai-btn is-main">Onayla</div>
-        </div>
-        <span className="ai-step-cap">
-          <i>3</i> Onayla
-        </span>
-      </div>
-    </div>
-  </figure>
-);
-
-const Example = ({ work }: { work: AiWork }) => {
-  const shots = work.media.filter((m) => m.kind === "desktop" || m.kind === "phone");
-  return (
-    <>
-      <p className="ai-ex-label">{work.exampleLabel}</p>
-      {shots.length > 0 && (
-        <div className="ai-devices">
-          {shots.map((m) => (
-            <Shot key={m.src} m={m} />
-          ))}
-        </div>
-      )}
-      {work.media.filter((m) => m.kind === "video").map((m) => <VideoCover key={m.src} m={m} />)}
-      {work.media.filter((m) => m.kind === "flow").map((m, i) => <AppFlow key={i} m={m} />)}
-      {work.facts && (
-        <dl className="ai-facts">
-          {work.facts.map((f) => (
-            <div key={f.label}>
-              <dt>{f.label}</dt>
-              <dd>{f.text}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-      {work.mediaNote && <p className="ai-media-note">{work.mediaNote}</p>}
-    </>
-  );
+/** The live loop of a section (see ai/stages.tsx). */
+const Stage = ({ work }: { work: AiWork }) => {
+  const st = work.stage;
+  if (st.kind === "web") return <WebStage s={st} />;
+  if (st.kind === "video") return <VideoStage s={st} id={work.id} />;
+  return <AppStage s={st} />;
 };
 
 const AiWorksPage = () => {
@@ -381,26 +249,23 @@ const AiWorksPage = () => {
         </section>
 
         {aiWorks.map((work, i) => (
-          <section key={work.id} id={work.id} className={`ai-sec${i % 2 ? " ai-sec-flip" : ""}`} aria-labelledby={`${work.id}-h`}>
+          <section key={work.id} id={work.id} className={`ai-sec ai-sec-${work.stage.kind}${i % 2 ? " ai-sec-flip" : ""}`} aria-labelledby={`${work.id}-h`}>
             <div className="ai-sec-head ai-reveal">
-              <p className="ai-sec-kicker">
-                <span>{String(i + 1).padStart(2, "0")}</span> {work.kicker}
-              </p>
               <h2 id={`${work.id}-h`}>{work.title}</h2>
               <p className="ai-sec-sum">{work.summary}</p>
             </div>
-
-            <div className="ai-sec-media ai-reveal">
-              <Example work={work} />
+            <div className="ai-sec-stage ai-reveal">
+              <Stage work={work} />
             </div>
-
             <div className="ai-sec-scope ai-reveal">
-              <h3 className="ai-h3">{work.id === "web-sitesi" ? "Örnek kapsamlar" : "Kapsam"}</h3>
               <ul className="ai-outputs">
                 {work.outputs.map((o) => (
                   <li key={o}>{o}</li>
                 ))}
               </ul>
+              <button type="button" className="ai-cta ai-cta-quiet" onClick={(e) => open([work.service], e.currentTarget)}>
+                Projeni anlat <MdArrowForward aria-hidden="true" />
+              </button>
               <details className="ai-details">
                 <summary>Kapsam ayrıntıları</summary>
                 <ul>
@@ -409,9 +274,6 @@ const AiWorksPage = () => {
                   ))}
                 </ul>
               </details>
-              <button type="button" className="ai-cta" onClick={(e) => open([work.service], e.currentTarget)}>
-                Projeni anlat <MdArrowForward aria-hidden="true" />
-              </button>
             </div>
           </section>
         ))}

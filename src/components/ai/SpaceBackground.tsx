@@ -65,9 +65,9 @@ const SpaceBackground = ({ rootRef }: { rootRef: React.RefObject<HTMLElement> })
       };
       return [
         pick(".ai-hero", ".ai-hero-video"),
-        pick("#web-sitesi", ".ai-sec-media"),
-        pick("#reklam-filmi", ".ai-sec-media"),
-        pick("#uygulama", ".ai-sec-media"),
+        pick("#web-sitesi", ".ai-sec-stage"),
+        pick("#reklam-filmi", ".ai-sec-stage"),
+        pick("#uygulama", ".ai-sec-stage"),
         pick(".ai-flow", null),
       ].filter(Boolean) as StopInfo[];
     };

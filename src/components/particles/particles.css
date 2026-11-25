@@ -1,0 +1,261 @@
+/* The particle story prototype (/hakkimda?prototip=parcacik): dark ground, off-white type, turquoise accents. */
+.pp {
+  min-height: 100vh;
+  min-height: 100svh;
+  color: #eae5ec;
+  font-family: var(--ui-font);
+  background: #05070c;
+}
+
+.pp .ai-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.pp a:focus-visible,
+.pp button:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.pp-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px max(20px, 4vw);
+  pointer-events: none;
+}
+.pp-top a {
+  pointer-events: auto;
+}
+.pp-logo {
+  display: inline-flex;
+  align-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.pp-top nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+}
+.pp-top nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #eae5ec;
+}
+.pp-top nav a:hover {
+  color: var(--accentColor);
+}
+
+/* One canvas, fixed behind everything; it never takes a click or a touch */
+.pp-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.pp main {
+  position: relative;
+  z-index: 5;
+}
+.pp main:focus {
+  outline: none;
+}
+
+.pp-track {
+  position: relative;
+}
+.pp-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  pointer-events: none;
+}
+.pp-stage > * {
+  pointer-events: auto;
+}
+
+/* The words stay in the calm left part; the swarm is in the middle and the right */
+.pp-copy {
+  position: absolute;
+  left: max(20px, 4vw);
+  bottom: clamp(96px, 16vh, 170px);
+  max-width: min(30em, 42vw);
+  pointer-events: none;
+}
+.pp-copy h1,
+.pp-copy h2 {
+  margin: 0 0 14px;
+  font-size: clamp(34px, 4.6vw, 64px);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+}
+.pp-copy p {
+  margin: 0;
+  font-size: clamp(17px, 1.5vw, 21px);
+  line-height: 1.55;
+  color: rgba(234, 229, 236, 0.9);
+  text-wrap: pretty;
+}
+
+/* Scene menu: a short list on the right */
+.pp-scenes {
+  position: absolute;
+  right: max(20px, 4vw);
+  top: 50%;
+  transform: translateY(-50%);
+}
+.pp-scenes ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pp-scenes button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 4px 0 0;
+  font: inherit;
+  font-size: 15px;
+  color: rgba(234, 229, 236, 0.8);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.pp-scenes button::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid rgba(234, 229, 236, 0.6);
+  border-radius: 50%;
+}
+.pp-scenes button[aria-current="true"] {
+  color: #ffffff;
+}
+.pp-scenes button[aria-current="true"]::before {
+  background: var(--accentColor);
+  border-color: var(--accentColor);
+}
+
+.pp-cta {
+  position: absolute;
+  left: max(20px, 4vw);
+  bottom: clamp(28px, 6vh, 56px);
+  min-height: 48px;
+  padding: 0 26px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0a0e17;
+  background: var(--accentColor);
+  border: 0;
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+/* The still version (no WebGL, "Hareketi azalt", or the model could not be loaded) */
+.pp-still {
+  display: grid;
+  gap: clamp(48px, 10vh, 110px);
+  width: min(900px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: clamp(110px, 20vh, 200px) 0 clamp(60px, 12vh, 140px);
+  background: radial-gradient(60% 40% at 78% 20%, rgba(13, 148, 136, 0.14), transparent 70%);
+}
+.pp-still h1,
+.pp-still h2 {
+  margin: 0 0 14px;
+  font-size: clamp(36px, 6vw, 72px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+}
+.pp-still p {
+  margin: 0;
+  max-width: 28em;
+  font-size: 19px;
+  line-height: 1.6;
+  color: rgba(234, 229, 236, 0.9);
+}
+.pp-cta-still {
+  position: static;
+  margin: 0 0 80px max(20px, calc((100% - 900px) / 2));
+}
+
+@media only screen and (max-width: 767px) {
+  .pp-copy {
+    left: 20px;
+    right: 20px;
+    bottom: 140px;
+    max-width: none;
+  }
+  .pp-copy h1,
+  .pp-copy h2 {
+    font-size: clamp(30px, 9vw, 40px);
+  }
+  .pp-scenes {
+    top: auto;
+    left: 12px;
+    right: auto;
+    bottom: 84px;
+    transform: none;
+  }
+  .pp-scenes ul {
+    display: flex;
+    gap: 0;
+  }
+  .pp-scenes button {
+    padding: 0 8px;
+    font-size: 14px;
+  }
+  .pp-scenes button::before {
+    display: none;
+  }
+  .pp-scenes button[aria-current="true"] {
+    text-decoration: underline;
+    text-decoration-color: var(--accentColor);
+    text-underline-offset: 6px;
+  }
+  .pp-cta {
+    left: 20px;
+    bottom: 28px;
+    padding: 0 20px;
+  }
+  /* a soft dark band behind the writing so it stays readable over the swarm */
+  .pp-copy::before {
+    content: "";
+    position: absolute;
+    inset: -40px -20px -20px;
+    z-index: -1;
+    background: linear-gradient(to top, rgba(5, 7, 12, 0.92), rgba(5, 7, 12, 0));
+  }
+}

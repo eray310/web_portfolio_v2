@@ -18,6 +18,9 @@
 import {
   AdditiveBlending,
   BufferAttribute,
+  DataTexture,
+  RGBAFormat,
+  UnsignedByteType,
   BufferGeometry,
   LineSegments,
   LinearFilter,
@@ -32,6 +35,7 @@ import {
   WebGLRenderTarget,
 } from "three";
 import { spaceBus } from "./spaceBus";
+import { createFlowField } from "./flowField";
 
 export type SpaceOptions = {
   canvas: HTMLCanvasElement;
@@ -102,6 +106,8 @@ const STAR_VERT = /* glsl */ `
   uniform vec2 uClearR;
   uniform float uClear;
   uniform float uTime;
+  uniform sampler2D uFlow;
+  uniform float uFlowK;
   varying float vAlpha;
   varying float vTint;
   void main() {
@@ -118,7 +124,18 @@ const STAR_VERT = /* glsl */ `
     vec2 dd = (uv - uClearC) / uClearR;
     float clearM = mix(1.0, 0.1, uClear * (1.0 - smoothstep(0.55, 1.15, length(dd))));
     float tw = 0.88 + 0.12 * sin(uTime * (0.6 + aSeed * 1.4) + aSeed * 40.0);
-    vAlpha = visible * farFade * nearFade * left * clearM * tw;
+    // the pointer's flow: near stars are pushed aside and bent along the way, far ones hardly move;
+    // calm on the left (the writing), more visible in the open space
+    float wake = 0.0;
+    if (uFlowK > 0.0) {
+      vec4 f = texture2D(uFlow, uv);
+      float mask = mix(0.28, 1.0, smoothstep(0.12, 0.5, uv.x));
+      float nearness = clamp(1.0 - dist / (uL * 0.6), 0.12, 1.0);
+      vec2 fl = (f.rg - 0.5) * 2.0 * uFlowK * mask * (0.25 + nearness * nearness * 1.6);
+      gl_Position.xy += fl * gl_Position.w;
+      wake = f.b * mask;
+    }
+    vAlpha = visible * farFade * nearFade * left * clearM * tw * (1.0 + wake * 0.7);
     vTint = aTint;
     gl_PointSize = clamp(aSize * uScale * uPR / max(dist, 0.001), 1.5 * uPR, uMaxSize * uPR);
   }
@@ -185,6 +202,9 @@ const BG_FRAG = /* glsl */ `
   uniform float uCalm;
   uniform float uQ;
   uniform float uLeftCalm;
+  uniform sampler2D uFlow;
+  uniform float uFlowT;
+  uniform float uFlowE;
 
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   float noise(vec2 p) {
@@ -207,6 +227,16 @@ const BG_FRAG = /* glsl */ `
     vec2 uv = gl_FragCoord.xy / uRes;
     float asp = uRes.x / uRes.y;
     vec2 p = (uv - uVp) * vec2(asp, 1.0);
+    // the pointer's flow bends the light texture (low resolution: this picture is a quarter of the screen)
+    vec2 fv = vec2(0.0);
+    float wake = 0.0;
+    float fmask = mix(0.25, 1.0, smoothstep(0.1, 0.55, uv.x));
+    if (uFlowT > 0.0 && uFlowE > 0.003) {
+      vec4 f = texture2D(uFlow, uv);
+      fv = (f.rg - 0.5) * 2.0;
+      wake = f.b;
+      p += fv * 0.07 * fmask * uFlowT;
+    }
     // charcoal black to night blue
     vec3 col = mix(vec3(0.016, 0.022, 0.035), vec3(0.028, 0.052, 0.105), smoothstep(0.0, 1.0, uv.y * 0.7 + 0.25 * (1.0 - uv.x)));
     // one very far, soft nebula up and to the right of the vanishing point: it tells the direction
@@ -225,6 +255,14 @@ const BG_FRAG = /* glsl */ `
     float soft = exp(-pow((r - 1.62) / 0.1, 2.0)) * 0.3;
     float span = smoothstep(-0.25, 0.4, p.x + 0.15) * (1.0 - smoothstep(0.55, 1.0, p.x));
     col += (ring * 0.9 + soft) * span * uArc * vec3(0.2, 0.78, 0.7) * 0.75;
+    // thin threads of light in the wake of the pointer, bent along the flow; they fade with the wake
+    if (wake > 0.01) {
+      vec2 q = p * 6.0 + fv * 2.2 + vec2(uTime * 0.03, -uTime * 0.02);
+      float r1 = 1.0 - abs(2.0 * noise(q) - 1.0);
+      float r2 = 1.0 - abs(2.0 * noise(q * 2.1 + 7.3) - 1.0);
+      float thread = pow(r1, 7.0) * 0.8 + pow(r2, 9.0) * 0.55;
+      col += (thread * wake * 0.9 + wake * wake * 0.05) * fmask * uFlowT * vec3(0.13, 0.6, 0.58);
+    }
     // calm: the closing stop settles
     col *= 1.0 - uCalm * 0.25;
     // the left of the screen stays dark and quiet
@@ -300,8 +338,22 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
       uCalm: { value: 0 },
       uQ: { value: light ? 0 : 1 },
       uLeftCalm: { value: 1 },
+      uFlow: { value: null as unknown as DataTexture },
+      uFlowT: { value: 0 },
+      uFlowE: { value: 0 },
     },
   });
+  // The pointer flow field (mouse only; none on a phone or for "Hareketi azalt"): a tiny picture the shaders read.
+  const flow = light || still ? null : createFlowField({ enabled: () => !spaceBus.briefOpen && !paused });
+  const flowTex = flow ? new DataTexture(flow.data as Uint8Array<ArrayBuffer>, flow.cols, flow.rows, RGBAFormat, UnsignedByteType) : null;
+  if (flowTex) {
+    flowTex.minFilter = LinearFilter;
+    flowTex.magFilter = LinearFilter;
+    flowTex.generateMipmaps = false;
+    flowTex.needsUpdate = true;
+    bgMat.uniforms.uFlow.value = flowTex;
+  }
+  const vtf = renderer.capabilities.maxVertexTextures > 0;
   const bgScene = new Scene();
   const bgQuad = new Mesh(new PlaneGeometry(2, 2), bgMat);
   bgQuad.frustumCulled = false;
@@ -324,7 +376,10 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     uClearR: { value: new Vector2(0.3, 0.4) },
     uClear: { value: 0 },
     uBright: { value: 1 },
+    uFlow: { value: null as unknown as DataTexture },
+    uFlowK: { value: 0 },
   };
+  shared.uFlow.value = flowTex as DataTexture;
   const makeLayer = (seed: number, count: number, L: number, R: number, size: [number, number], speed: number, bias: { x: number; y: number }, maxSize: number, bright: number, tintBright: number): Layer => {
     const r = rng(seed);
     const pos = new Float32Array(count * 3);
@@ -530,7 +585,8 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
       applyQuality();
     }
     const reading = performance.now() - lastScrollT > 300;
-    const every = level >= 3 ? 2 : reading ? 2 : 1;
+    const flowing = !!flow && flow.energy > 0.02; // the pointer is moving things: draw every frame
+    const every = level >= 3 ? 2 : reading && !flowing && !spaceBus.stageLive ? 2 : 1;
     if (every > 1 && last && tick % every !== 0 && !paused && !document.hidden && !spaceBus.briefOpen) {
       raf = requestAnimationFrame(frame);
       return;
@@ -538,6 +594,14 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     const dt = Math.min(0.25, last ? (t - last) / 1000 : 0.016);
     last = t;
     time += dt;
+    if (flow && flowTex) {
+      flow.update(dt);
+      if (flow.changed) flowTex.needsUpdate = true;
+      // quality steps: full, then a lighter bend, then the displacement off (the light texture stays longest)
+      shared.uFlowK.value = vtf && level < 2 ? (level === 0 ? 0.045 : 0.028) : 0;
+      bgMat.uniforms.uFlowT.value = level >= 3 ? 0 : level === 2 ? 0.4 : 0.75;
+      bgMat.uniforms.uFlowE.value = flow.energy;
+    }
     readScroll();
     // settles in a short glide: it follows the scroll, no long catch-up and no waiting
     const k1 = 1 - Math.exp(-dt * 11);
@@ -599,18 +663,38 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     bgMat.uniforms.uCalm.value = cur.calm;
     // soft background into the small picture: it only drifts slowly, so every third frame is enough,
     // every second one while the scroll is changing the look
-    if (frames <= 3 || still || frames % (light || level >= 2 ? 4 : 3) === 0 || (Math.abs(sCur - prev) > 0.0005 && frames % (light ? 3 : 2) === 0)) {
+    if (frames <= 3 || still || frames % (light || level >= 2 ? 4 : 3) === 0 || (Math.abs(sCur - prev) > 0.0005 && frames % (light ? 3 : 2) === 0) || (flowing && frames % (level >= 2 ? 3 : 2) === 0)) {
       renderer.setRenderTarget(rt);
       renderer.render(bgScene, camera);
       renderer.setRenderTarget(null);
     }
     renderer.render(scene, camera);
+    // the particle stage (prototype): drawn by the same renderer into its own box, only while the box is on screen
+    const stage = spaceBus.stage;
+    if (stage) {
+      const r = stage.rect();
+      if (r && r.bottom > 0 && r.top < h && r.right > 0 && r.left < w && r.width > 8 && r.height > 8) {
+        stage.step(dt);
+        const vy = h - r.bottom;
+        const sx = Math.max(0, r.left);
+        const sy = Math.max(0, vy);
+        renderer.autoClear = false;
+        renderer.setScissorTest(true);
+        renderer.setViewport(r.left, vy, r.width, r.height);
+        renderer.setScissor(sx, sy, Math.min(w, r.right) - sx, Math.min(h, vy + r.height) - sy);
+        stage.render(renderer, renderer.getPixelRatio());
+        renderer.setScissorTest(false);
+        renderer.setViewport(0, 0, w, h);
+        renderer.autoClear = true;
+      }
+    }
     // read-only state for tests and debugging
     if (frames % 5 === 0 || still || paused) {
       canvas.dataset.s = sCur.toFixed(2);
       canvas.dataset.q = String(level);
       canvas.dataset.res = resScale.toFixed(1);
       canvas.dataset.frames = String(frames);
+      if (flow) canvas.dataset.flow = flow.energy.toFixed(3);
     }
     if (!paused && !document.hidden && !spaceBus.briefOpen) raf = requestAnimationFrame(frame);
     else last = 0;
@@ -707,6 +791,8 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
         l.geo.dispose();
         l.mat.dispose();
       });
+      flow?.dispose();
+      flowTex?.dispose();
       tgeo.dispose();
       tmat.dispose();
       bg.geometry.dispose();

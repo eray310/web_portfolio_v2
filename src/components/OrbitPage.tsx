@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { allesta } from "../data/interactive";
 import type { CreativeRequest } from "./creative/CreativeHost";
 import { tools } from "../data/tools";
+import OrbitFlow from "./ai/OrbitFlow";
 import "./styles/OrbitPage.css";
 
 const BASE = import.meta.env.BASE_URL;
@@ -377,6 +378,8 @@ const LiveOrbit = ({ hasCv, onBrief }: { hasCv: boolean; onBrief: () => void }) 
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const phone = useIsPhone();
+  // The pointer's flow in the sky: only with a mouse (no touch screen), never for "Hareketi azalt" (that is the still version).
+  const flowOn = useMemo(() => typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches && !window.matchMedia("(max-width: 767px)").matches, []);
   const farStars = useMemo(() => makeFarStars(phone ? 56 : 130), [phone]);
   const sky = useMemo(() => (phone ? makeSky(260, 70, 6) : makeSky(900, 260, 14)), [phone]);
   const midStars = useMemo(() => makeMidStars(phone ? 16 : 40), [phone]);
@@ -688,6 +691,7 @@ const LiveOrbit = ({ hasCv, onBrief }: { hasCv: boolean; onBrief: () => void }) 
           <i className="yr-shoot yr-shoot-3" />
           <i className="yr-shoot yr-shoot-4" />
           <i className="yr-shoot yr-shoot-5" />
+          {flowOn && <OrbitFlow rootRef={stageRef} />}
           <div className="yr-vignette" />
         </div>
 

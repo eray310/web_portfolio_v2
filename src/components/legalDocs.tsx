@@ -69,9 +69,7 @@ export const docs: Record<LegalKey, LegalDoc> = {
             <li>
               Posta adresi: <Todo>[posta adresi henüz eklenmedi: sizden gerekli]</Todo>
             </li>
-            <li>
-              KEP adresi: <Todo>[KEP adresi doğrulanmadı: varsa sizden gerekli, yoksa bu satır kaldırılacak]</Todo>
-            </li>
+            <li>KEP adresim yok.</li>
           </ul>
         </section>
 
@@ -146,8 +144,8 @@ export const docs: Record<LegalKey, LegalDoc> = {
           <h2>6. Saklama süresi</h2>
           <ul>
             <li>
-              <strong>Brief e-postaları:</strong> brief'in ulaştığı Gmail kutumda brief'i ve ilgili e-postaları en fazla 1 gün saklıyorum; bu benim kendi kutumdaki uygulamamdır.{" "}
-              <Todo>[Bir günlük silmenin nasıl uygulandığı (elle mi, otomatik kural mı) doğrulanmadı; Gmail çöp kutusu, yedekler ve sağlayıcı kayıtları için süre bilinmiyor]</Todo>
+              <strong>Brief e-postaları:</strong> Proje brief'lerini ve ilgili e-postaları Gmail gelen kutumdan bir gün sonra elle siliyorum. Silme işlemi otomatik değildir.{" "}
+              <Todo>[Gmail çöp kutusundan kalıcı silme süresi doğrulanmadı; Google'ın sağlayıcı kayıtlarının ve yedeklerin saklama süresi doğrulanmadı]</Todo>
             </li>
             <li>
               <strong>Vercel sunucu kayıtları:</strong> süre Vercel hesabının planına göre değişir (Vercel belgelerinde Hobby için 1 saat, Pro için 1 gün, Observability Plus ile 30 güne kadar).{" "}
@@ -172,18 +170,21 @@ export const docs: Record<LegalKey, LegalDoc> = {
         <section>
           <h2>8. Başvuru usulü</h2>
           <p>
-            Başvurunu “Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ”in 5. maddesinde sayılan yollardan biriyle yapabilirsin: yazılı olarak; kayıtlı elektronik posta (KEP) adresi, güvenli elektronik imza veya mobil imza ile; ya da daha önce veri sorumlusuna bildirdiğin ve veri sorumlusunun sisteminde kayıtlı e-posta adresinden.
+            Başvuru, “Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ”in 5. maddesinde sayılan yollarla yapılır: yazılı olarak; KEP adresi, güvenli elektronik imza veya mobil imza ile; ya da daha önce veri sorumlusuna bildirilen ve veri sorumlusunun sisteminde kayıtlı e-posta adresinden. Benim KEP adresim yoktur; aşağıda hangi yolların benim için kullanılabilir olduğunu yazdım.
           </p>
           <ul>
             <li>
-              <strong>Normal e-posta:</strong> brief'te bildirdiğin e-posta adresinden <Mail /> adresine yazarak başvurabilirsin. Tebliğ'e göre bu yol, adresin veri sorumlusunun sisteminde kayıtlı olmasına bağlıdır. Brief e-postaları 1 gün sonra silindiği için, silindikten sonra gelen bir e-posta bu yola girmeyebilir; bu durumda yazılı başvuru, KEP veya imza ile başvuru gerekir ya da kimliğini doğrulamak için ek bilgi isteyebilirim.{" "}
+              <strong>Normal e-posta:</strong> brief'te bildirdiğin e-posta adresinden <Mail /> adresine yazarak başvurabilirsin. Tebliğ'e göre bu yol, adresin veri sorumlusunun sisteminde kayıtlı olmasına bağlıdır. Brief e-postalarını bir gün sonra elle sildiğim için, silindikten sonra gelen bir e-posta bu yola girmeyebilir; bu durumda yazılı başvuru ya da imzalı başvuru gerekir veya kimliğini doğrulamak için ek bilgi isteyebilirim.{" "}
               <Todo>[Bu yorum yayından önce sizin tarafınızdan ve gerekirse bir hukukçu tarafından doğrulanmalı]</Todo>
             </li>
             <li>
               <strong>Yazılı:</strong> <Todo>[posta adresi eklendiğinde buraya yazılacak]</Todo>
             </li>
             <li>
-              <strong>KEP, güvenli elektronik imza veya mobil imza:</strong> <Todo>[KEP adresi doğrulanmadı; imzalı e-posta kabul edilip edilmeyeceği sizden gerekli]</Todo>
+              <strong>KEP:</strong> KEP adresim olmadığı için KEP ile başvuru alamıyorum.
+            </li>
+            <li>
+              <strong>Güvenli elektronik imza veya mobil imza:</strong> <Todo>[Bu yollarla gelen başvurunun nasıl kabul edileceği sizden gerekli]</Todo>
             </li>
           </ul>
           <p>
@@ -251,8 +252,8 @@ export const docs: Record<LegalKey, LegalDoc> = {
         <section>
           <h2>Ne kadar süre saklanır?</h2>
           <p>
-            Brief ve ilgili e-postaları Gmail kutumda 1 gün saklıyorum; bu benim kendi kutumdaki uygulamamdır.{" "}
-            <Todo>[Silmenin nasıl uygulandığı doğrulanmadı; Gmail çöp kutusu, yedekler, Vercel ve Resend kayıtları için süre bilinmiyor ve 1 gün olarak varsayılmıyor]</Todo>
+            Proje brief'lerini ve ilgili e-postaları Gmail gelen kutumdan bir gün sonra elle siliyorum.{" "}
+            <Todo>[Gmail çöp kutusundan kalıcı silme süresi ve sağlayıcı kayıtlarının saklama süresi doğrulanmadı; Vercel ve Resend kayıtları için de süre 1 gün olarak varsayılmıyor]</Todo>
           </p>
         </section>
 

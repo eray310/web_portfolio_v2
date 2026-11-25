@@ -391,38 +391,46 @@
   }
 }
 
-/* ── Pause: hover, keyboard focus, and a small play/pause button under the strip ── */
+/* ── Pause: hover, finger, keyboard focus, and one text control that appears on focus ── */
 .brands-stage {
   position: relative;
 }
 .brands-marquee.is-paused .brands-track,
-.brands-marquee:focus-within .brands-track {
+.brands-stage:focus-within .brands-track {
   animation-play-state: paused;
 }
-.brands-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  margin: 6px max(15px, calc((100% - 1240px) / 2)) 0 auto;
-  padding: 0;
+/* The only control: plain text, invisible until the strip has keyboard focus. */
+.brands-pause {
+  position: absolute;
+  right: max(15px, calc((100% - 1240px) / 2));
+  bottom: -50px;
+  z-index: 3;
+  min-height: 44px;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 14px;
   color: #eae5ec;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
+  background: #0a0e17;
+  border: 1px solid rgba(94, 234, 212, 0.55);
+  border-radius: 999px;
   cursor: pointer;
+  clip-path: inset(50%);
+  opacity: 0;
+  pointer-events: none;
 }
-.brands-toggle svg {
-  font-size: 22px;
-  color: var(--accentColor);
+.brands-stage:focus-within .brands-pause,
+.brands-pause:focus-visible {
+  clip-path: none;
+  opacity: 1;
+  pointer-events: auto;
 }
-.brands-toggle:hover {
-  border-color: var(--accentColor);
-}
-.brands-toggle:focus-visible {
+.brands-pause:focus-visible {
   outline: 2px solid var(--accentColor);
   outline-offset: 3px;
+}
+/* A finger on the strip holds it too (there is no hover on a phone). */
+.brands-marquee:active .brands-track {
+  animation-play-state: paused;
 }
 .brands-static {
   cursor: default;

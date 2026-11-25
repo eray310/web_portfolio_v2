@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from "react";
-import { MdPause, MdPlayArrow } from "react-icons/md";
 import { brands, type Brand } from "../data/brands";
 import { brandVideos } from "../data/brandVideos";
 import { prefersReducedMotion } from "../utils/motion";
@@ -18,7 +17,9 @@ const Brands = () => {
   // The brand whose video window is open, and the logo to give focus back to.
   const [openBrand, setOpenBrand] = useState<Brand | null>(null);
   const opener = useRef<HTMLElement | null>(null);
-  // The strip flows by itself, stops on hover and keyboard focus, and has a small play/pause button.
+  // The strip flows by itself and stands still while the pointer is over it, while a finger is on it and
+  // while keyboard focus is inside it. Focus inside also shows one plain text control ("Akışı durdur") so
+  // the movement can be switched off for good; it stays hidden for everyone else.
   // With "Hareketi azalt" it stands still and is scrolled by hand instead (finger, drag, keys).
   const reduced = prefersReducedMotion();
   const [paused, setPaused] = useState(false);
@@ -157,14 +158,12 @@ const Brands = () => {
         {!reduced && (
           <button
             type="button"
-            className="brands-toggle"
+            className="brands-pause"
             aria-pressed={paused}
-            aria-label="Marka şeridi akışı"
-            title={paused ? "Akışı başlat" : "Akışı durdur"}
             onClick={() => setPaused((p) => !p)}
             data-cursor="disable"
           >
-            {paused ? <MdPlayArrow aria-hidden="true" /> : <MdPause aria-hidden="true" />}
+            {paused ? "Akışı başlat" : "Akışı durdur"}
           </button>
         )}
       </div>

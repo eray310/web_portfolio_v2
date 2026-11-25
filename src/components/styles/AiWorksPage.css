@@ -1096,19 +1096,18 @@ main:focus {
   background: linear-gradient(90deg, rgba(5, 8, 14, 0.7) 0%, rgba(5, 8, 14, 0.46) 36%, rgba(5, 8, 14, 0.12) 62%, rgba(5, 8, 14, 0) 80%);
 }
 
-/* Outside the background layer so that it sits above the page content and can be clicked. */
+/* "Arka planı durdur": a small text button in the normal page flow (under the opening call and in the
+   footer), so it never covers writing, the showreel or any control. */
 .ai-space-ctl {
-  position: fixed;
-  left: 14px;
-  bottom: 14px;
-  z-index: 50;
+  display: inline-flex;
+  align-items: center;
   min-height: 44px;
-  padding: 0 16px;
+  padding: 0 18px;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #eae5ec;
-  background: rgba(8, 11, 17, 0.78);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.34);
   border-radius: 999px;
   cursor: pointer;
@@ -1120,6 +1119,12 @@ main:focus {
 }
 
 @media (hover: hover) and (pointer: fine) {
+  .ai-space-ctl {
+    min-height: 36px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
   .ai-space-ctl:hover {
     border-color: var(--accentColor);
   }
@@ -1128,6 +1133,21 @@ main:focus {
 .ai-space-ctl:focus-visible {
   outline: 2px solid var(--accentColor);
   outline-offset: 3px;
+}
+
+.ai-hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 14px;
+}
+
+.ai-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
 }
 
 /* The page content stays above the canvas. */
@@ -1155,11 +1175,7 @@ main:focus {
   }
 }
 
-/* With a mouse the control can be smaller (28 px is enough); touch keeps the 44 px target. */
-@media (hover: hover) and (pointer: fine) {
-  .ai-space-ctl {
-    min-height: 32px;
-    padding: 0 12px;
-    font-size: 12px;
-  }
+/* The header (with its open menu) stays above the page content. */
+.ai-top {
+  z-index: 30;
 }

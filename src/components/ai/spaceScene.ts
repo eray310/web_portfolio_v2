@@ -235,7 +235,7 @@ const BG_FRAG = /* glsl */ `
   }
 `;
 
-// The slow, soft parts (nebula, glow, arc) are drawn into a small picture (a third of the size, both ways)
+// The slow, soft parts (nebula, glow, arc) are drawn into a small picture (a quarter of the size, both ways)
 // and stretched over the screen: they are smooth anyway, and it costs a fraction of drawing them at full size.
 const COMP_VERT = /* glsl */ `
   varying vec2 vUv;
@@ -263,15 +263,26 @@ type Layer = {
 
 export function createSpaceScene(opts: SpaceOptions): SpaceApi {
   const { canvas, light, still } = opts;
-  const renderer = new WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: light ? "low-power" : "default" });
+  // One context with only what is needed (no alpha, no antialias, no depth buffer): the stars are drawn
+  // in a fixed order with additive blending. A "desynchronized" context was tried and left out: it is
+  // faster on average here but makes the frame times uneven.
+  const attrs: WebGLContextAttributes = { alpha: false, antialias: false, depth: false, stencil: false, powerPreference: light ? "low-power" : "default" };
+  const context = (canvas.getContext("webgl2", attrs) || canvas.getContext("webgl", attrs)) as WebGLRenderingContext | WebGL2RenderingContext | null;
+  if (!context) throw new Error("no WebGL");
+  const renderer = new WebGLRenderer({ canvas, context, antialias: false, alpha: false });
   renderer.setClearColor(0x05070c, 1);
   const scene = new Scene();
   const camera = new PerspectiveCamera(58, 1, 0.1, 2000);
   camera.position.set(0, 0, 0);
 
-  let level = 0; // 0 = full, 1 = lighter, 2 = lightest (set by frame times)
-  // drawing size: the picture is presented to the screen every frame, so a slow machine draws it smaller
-  const dprMax = () => (level >= 2 ? (light ? 0.7 : 0.6) : level === 1 ? (light ? 0.85 : 0.85) : light ? 1 : 1.5);
+  let level = 0; // 0 = full, 1 = lighter, 2 = lightest, 3 = slowest machines (set by frame times)
+  let tick = 0;
+  let lastRaf = 0;
+  let lastScrollT = 0;
+  // Drawing size: at most 1.25 pixels per CSS pixel (1 on a phone), and a slow machine draws it smaller,
+  // step by step, before anything else is taken away; the stars keep their positions and depth.
+  let resScale = 1;
+  const dprMax = () => (light ? 1 : 1.25) * resScale;
 
   // ── background quad (charcoal, night blue, nebula, glow, arc) ──
   const bgMat = new ShaderMaterial({
@@ -448,8 +459,8 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     camera.updateProjectionMatrix();
     shared.uScale.value = h / (2 * Math.tan((camera.fov * Math.PI) / 360));
     applyQuality();
-    const rw = Math.max(48, Math.ceil(w / 3));
-    const rh = Math.max(48, Math.ceil(h / 3));
+    const rw = Math.max(48, Math.ceil(w / 4));
+    const rh = Math.max(48, Math.ceil(h / 4));
     rt.setSize(rw, rh);
     bgMat.uniforms.uRes.value.set(rw, rh);
     bgMat.uniforms.uVp.value.copy(vp);
@@ -490,20 +501,28 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
   const frame = (t: number) => {
     raf = 0;
     if (disposed) return;
-    // at the lowest quality the scene is drawn about 30 times a second, which leaves the rest to the page
-    if (level >= 2 && last && t - last < 30 && !paused && !document.hidden && !spaceBus.briefOpen) {
+    // Not every frame is drawn when that is not needed: half of them while the page is not being scrolled
+    // (the drift is slow), and one in two or three on a machine that cannot keep up. The movement is
+    // timed with the clock, so it keeps its speed whatever is skipped.
+    tick++;
+    // how fast the screen really runs (every rAF counts, drawn or skipped): this drives the quality
+    const raw = lastRaf ? Math.min(100, t - lastRaf) : 16;
+    lastRaf = t;
+    ema += (raw - ema) * 0.06;
+    frames++;
+    if (frames > 60 && frames % 40 === 0 && ema > (light ? 30 : 22) && !paused) {
+      if (resScale > 0.61) resScale = Math.max(0.6, resScale - 0.1);
+      else if (level < 2 || (level === 2 && ema > 40)) level++;
+      applyQuality();
+    }
+    const reading = performance.now() - lastScrollT > 300;
+    const every = level >= 3 ? 2 : reading ? 2 : 1;
+    if (every > 1 && last && tick % every !== 0 && !paused && !document.hidden && !spaceBus.briefOpen) {
       raf = requestAnimationFrame(frame);
       return;
     }
-    const dt = Math.min(0.1, last ? (t - last) / 1000 : 0.016);
+    const dt = Math.min(0.25, last ? (t - last) / 1000 : 0.016);
     last = t;
-    // adaptive quality: a few seconds of slow frames lowers the cost, never raises it back
-    frames++;
-    ema += (dt * 1000 - ema) * 0.08;
-    if (frames > 70 && frames % 45 === 0 && level < 2 && ema > (light ? 34 : 26)) {
-      level++;
-      applyQuality();
-    }
     time += dt;
     readScroll();
     // settles in a short glide: it follows the scroll, no long catch-up and no waiting
@@ -563,17 +582,21 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     bgMat.uniforms.uGlow.value = cur.glow;
     bgMat.uniforms.uArc.value = cur.arc;
     bgMat.uniforms.uCalm.value = cur.calm;
-    // soft background into the small picture (every frame at full quality, every third one when slow)
-    if (level === 0 || frames % 3 === 0 || still) {
+    // soft background into the small picture: it only drifts slowly, so every third frame is enough,
+    // every second one while the scroll is changing the look
+    if (frames <= 3 || still || frames % 3 === 0 || (Math.abs(sCur - prev) > 0.0005 && frames % 2 === 0)) {
       renderer.setRenderTarget(rt);
       renderer.render(bgScene, camera);
       renderer.setRenderTarget(null);
     }
     renderer.render(scene, camera);
     // read-only state for tests and debugging
-    canvas.dataset.s = sCur.toFixed(2);
-    canvas.dataset.q = String(level);
-    canvas.dataset.frames = String(frames);
+    if (frames % 5 === 0 || still || paused) {
+      canvas.dataset.s = sCur.toFixed(2);
+      canvas.dataset.q = String(level);
+      canvas.dataset.res = resScale.toFixed(1);
+      canvas.dataset.frames = String(frames);
+    }
     if (!paused && !document.hidden && !spaceBus.briefOpen) raf = requestAnimationFrame(frame);
     else last = 0;
   };
@@ -588,6 +611,9 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     pointerX = (e.clientX / window.innerWidth - 0.5) * 2;
     pointerY = -(e.clientY / window.innerHeight - 0.5) * 2;
     lastMove = performance.now();
+  };
+  const onScroll = () => {
+    lastScrollT = performance.now();
   };
   const onVis = () => {
     if (document.hidden) {
@@ -635,6 +661,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     kick();
   }
   window.addEventListener("resize", onResize);
+  window.addEventListener("scroll", onScroll, { passive: true });
   document.addEventListener("visibilitychange", onVis);
   if (!light && !still) window.addEventListener("pointermove", onMove, { passive: true });
 
@@ -658,7 +685,8 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
       if (raf) cancelAnimationFrame(raf);
       window.clearInterval(busTimer);
       window.removeEventListener("resize", onResize);
-          document.removeEventListener("visibilitychange", onVis);
+          window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("pointermove", onMove);
       [far, mid, near, dust].forEach((l) => {
         l.geo.dispose();

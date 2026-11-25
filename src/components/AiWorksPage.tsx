@@ -3,6 +3,7 @@ import { MdArrowForward, MdCheck, MdPause, MdPlayArrow } from "react-icons/md";
 import { aiHero, aiSteps, aiWorks, type AiMedia, type AiWork } from "../data/aiWorks";
 import { prefersReducedMotion } from "../utils/motion";
 import SpaceBackground from "./ai/SpaceBackground";
+import SpaceToggle from "./ai/SpaceToggle";
 import { spaceBus } from "./ai/spaceBus";
 import "./styles/AiWorksPage.css";
 
@@ -375,6 +376,7 @@ const AiWorksPage = () => {
             <button type="button" className="ai-cta ai-cta-big" onClick={(e) => open([], e.currentTarget)}>
               Projeni anlat <MdArrowForward aria-hidden="true" />
             </button>
+            <SpaceToggle className="ai-space-ctl-hero" />
           </div>
         </section>
 
@@ -439,6 +441,7 @@ const AiWorksPage = () => {
         <p>
           Tasarım ve motion — <span>Eray Ömeroğlu</span>
         </p>
+        <SpaceToggle className="ai-space-ctl-foot" />
       </footer>
 
       {brief && (

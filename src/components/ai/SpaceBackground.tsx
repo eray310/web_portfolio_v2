@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { prefersReducedMotion } from "../../utils/motion";
 import type { SpaceApi, StopInfo } from "./spaceScene";
+import { spaceControl } from "./spaceBus";
 
 /**
  * The AI İşler background. A decorative canvas (no click, no keyboard focus) behind the page:
  * `ai-space`. Until the 3D scene has drawn its first frame, and if WebGL is not available, a
  * dark starry still picture is shown instead (plain CSS, no request).
  *
- * The small "Arka planı durdur" control lets the visitor stop the movement; it is a normal
- * button with a text label. With "Hareketi azalt" one still frame is drawn and there is nothing to stop.
+ * The "Arka planı durdur" control (SpaceToggle, in the normal page flow) lets the visitor stop the
+ * movement. With "Hareketi azalt" one still frame is drawn and there is nothing to stop.
  */
 
 /** A static starry picture as an inline SVG (drawn once, no request): the fallback and the first paint. */
@@ -34,8 +35,7 @@ const SpaceBackground = ({ rootRef }: { rootRef: React.RefObject<HTMLElement> })
   const api = useRef<SpaceApi | null>(null);
   const reduced = useMemo(() => prefersReducedMotion(), []);
   const [live, setLive] = useState(false); // the canvas has drawn its first frame
-  const [failed, setFailed] = useState(false); // no WebGL: the still picture stays
-  const [paused, setPaused] = useState(false);
+  const [, setFailed] = useState(false); // no WebGL: the still picture stays
   const stars = useMemo(starsDataUrl, []);
 
   useEffect(() => {
@@ -85,11 +85,18 @@ const SpaceBackground = ({ rootRef }: { rootRef: React.RefObject<HTMLElement> })
             ro = new ResizeObserver(refresh);
             ro.observe(root);
             window.addEventListener("load", refresh);
-            window.requestAnimationFrame(() => window.requestAnimationFrame(() => !cancelled && setLive(true)));
+            window.requestAnimationFrame(() =>
+              window.requestAnimationFrame(() => {
+                if (cancelled) return;
+                setLive(true);
+                if (!reduced) spaceControl.set({ live: true, paused: false });
+              })
+            );
             el.addEventListener("webglcontextlost", (e) => {
               e.preventDefault();
               setLive(false);
               setFailed(true);
+              spaceControl.set({ live: false });
             });
           } catch {
             setFailed(true);
@@ -104,16 +111,20 @@ const SpaceBackground = ({ rootRef }: { rootRef: React.RefObject<HTMLElement> })
       ro?.disconnect();
       api.current?.dispose();
       api.current = null;
+      spaceControl.set({ live: false, paused: false });
     };
   }, [rootRef, reduced]);
 
-  const toggle = () => {
-    const a = api.current;
-    if (!a) return;
-    const next = !a.isPaused();
-    a.setPaused(next);
-    setPaused(next);
-  };
+  // the control (in the page flow) starts and stops the scene
+  useEffect(
+    () =>
+      spaceControl.subscribe(() => {
+        const a = api.current;
+        const want = spaceControl.get().paused;
+        if (a && a.isPaused() !== want) a.setPaused(want);
+      }),
+    []
+  );
 
   return (
     <>
@@ -122,11 +133,6 @@ const SpaceBackground = ({ rootRef }: { rootRef: React.RefObject<HTMLElement> })
         <canvas ref={canvas} className={`ai-space-canvas${live ? " is-live" : ""}`} tabIndex={-1} />
         <div className="ai-space-shade" />
       </div>
-      {live && !reduced && !failed && (
-        <button type="button" className="ai-space-ctl" onClick={toggle} aria-pressed={paused} data-cursor="disable">
-          {paused ? "Arka planı başlat" : "Arka planı durdur"}
-        </button>
-      )}
     </>
   );
 };

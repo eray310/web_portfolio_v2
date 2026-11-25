@@ -69,7 +69,9 @@ export const docs: Record<LegalKey, LegalDoc> = {
             <li>
               Posta adresi: <Todo>[posta adresi henüz eklenmedi: sizden gerekli]</Todo>
             </li>
-            <li>KEP adresim yok.</li>
+            <li>
+              KEP adresi: <Todo>[KEP adresi taslakta bekleyen bilgi: sizden gerekli]</Todo>
+            </li>
           </ul>
         </section>
 
@@ -120,7 +122,7 @@ export const docs: Record<LegalKey, LegalDoc> = {
           <h2>5. Verilerin kimlere ve hangi amaçla aktarılabileceği</h2>
           <ul>
             <li>
-              <strong>Vercel Inc.:</strong> siteyi ve form uç noktasını barındıran hizmet sağlayıcı. Amaç: sitenin yayında tutulması ve formun çalışması.
+              <strong>Vercel Inc.:</strong> siteyi ve form uç noktasını barındıran hizmet sağlayıcı. Amaç: sitenin yayında tutulması ve formun çalışması. Form gönderimi Vercel'in sunucusuz fonksiyonu (/api/idea) üzerinden geçer; yani brief'in içeriği iletim sırasında Vercel altyapısından geçer. Fonksiyon brief'in içeriğini kendisi kaydetmez veya günlüğe yazmaz; Vercel'in kendi istek ve çalışma günlüklerinin kapsamı ise doğrulanmamıştır.
             </li>
             <li>
               <strong>Resend:</strong> brief'in e-posta olarak bana iletilmesini sağlayan e-posta gönderim hizmeti. Amaç: gönderdiğin brief'in tarafıma ulaşması.
@@ -144,8 +146,8 @@ export const docs: Record<LegalKey, LegalDoc> = {
           <h2>6. Saklama süresi</h2>
           <ul>
             <li>
-              <strong>Brief e-postaları:</strong> Proje brief'lerini ve ilgili e-postaları Gmail gelen kutumdan bir gün sonra elle siliyorum. Silme işlemi otomatik değildir.{" "}
-              <Todo>[Gmail çöp kutusundan kalıcı silme süresi doğrulanmadı; Google'ın sağlayıcı kayıtlarının ve yedeklerin saklama süresi doğrulanmadı]</Todo>
+              <strong>Brief e-postaları:</strong>{" "}
+              <Todo>[Saklama süresi taslakta bekleyen bilgi: belirlenip doğrulanınca yazılacak. Gmail çöp kutusu, Google'ın sağlayıcı kayıtları ve yedekler için süre de doğrulanmadı]</Todo>
             </li>
             <li>
               <strong>Vercel sunucu kayıtları:</strong> süre Vercel hesabının planına göre değişir (Vercel belgelerinde Hobby için 1 saat, Pro için 1 gün, Observability Plus ile 30 güne kadar).{" "}
@@ -158,7 +160,7 @@ export const docs: Record<LegalKey, LegalDoc> = {
               <strong>Form hız sınırı:</strong> IP adresin yalnızca sunucu fonksiyonunun belleğinde, birkaç dakikalık bir pencere için sayılır; ayrı bir kayıt tutulmaz.
             </li>
           </ul>
-          <p>1 günlük süre, saydığım diğer sağlayıcıların ve yedeklerin sürelerini kapsamaz. Amaç ortadan kalktığında veriler silinir, yok edilir veya anonim hâle getirilir.</p>
+          <p>Amaç ortadan kalktığında veriler silinir, yok edilir veya anonim hâle getirilir.</p>
         </section>
 
         <section>
@@ -170,18 +172,18 @@ export const docs: Record<LegalKey, LegalDoc> = {
         <section>
           <h2>8. Başvuru usulü</h2>
           <p>
-            Başvuru, “Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ”in 5. maddesinde sayılan yollarla yapılır: yazılı olarak; KEP adresi, güvenli elektronik imza veya mobil imza ile; ya da daha önce veri sorumlusuna bildirilen ve veri sorumlusunun sisteminde kayıtlı e-posta adresinden. Benim KEP adresim yoktur; aşağıda hangi yolların benim için kullanılabilir olduğunu yazdım.
+            Başvuru, “Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ”in 5. maddesinde sayılan yollarla yapılır: yazılı olarak; KEP adresi, güvenli elektronik imza veya mobil imza ile; ya da daha önce veri sorumlusuna bildirilen ve veri sorumlusunun sisteminde kayıtlı e-posta adresinden. Hangi yolların benim için kullanılabilir olduğunu aşağıda yazdım.
           </p>
           <ul>
             <li>
-              <strong>Normal e-posta:</strong> brief'te bildirdiğin e-posta adresinden <Mail /> adresine yazarak başvurabilirsin. Tebliğ'e göre bu yol, adresin veri sorumlusunun sisteminde kayıtlı olmasına bağlıdır. Brief e-postalarını bir gün sonra elle sildiğim için, silindikten sonra gelen bir e-posta bu yola girmeyebilir; bu durumda yazılı başvuru ya da imzalı başvuru gerekir veya kimliğini doğrulamak için ek bilgi isteyebilirim.{" "}
+              <strong>Normal e-posta:</strong> brief'te bildirdiğin e-posta adresinden <Mail /> adresine yazarak başvurabilirsin. Tebliğ'e göre bu yol, adresin veri sorumlusunun sisteminde kayıtlı olmasına bağlıdır. Adresin kayıtlı değilse yazılı ya da imzalı başvuru gerekir veya kimliğini doğrulamak için ek bilgi isteyebilirim.{" "}
               <Todo>[Bu yorum yayından önce sizin tarafınızdan ve gerekirse bir hukukçu tarafından doğrulanmalı]</Todo>
             </li>
             <li>
               <strong>Yazılı:</strong> <Todo>[posta adresi eklendiğinde buraya yazılacak]</Todo>
             </li>
             <li>
-              <strong>KEP:</strong> KEP adresim olmadığı için KEP ile başvuru alamıyorum.
+              <strong>KEP:</strong> <Todo>[KEP adresi taslakta bekleyen bilgi: sizden gerekli]</Todo>
             </li>
             <li>
               <strong>Güvenli elektronik imza veya mobil imza:</strong> <Todo>[Bu yollarla gelen başvurunun nasıl kabul edileceği sizden gerekli]</Todo>
@@ -252,8 +254,7 @@ export const docs: Record<LegalKey, LegalDoc> = {
         <section>
           <h2>Ne kadar süre saklanır?</h2>
           <p>
-            Proje brief'lerini ve ilgili e-postaları Gmail gelen kutumdan bir gün sonra elle siliyorum.{" "}
-            <Todo>[Gmail çöp kutusundan kalıcı silme süresi ve sağlayıcı kayıtlarının saklama süresi doğrulanmadı; Vercel ve Resend kayıtları için de süre 1 gün olarak varsayılmıyor]</Todo>
+            <Todo>[Saklama süresi taslakta bekleyen bilgi: belirlenip doğrulanınca yazılacak. Gmail, Vercel ve Resend kayıtları için süre doğrulanmadı]</Todo>
           </p>
         </section>
 

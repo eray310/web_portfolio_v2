@@ -525,11 +525,11 @@ const BriefFlow = ({ initialServices, onClose, lock, unlock }: Props) => {
 
             {step === 2 && (
               <p className="bf-legal">
-                Kişisel verilerinin nasıl işlendiğini{" "}
+                Veri sorumlusu Eray Ömeroğlu'dur. Adın, e-postan ve brief'in yalnızca projeni değerlendirip sana dönmek için işlenir; pazarlama için kullanılmaz. Bilgilerin barındırma ve e-posta hizmetleri (Vercel, Resend, Gmail) üzerinden yurt dışına aktarılabilir. Ayrıntılar ve haklarının tamamı için{" "}
                 <a href="/kvkk" target="_blank" rel="noopener noreferrer" data-cursor="disable">
                   KVKK Aydınlatma Metni
                 </a>
-                'nde okuyabilirsin.
+                'ne bak.
               </p>
             )}
 

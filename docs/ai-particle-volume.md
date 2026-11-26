@@ -1,4 +1,4 @@
-# AI İşler: particle volume (design branch, not on main, not published)
+# AI İşler + Hakkımda: particle volume and local pointer wave (design branch, not on main, not published)
 
 Branch: `design/ai-particle-volume` (from `main` at `0dc9bf9`). Status: preview only, to be judged visually first.
 
@@ -44,3 +44,21 @@ loop and breathing; `debugSet(null)` lets time run.
 - The mobile formation is deliberately quiet (it mostly sits behind the showreel).
 - `public/cv/Eray_Omeroglu_CV.pdf` is still missing (older issue).
 - Making this the default look on main, and extending it to the other sections or to Hakkımda, is not done.
+
+## Revision 2 (three changes)
+1. **AI İşler, smoke removed.** The turquoise smoke and the curling light threads that followed the pointer were drawn
+   by the background shader in `ai/spaceScene.ts` (`BG_FRAG`: the flow-bent texture and the "thin threads" block, fed by
+   `uFlow`, `uFlowT`, `uFlowE`). All of that is gone. The pointer reaches only the particles now (volume layer and the old
+   near stars). The static nebula and glow were also turned down at stops 0 to 2 (`LOOKS` in `spaceScene.ts`) to keep
+   the ground dark and clean.
+2. **Reklam Filmi ve Video.** The formation continues: shape A (opening), B (Web Sitesi lanes and panels), C (a wider curl).
+   `uMorph` goes 0 to 1 over stops 0 to 1, `uMorph2` 0 to 1 over stops 1 to 2; it fades into the old background between
+   `scroll.fadeStart` and `scroll.fadeEnd`. The shape follows the example box (live, also while scrolling), the quiet zone
+   for the writing moves from the left to the right (`uSide`), an open full player calms it (`motion.playerAlpha`, eased,
+   and only near that section). Same palette and colour waves, same loop. Settings: `volumeConfig.ts` (`scroll`,
+   `readability.textColumnSide`, `place`), shape C: `centreC`, `halfWidthC` in `volumeLayer.ts`.
+3. **Hakkımda.** The threads of light (and nothing else of the old wake) are removed from `ai/OrbitFlow.tsx`. In their
+   place: a "local particle wave" on the same small 2D canvas (no WebGL): about 1100 faint stars plus 64 near ones, each with
+   a depth; near the pointer they spread along the flow, swell (size, brightness, small parallax) and take a faint ice
+   blue / turquoise tint; they are back in place about a second after the pointer stops. Settings: `ai/orbitWaveConfig.ts`.
+   Touch screens and "Hareketi azalt": resting picture only; the loop sleeps when nothing moves.

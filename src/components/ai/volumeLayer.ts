@@ -40,6 +40,12 @@ const centre = (u: number, out: Vector3) => {
   const a = TAU * u;
   return out.set(34 * (u - 0.5) + 6 * Math.sin(a + 0.4), 10 * Math.sin(a + 0.9) + 4 * Math.sin(2 * a + 0.2), 13 * Math.sin(1.5 * a + 0.3));
 };
+// Shape C (Reklam Filmi ve Video): a wider, slower curl that passes behind and on both sides of the video
+const centreC = (u: number, out: Vector3) => {
+  const a = TAU * u;
+  return out.set(90 * (u - 0.5) + 9 * Math.sin(1.2 * a + 0.3), 22 * Math.sin(0.85 * a + 2.2) + 8 * Math.sin(2.3 * a), 20 * Math.sin(1.25 * a + 1.1));
+};
+const halfWidthC = (u: number) => 6 + 10 * Math.pow(0.5 + 0.5 * Math.sin(TAU * 1.3 * u + 0.4), 1.4);
 const halfWidth = (u: number) => 4 + 11 * Math.pow(0.5 + 0.5 * Math.sin(TAU * u - 1.2), 1.5);
 // density along the ribbon: thick stretches and near-empty ones
 const density = (u: number) => clamp(0.12 + 1.35 * Math.pow(0.5 + 0.5 * Math.sin(TAU * (1.9 * u + 0.18)), 1.4), 0, 1);
@@ -52,18 +58,19 @@ const P0 = new Vector3();
 const P1 = new Vector3();
 
 /** Position on the ribbon at (u along, v across -1..1): returns the world-ish position in `out` and the local frame. */
-function ribbon(u: number, v: number, out: Vector3, frame?: { w: Vector3; n: Vector3 }) {
-  centre(u, P0);
-  centre(Math.min(1, u + 0.002), P1);
+function ribbon(u: number, v: number, out: Vector3, frame?: { w: Vector3; n: Vector3 }, kind = 0) {
+  const cf = kind === 0 ? centre : centreC;
+  cf(u, P0);
+  cf(Math.min(1, u + 0.002), P1);
   T.copy(P1).sub(P0);
   if (T.lengthSq() < 1e-9) {
-    centre(Math.max(0, u - 0.002), P1);
+    cf(Math.max(0, u - 0.002), P1);
     T.copy(P0).sub(P1);
   }
   T.normalize();
   N1.crossVectors(T, UP).normalize();
   B1.crossVectors(T, N1).normalize();
-  const psi = TAU * 1.1 * u + 0.5; // the ribbon twists: edge-on in places, seen flat in others
+  const psi = kind === 0 ? TAU * 1.1 * u + 0.5 : TAU * 0.8 * u + 2.0; // the ribbon twists: edge-on in places, seen flat in others
   const cs = Math.cos(psi);
   const sn = Math.sin(psi);
   const wx = N1.x * cs + B1.x * sn;
@@ -72,7 +79,7 @@ function ribbon(u: number, v: number, out: Vector3, frame?: { w: Vector3; n: Vec
   const nx = -N1.x * sn + B1.x * cs;
   const ny = -N1.y * sn + B1.y * cs;
   const nz = -N1.z * sn + B1.z * cs;
-  const hw = halfWidth(u);
+  const hw = kind === 0 ? halfWidth(u) : halfWidthC(u);
   const across = v * hw;
   const cup = (v * v - 0.35) * hw * 0.55 + Math.abs(v) * 1.2 * Math.sin(TAU * 2.6 * u); // cupped, with a soft crease
   out.set(P0.x + wx * across + nx * cup, P0.y + wy * across + ny * cup, P0.z + wz * across + nz * cup);
@@ -126,18 +133,20 @@ function ordered(u: number, v: number, seed: number, seed2: number, out: Vector3
 }
 
 // ── Build the points ─────────────────────────────────────────────────────────────────────────────
-type Built = { pos: Float32Array; posB: Float32Array; data: Float32Array; tier: Float32Array; n: number };
+type Built = { pos: Float32Array; posB: Float32Array; posC: Float32Array; data: Float32Array; tier: Float32Array; n: number };
 
 function build(total: number, light: boolean): Built {
   const r = rng(90210);
   const pos = new Float32Array(total * 3);
   const posB = new Float32Array(total * 3);
+  const posC = new Float32Array(total * 3);
   const data = new Float32Array(total * 4);
   const tier = new Float32Array(total);
   const nFar = Math.round(total * C.share.far);
   const nNear = Math.round(total * C.share.near);
   const A = new Vector3();
   const Bv = new Vector3();
+  const Cv = new Vector3();
   const frame = { w: new Vector3(), n: new Vector3() };
   const fibres = 46;
   const fibreW = Array.from({ length: fibres }, () => 0.35 + 0.65 * r());
@@ -173,6 +182,7 @@ function build(total: number, light: boolean): Built {
       }
       A.set(x, y, z);
       Bv.set(x, y, z);
+      Cv.set(x, y, z);
       u = r();
       v = r() * 2 - 1;
     } else {
@@ -190,6 +200,8 @@ function build(total: number, light: boolean): Built {
         const ang = s.k * TAU * u + s.ph;
         const rad = s.rad * (0.7 + 0.5 * Math.sin(TAU * u * 1.3 + s.ph)) + gauss(r) * 0.35;
         A.addScaledVector(frame.w, Math.cos(ang) * rad).addScaledVector(frame.n, Math.sin(ang) * rad * 0.8);
+        ribbon(u, 0, Cv, frame, 1);
+        Cv.addScaledVector(frame.w, Math.cos(ang) * rad * 1.5).addScaledVector(frame.n, Math.sin(ang) * rad * 1.2);
         v = clamp(Math.cos(ang) * 0.9, -1, 1);
       } else {
         let f = 0;
@@ -202,9 +214,12 @@ function build(total: number, light: boolean): Built {
         ribbon(u, v, A);
         // most points sit on their fibre; some drift off it into a soft haze around the folds (volume, not a shell)
         const spread = r() < 0.12 ? 0.9 + r() * 1.5 : 0.1;
-        A.x += gauss(r) * spread;
-        A.y += gauss(r) * spread;
-        A.z += gauss(r) * spread;
+        const jx = gauss(r) * spread;
+        const jy = gauss(r) * spread;
+        const jz = gauss(r) * spread;
+        A.set(A.x + jx, A.y + jy, A.z + jz);
+        ribbon(u, v, Cv, undefined, 1);
+        Cv.set(Cv.x + jx, Cv.y + jy, Cv.z + jz);
       }
       ordered(u, v, seed, seed2, Bv);
       Bv.x += gauss(r) * 0.07;
@@ -215,10 +230,12 @@ function build(total: number, light: boolean): Built {
         const dz = 18 + r() * 14;
         A.z += dz;
         Bv.z += dz;
+        Cv.z += dz;
       }
     }
     pos.set([A.x, A.y, A.z], i * 3);
     posB.set([Bv.x, Bv.y, Bv.z], i * 3);
+    posC.set([Cv.x, Cv.y, Cv.z], i * 3);
     const size = kind === 0 ? C.size.far : kind === 2 ? C.size.near : C.size.main;
     data[i * 4] = u;
     data[i * 4 + 1] = v;
@@ -227,17 +244,20 @@ function build(total: number, light: boolean): Built {
     tier[i] = kind;
   }
   void light;
-  return { pos, posB, data, tier, n: total };
+  return { pos, posB, posC, data, tier, n: total };
 }
 
 // ── Shaders ──────────────────────────────────────────────────────────────────────────────────────
 const VERT = /* glsl */ `
   attribute vec3 aB;
+  attribute vec3 aC;
   attribute vec4 aData;
   attribute float aTier;
   uniform float uPhase;      // 0..2pi over the 64 s breathing period
   uniform float uLoop;       // 0..1 over one colour loop
   uniform float uMorph;
+  uniform float uMorph2;
+  uniform float uSide;
   uniform float uShow;
   uniform mat3 uRot;
   uniform vec3 uPlace;
@@ -249,6 +269,7 @@ const VERT = /* glsl */ `
   uniform float uMaxPx;
   uniform float uLeftCalm;
   uniform float uTextCol;
+  uniform float uTextColSide;
   uniform vec2 uClearC;
   uniform vec2 uClearR;
   uniform float uClear;
@@ -279,10 +300,13 @@ const VERT = /* glsl */ `
     float sz = aData.w;
     // the shape: A to B, rolling along the ribbon (the front end changes first)
     float m = smoothstep(0.0, 1.0, clamp(uMorph * 1.5 - u * 0.5, 0.0, 1.0));
-    vec3 p = mix(position, aB, aTier < 0.5 ? 0.0 : m);
-    p.z += sin(m * 3.14159) * 5.0 * sin(u * 6.2832 + 1.0);
+    // then B to C (Reklam Filmi ve Video), rolling the other way along the shape
+    float m2 = smoothstep(0.0, 1.0, clamp(uMorph2 * 1.5 - (1.0 - u) * 0.5, 0.0, 1.0));
+    float isMain = aTier < 0.5 ? 0.0 : 1.0;
+    vec3 p = mix(mix(position, aB, isMain * m), aC, isMain * m2);
+    p.z += sin(m * 3.14159) * 5.0 * sin(u * 6.2832 + 1.0) + sin(m2 * 3.14159) * 6.0 * sin(u * 6.2832 + 3.0);
     // slow folds: one smooth field, so neighbouring points move together
-    float amp = mix(1.0, 0.42, m);
+    float amp = mix(mix(1.0, 0.42, m), 0.95, m2);
     vec3 q = p * 0.085;
     float ph = uPhase;
     vec3 d = vec3(
@@ -310,11 +334,13 @@ const VERT = /* glsl */ `
     // brightness: depth (far parts of the shape are dimmer), the quiet text column, the example boxes
     float depthFade = clamp(1.2 - (dist - 48.0) / 90.0, 0.3, 1.0);
     float nearFade = smoothstep(12.0, 30.0, dist);
-    float left = mix(1.0, uTextCol, uLeftCalm * (1.0 - smoothstep(0.12, 0.64, uv.x)));
-    vec2 dd = (uv - uClearC - vec2(0.0, -0.07)) / (uClearR * vec2(1.0, 1.4));
+    // the writing sits on the left (opening, Web Sitesi) or on the right (Reklam Filmi ve Video): stay quiet over it
+    float quiet = mix(1.0 - smoothstep(0.12, 0.64, uv.x), smoothstep(0.34, 0.52, uv.x), uSide);
+    float left = mix(1.0, mix(uTextCol, uTextColSide, uSide), uLeftCalm * quiet);
+    vec2 dd = (uv - uClearC - vec2(0.0, -0.05)) / (uClearR * vec2(1.0, 1.2));
     float len = length(dd);
-    float behind = mix(1.0, uBehind, uClear * (1.0 - smoothstep(0.6, 0.88, len)));
-    float halo = 1.0 + (uAround - 1.0) * uClear * exp(-pow((len - 1.0) / 0.3, 2.0));
+    float behind = mix(1.0, uBehind, uClear * (1.0 - smoothstep(0.62, 0.8, len)));
+    float halo = 1.0 + (uAround - 1.0) * uClear * exp(-pow((len - 0.9) / 0.28, 2.0));
     float edge = 1.0 - smoothstep(0.88, 1.12, max(abs(uv.x - 0.5), abs(uv.y - 0.5)) * 2.0);
     float tierA = aTier < 0.5 ? uAlphaTier.x : aTier > 1.5 ? uAlphaTier.z : uAlphaTier.y;
     float alpha = tierA * depthFade * nearFade * left * behind * halo * mix(0.35, 1.0, edge) * uShow;
@@ -380,6 +406,10 @@ export type VolumeInputs = {
   py: number;
   /** 0..1: a video player is open (the movement calms). */
   calm: number;
+  /** Screen distance (0..1 of the width) from the vanishing point to the example box of the nearest stop; the shape follows it in Reklam Filmi. */
+  shiftU: number;
+  aspect: number;
+  fov: number;
   /** The example box of the nearest stop, live on screen (centre and half-extent in 0..1 screen units, y up) and how much to clear. */
   clear: { cx: number; cy: number; rx: number; ry: number; amount: number };
   /** Flow-field displacement gain for this quality level (0 = off). */
@@ -408,6 +438,7 @@ export function createVolumeLayer(opts: { light: boolean; shared: Record<string,
   const geo = new BufferGeometry();
   geo.setAttribute("position", new BufferAttribute(b.pos, 3));
   geo.setAttribute("aB", new BufferAttribute(b.posB, 3));
+  geo.setAttribute("aC", new BufferAttribute(b.posC, 3));
   geo.setAttribute("aData", new BufferAttribute(b.data, 4));
   geo.setAttribute("aTier", new BufferAttribute(b.tier, 1));
   const wv = C.color.waves.map((w) => new Vector4(w.laps, w.width, w.trail, w.start));
@@ -425,6 +456,8 @@ export function createVolumeLayer(opts: { light: boolean; shared: Record<string,
       uPhase: { value: 0 },
       uLoop: { value: 0 },
       uMorph: { value: 0 },
+      uMorph2: { value: 0 },
+      uSide: { value: 0 },
       uShow: { value: 1 },
       uRot: { value: new Matrix3() },
       uPlace: { value: new Vector3(C.place.x, C.place.y, C.place.z) },
@@ -436,6 +469,7 @@ export function createVolumeLayer(opts: { light: boolean; shared: Record<string,
       uMaxPx: { value: C.size.maxPx },
       uLeftCalm: opts.shared.uLeftCalm,
       uTextCol: { value: C.readability.textColumn },
+      uTextColSide: { value: C.readability.textColumnSide },
       uClearC: { value: new Vector2(0.7, 0.5) },
       uClearR: { value: new Vector2(0.3, 0.4) },
       uClear: { value: 0 },
@@ -469,6 +503,7 @@ export function createVolumeLayer(opts: { light: boolean; shared: Record<string,
   let still = opts.still;
   let hold = false;
   let show = 1;
+  let calmS = 0;
   const rotM = new Matrix3();
   const setRot = (ry: number, rx: number) => {
     const cy = Math.cos(ry);
@@ -483,7 +518,7 @@ export function createVolumeLayer(opts: { light: boolean; shared: Record<string,
 
   const api: VolumeApi = {
     points,
-    update({ dt, s, px, py, calm, pushK, clear }) {
+    update({ dt, s, px, py, calm, pushK, clear, shiftU, aspect, fov }) {
       const u = mat.uniforms;
       if (hold) {
         // a test froze the clocks (see `debugSet`)
@@ -499,13 +534,19 @@ export function createVolumeLayer(opts: { light: boolean; shared: Record<string,
       u.uLoop.value = loopT / C.color.loopSeconds;
       const morph = clamp(s / C.scroll.morphEnd, 0, 1);
       u.uMorph.value = morph;
+      u.uMorph2.value = clamp(s - 1, 0, 1);
+      u.uSide.value = smooth(C.scroll.sideStart, C.scroll.sideEnd, s);
       show = 1 - smooth(C.scroll.fadeStart, C.scroll.fadeEnd, s);
-      u.uShow.value = show;
+      // an open video player calms the whole thing (eased, so it does not pop)
+      calmS += (calm - calmS) * (1 - Math.exp(-dt * 3));
+      u.uShow.value = show * (1 + C.scroll.sideBoost * smooth(1, 2, s)) * (1 - (1 - C.motion.playerAlpha) * calmS);
+      const widthUnits = 2 * Math.abs(C.place.z) * Math.tan((fov * Math.PI) / 360) * aspect;
+      (u.uPlace.value as Vector3).x = C.place.x + shiftU * widthUnits * smooth(1, 2, s);
       const k = 1 - Math.exp(-dt * 3);
       rotSmooth.x += (px - rotSmooth.x) * k;
       rotSmooth.y += (py - rotSmooth.y) * k;
       const breathe = Math.sin(u.uPhase.value * 2) * C.motion.turn;
-      setRot(0.34 * (1 - morph) - 0.1 * morph + breathe + rotSmooth.x * C.motion.parallax, 0.08 * (1 - morph) - rotSmooth.y * C.motion.parallax * 0.7 + Math.sin(u.uPhase.value * 3 + 1) * C.motion.turn * 0.4);
+      setRot(0.34 * (1 - morph) - 0.1 * morph + 0.3 * clamp(s - 1, 0, 1) + breathe + rotSmooth.x * C.motion.parallax, 0.08 * (1 - morph) - rotSmooth.y * C.motion.parallax * 0.7 + Math.sin(u.uPhase.value * 3 + 1) * C.motion.turn * 0.4);
       u.uPush.value = pushK * C.pointer.push;
       (u.uClearC.value as Vector2).set(clear.cx, clear.cy);
       (u.uClearR.value as Vector2).set(clear.rx, clear.ry);

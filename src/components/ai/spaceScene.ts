@@ -74,9 +74,9 @@ export type SpaceApi = {
 // speed:  drift speed
 type Look = { near: number; dust: number; trails: number; arc: number; glow: number; neb: number; clear: number; yaw: number; speed: number; calm: number };
 const LOOKS: Look[] = [
-  { near: 1.0, dust: 0.25, trails: 0.0, arc: 0.0, glow: 0.9, neb: 0.9, clear: 0.0, yaw: 0.0, speed: 1.0, calm: 0.0 },
-  { near: 0.3, dust: 0.2, trails: 0.0, arc: 0.85, glow: 0.35, neb: 0.7, clear: 0.85, yaw: 0.025, speed: 0.85, calm: 0.2 },
-  { near: 0.55, dust: 1.0, trails: 1.0, arc: 0.2, glow: 0.5, neb: 0.6, clear: 0.7, yaw: 0.05, speed: 1.3, calm: 0.0 },
+  { near: 1.0, dust: 0.25, trails: 0.0, arc: 0.0, glow: 0.5, neb: 0.5, clear: 0.0, yaw: 0.0, speed: 1.0, calm: 0.0 },
+  { near: 0.3, dust: 0.2, trails: 0.0, arc: 0.85, glow: 0.22, neb: 0.4, clear: 0.85, yaw: 0.025, speed: 0.85, calm: 0.2 },
+  { near: 0.55, dust: 1.0, trails: 1.0, arc: 0.2, glow: 0.3, neb: 0.35, clear: 0.7, yaw: 0.05, speed: 1.3, calm: 0.0 },
   { near: 0.25, dust: 0.35, trails: 0.0, arc: 0.3, glow: 0.3, neb: 0.5, clear: 0.8, yaw: -0.035, speed: 0.9, calm: 0.3 },
   { near: 0.1, dust: 0.12, trails: 0.0, arc: 0.45, glow: 0.22, neb: 0.4, clear: 0.0, yaw: 0.0, speed: 0.5, calm: 0.7 },
 ];
@@ -203,9 +203,6 @@ const BG_FRAG = /* glsl */ `
   uniform float uCalm;
   uniform float uQ;
   uniform float uLeftCalm;
-  uniform sampler2D uFlow;
-  uniform float uFlowT;
-  uniform float uFlowE;
 
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   float noise(vec2 p) {
@@ -228,16 +225,6 @@ const BG_FRAG = /* glsl */ `
     vec2 uv = gl_FragCoord.xy / uRes;
     float asp = uRes.x / uRes.y;
     vec2 p = (uv - uVp) * vec2(asp, 1.0);
-    // the pointer's flow bends the light texture (low resolution: this picture is a quarter of the screen)
-    vec2 fv = vec2(0.0);
-    float wake = 0.0;
-    float fmask = mix(0.25, 1.0, smoothstep(0.1, 0.55, uv.x));
-    if (uFlowT > 0.0 && uFlowE > 0.003) {
-      vec4 f = texture2D(uFlow, uv);
-      fv = (f.rg - 0.5) * 2.0;
-      wake = f.b;
-      p += fv * 0.07 * fmask * uFlowT;
-    }
     // charcoal black to night blue
     vec3 col = mix(vec3(0.016, 0.022, 0.035), vec3(0.028, 0.052, 0.105), smoothstep(0.0, 1.0, uv.y * 0.7 + 0.25 * (1.0 - uv.x)));
     // one very far, soft nebula up and to the right of the vanishing point: it tells the direction
@@ -256,14 +243,6 @@ const BG_FRAG = /* glsl */ `
     float soft = exp(-pow((r - 1.62) / 0.1, 2.0)) * 0.3;
     float span = smoothstep(-0.25, 0.4, p.x + 0.15) * (1.0 - smoothstep(0.55, 1.0, p.x));
     col += (ring * 0.9 + soft) * span * uArc * vec3(0.2, 0.78, 0.7) * 0.75;
-    // thin threads of light in the wake of the pointer, bent along the flow; they fade with the wake
-    if (wake > 0.01) {
-      vec2 q = p * 6.0 + fv * 2.2 + vec2(uTime * 0.03, -uTime * 0.02);
-      float r1 = 1.0 - abs(2.0 * noise(q) - 1.0);
-      float r2 = 1.0 - abs(2.0 * noise(q * 2.1 + 7.3) - 1.0);
-      float thread = pow(r1, 7.0) * 0.8 + pow(r2, 9.0) * 0.55;
-      col += (thread * wake * 0.9 + wake * wake * 0.05) * fmask * uFlowT * vec3(0.13, 0.6, 0.58);
-    }
     // calm: the closing stop settles
     col *= 1.0 - uCalm * 0.25;
     // the left of the screen stays dark and quiet
@@ -339,9 +318,6 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
       uCalm: { value: 0 },
       uQ: { value: light ? 0 : 1 },
       uLeftCalm: { value: 1 },
-      uFlow: { value: null as unknown as DataTexture },
-      uFlowT: { value: 0 },
-      uFlowE: { value: 0 },
     },
   });
   // The pointer flow field (mouse only; none on a phone or for "Hareketi azalt"): a tiny picture the shaders read.
@@ -352,7 +328,6 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     flowTex.magFilter = LinearFilter;
     flowTex.generateMipmaps = false;
     flowTex.needsUpdate = true;
-    bgMat.uniforms.uFlow.value = flowTex;
   }
   const vtf = renderer.capabilities.maxVertexTextures > 0;
   const bgScene = new Scene();
@@ -610,8 +585,6 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
       if (flow.changed) flowTex.needsUpdate = true;
       // quality steps: full, then a lighter bend, then the displacement off (the light texture stays longest)
       shared.uFlowK.value = vtf && level < 2 ? (level === 0 ? 0.045 : 0.028) : 0;
-      bgMat.uniforms.uFlowT.value = level >= 3 ? 0 : level === 2 ? 0.4 : 0.75;
-      bgMat.uniforms.uFlowE.value = flow.energy;
     }
     readScroll();
     // settles in a short glide: it follows the scroll, no long catch-up and no waiting
@@ -673,7 +646,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     const bt = Math.min(1, Math.max(0, (f0 - 0.25) / 0.5));
     const bs = bt * bt * (3 - 2 * bt);
     const vClear = lb0 && lb1 ? { cx: lb0.cx + (lb1.cx - lb0.cx) * bs, cy: lb0.cy + (lb1.cy - lb0.cy) * bs, rx: lb0.rx + (lb1.rx - lb0.rx) * bs, ry: lb0.ry + (lb1.ry - lb0.ry) * bs, amount: 1 } : { cx: 0.7, cy: 0.5, rx: 0.3, ry: 0.4, amount: 0 };
-    volume.update({ clear: vClear, dt: still ? 0 : dt, s: sCur, px: idleP ? 0 : pointerX, py: idleP ? 0 : pointerY, calm: calmPlayer, pushK: flow && vtf && level < 3 ? (level === 0 ? 1 : level === 1 ? 0.7 : 0.4) : 0 });
+    volume.update({ clear: vClear, shiftU: vClear.amount ? vClear.cx + (0.5 - vClear.cx) * 0.85 - vp.x : 0, aspect: camera.aspect, fov: camera.fov, dt: still ? 0 : dt, s: sCur, px: idleP ? 0 : pointerX, py: idleP ? 0 : pointerY, calm: calmPlayer * (1 - Math.min(1, Math.max(0, (Math.abs(sCur - 2) - 0.4) / 0.8))), pushK: flow && vtf && level < 3 ? (level === 0 ? 1 : level === 1 ? 0.7 : 0.4) : 0 });
     shared.uTravel.value = travel;
     shared.uTime.value = time;
     shared.uClearC.value.copy(clearC);
@@ -691,7 +664,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     bgMat.uniforms.uCalm.value = cur.calm;
     // soft background into the small picture: it only drifts slowly, so every third frame is enough,
     // every second one while the scroll is changing the look
-    if (frames <= 3 || still || frames % (light || level >= 2 ? 4 : 3) === 0 || (Math.abs(sCur - prev) > 0.0005 && frames % (light ? 3 : 2) === 0) || (flowing && frames % (level >= 2 ? 3 : 2) === 0)) {
+    if (frames <= 3 || still || frames % (light || level >= 2 ? 4 : 3) === 0 || (Math.abs(sCur - prev) > 0.0005 && frames % (light ? 3 : 2) === 0)) {
       renderer.setRenderTarget(rt);
       renderer.render(bgScene, camera);
       renderer.setRenderTarget(null);

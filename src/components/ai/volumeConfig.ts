@@ -59,6 +59,8 @@ export const volumeConfig = {
     turn: 0.1,
     /** How much the camera/pointer parallax turns the formation, radians at the screen edge. */
     parallax: 0.06,
+    /** Brightness that is left while a full video player is open (0..1); the movement slows as well. */
+    playerAlpha: 0.3,
   },
 
   /** The pointer (mouse only). Radius is set by the flow field (about 0.1 of the screen height). */
@@ -76,6 +78,8 @@ export const volumeConfig = {
   readability: {
     /** Brightness left over the left column on wide screens (0..1). */
     textColumn: 0.1,
+    /** The same for Reklam Filmi ve Video, where the writing is on the right and the formation needs more room. */
+    textColumnSide: 0.38,
     /** Brightness left behind the example box of a stop (it is covered by the box anyway). */
     behindBox: 0.12,
     /** Extra brightness around the showreel's edge (a soft halo, 0..1). */
@@ -85,8 +89,8 @@ export const volumeConfig = {
     phoneTop: 0.45,
   },
 
-  /** The scroll: the formation is fully shown at stop 0 and 1 and leaves between stop 1 and `fadeEnd`. */
-  scroll: { morphEnd: 1, fadeStart: 1.25, fadeEnd: 2.2 },
+  /** The scroll: stop 0 opening, 1 Web Sitesi, 2 Reklam Filmi ve Video. The formation morphs 0 to 1 to 2, and fades into the existing background between `fadeStart` and `fadeEnd`. `sideStart`/`sideEnd`: where the quiet zone for the writing moves from the left to the right. */
+  scroll: { sideBoost: 0.6, morphEnd: 1, sideStart: 1.15, sideEnd: 1.7, fadeStart: 2.4, fadeEnd: 3.3 },
 } as const;
 
 export type VolumeConfig = typeof volumeConfig;

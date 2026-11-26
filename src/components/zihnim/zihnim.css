@@ -218,21 +218,193 @@
   pointer-events: none !important;
 }
 
-.zh-foot {
+/* the route: one track, the stations on it, the camera's place as a fill (vertical on the right; across the bottom on phones) */
+.zh-route {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 40px clamp(16px, 3vw, 36px) 16px;
-  font-size: 15px;
-  line-height: 1.5;
-  background: linear-gradient(0deg, rgba(12, 10, 11, 0.88) 0%, rgba(12, 10, 11, 0.6) 55%, rgba(12, 10, 11, 0) 100%);
+  top: 50%;
+  right: clamp(12px, 2vw, 28px);
+  width: 190px;
+  height: min(46vh, 380px);
+  transform: translateY(-50%);
   pointer-events: none;
 }
-.zh-foot span {
-  display: block;
-  max-width: 46em;
+.zh-route-track {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 21px;
+  width: 2px;
+  background: rgba(238, 233, 228, 0.22);
+  border-radius: 2px;
+}
+.zh-route-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--zh-accent);
+  border-radius: 2px;
+  transform-origin: 50% 0;
+  transform: scaleY(0);
+}
+.zh-route ol {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.zh-route li {
+  position: absolute;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  transform: translateY(-50%);
+}
+.zh-route button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 0 0 10px;
+  font-size: 14px;
   color: var(--zh-dim);
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  pointer-events: auto;
+}
+/* only the current station is named; the others show their names on hover or keyboard focus */
+.zh-route button span {
+  padding: 3px 9px;
+  white-space: nowrap;
+  background: rgba(12, 10, 11, 0.6);
+  border-radius: 999px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.zh-route button.is-on span,
+.zh-route button:focus-visible span,
+.zh-route:hover button span {
+  opacity: 1;
+}
+.zh-route button i {
+  display: block;
+  order: 2;
+  width: 14px;
+  height: 14px;
+  margin: 0 15px 0 0;
+  background: var(--zh-ground);
+  border: 2px solid rgba(238, 233, 228, 0.6);
+  border-radius: 50%;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.zh-route button.is-past i {
+  border-color: var(--zh-accent);
+}
+.zh-route button.is-on {
+  color: var(--zh-ink);
+}
+.zh-route button.is-on i {
+  background: var(--zh-accent);
+  border-color: var(--zh-accent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .zh-route button:hover {
+    color: var(--zh-ink);
+  }
+}
+
+.zh-hint {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(20px, 5vh, 44px);
+  padding: 10px 18px;
+  font-size: 15px;
+  color: var(--zh-ink);
+  white-space: nowrap;
+  background: rgba(12, 10, 11, 0.72);
+  border: 1px solid rgba(238, 233, 228, 0.28);
+  border-radius: 999px;
+  transform: translateX(-50%);
+  pointer-events: none !important;
+  animation: zhHint 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0.6s both;
+}
+@keyframes zhHint {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}
+
+/* the card of the place the camera is at */
+.zh-card {
+  position: absolute;
+  left: clamp(16px, 3vw, 36px);
+  bottom: clamp(16px, 3vw, 36px);
+  width: min(400px, calc(100% - 32px));
+  max-height: min(48vh, 440px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 18px 14px;
+  background: rgba(14, 12, 13, 0.84);
+  border: 1px solid rgba(238, 233, 228, 0.2);
+  border-radius: 18px;
+}
+.zh-card h2 {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.zh-card p {
+  margin-top: 6px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--zh-dim);
+}
+.zh-card .zh-card-hint {
+  color: var(--zh-accent);
+}
+.zh-works {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.zh-works li {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+.zh-works button {
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
+  text-align: left;
+  background: rgba(238, 233, 228, 0.07);
+  border: 1px solid rgba(238, 233, 228, 0.3);
+  border-radius: 999px;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+.zh-works button:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) and (pointer: fine) {
+  .zh-works button:hover {
+    background: rgba(238, 233, 228, 0.16);
+  }
+}
+.zh-vid-mark {
+  color: var(--zh-accent);
+}
+@media (pointer: fine) {
+  .zh-works button {
+    min-height: 32px;
+    padding: 0 12px;
+    font-size: 13.5px;
+  }
 }
 
 .zh-loading {
@@ -343,56 +515,48 @@
   font-size: 13.5px;
   color: rgba(238, 233, 228, 0.72);
 }
-.zh-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-  gap: 12px;
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
+.zh-panel-area {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--zh-accent) !important;
 }
-.zh-grid li {
-  display: grid;
-  gap: 4px;
-  align-content: start;
-  margin: 0;
-  padding: 0;
-  background: none;
-  border: 0;
-}
-.zh-grid img {
-  width: 100%;
-  aspect-ratio: 9 / 14;
-  object-fit: cover;
-  border-radius: 12px;
-  background: #1a1618;
-}
-.zh-grid strong {
+.zh-panel .zh-panel-tag {
   font-size: 14px;
-  font-weight: 600;
-  line-height: 1.3;
-  overflow-wrap: anywhere;
 }
-.zh-grid small {
-  font-size: 12.5px;
-  color: rgba(238, 233, 228, 0.75);
-}
-.zh-video {
+.zh-media {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(100%, 260px);
-  margin: 14px auto 0;
+  width: min(100%, 280px);
+  margin: 4px auto 14px;
   overflow: hidden;
   border-radius: 14px;
   background: #1a1618;
 }
-.zh-video img,
-.zh-video video {
+.zh-media.is-wide {
+  width: 100%;
+}
+.zh-media img,
+.zh-media video {
   display: block;
   width: 100%;
-  aspect-ratio: 9 / 16;
-  object-fit: cover;
+  height: auto;
+  max-height: 52vh;
+  object-fit: contain;
+}
+.zh-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: 8px;
+  font-size: 15px;
+  color: var(--zh-accent);
+}
+.zh-link svg {
+  width: 18px;
+  height: 18px;
 }
 .zh-play {
   position: absolute;
@@ -411,36 +575,6 @@
 .zh-play svg {
   width: 26px;
   height: 26px;
-}
-.zh-links {
-  display: grid;
-  gap: 14px;
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.zh-links li {
-  margin: 0;
-  padding: 14px 16px;
-  background: rgba(238, 233, 228, 0.05);
-  border: 1px solid rgba(238, 233, 228, 0.18);
-  border-radius: 14px;
-}
-.zh-links h3 {
-  margin-top: 0;
-}
-.zh-links a {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  margin-top: 6px;
-  font-size: 15px;
-  color: var(--zh-accent);
-}
-.zh-links a svg {
-  width: 18px;
-  height: 18px;
 }
 
 /* static map and list (no WebGL, or the world failed) */
@@ -539,7 +673,81 @@
     max-height: 82vh;
     border-radius: 22px 22px 0 0;
   }
-  .zh-foot {
+  .zh-route {
+    top: auto;
+    right: 16px;
+    left: 16px;
+    bottom: 6px;
+    width: auto;
+    height: 44px;
+    transform: none;
+  }
+  .zh-route-track {
+    top: 21px;
+    bottom: auto;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: 2px;
+  }
+  .zh-route-fill {
+    transform-origin: 0 50%;
+  }
+  .zh-route li {
+    top: 0;
+    right: auto;
+    transform: translateX(-50%);
+  }
+  .zh-route li:first-child {
+    transform: none;
+  }
+  .zh-route li:last-child {
+    transform: translateX(-100%);
+  }
+  .zh-route button {
+    min-width: 44px;
+    justify-content: center;
+    padding: 0;
+  }
+  .zh-route button i {
+    margin: 0;
+  }
+  /* only the dots on a phone; the card names the place */
+  .zh-route button span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .zh-card {
+    left: 12px;
+    right: 12px;
+    bottom: 56px;
+    width: auto;
+    max-height: 38vh;
+    padding: 12px 14px 10px;
+  }
+  .zh-card h2 {
+    font-size: 18px;
+  }
+  .zh-card p {
+    font-size: 14px;
+  }
+  .zh-works {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-right: -14px;
+    padding-right: 14px;
+    scrollbar-width: none;
+    touch-action: pan-x;
+  }
+  .zh-works button {
+    white-space: nowrap;
+  }
+  /* on a phone the line under the title already says this */
+  .zh-hint {
     display: none;
   }
 }

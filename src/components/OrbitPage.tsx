@@ -824,6 +824,7 @@ const OrbitPage = () => {
   // with the site's index.html (not a 404), so the content type is checked too.
   useEffect(() => {
     let alive = true;
+    if (!__HAS_CV__) return; // no CV file in this build: no request, no 404
     fetch(CV_URL, { method: "HEAD" })
       .then((res) => {
         const type = res.headers.get("content-type") || "";

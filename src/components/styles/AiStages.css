@@ -198,7 +198,7 @@
 
 .st-phone {
   position: absolute;
-  right: -1%;
+  right: 0;
   bottom: 0;
   width: 25%;
   overflow: hidden;
@@ -266,10 +266,10 @@
   100% { opacity: 0; transform: rotateY(-4deg) rotateX(2deg); }
 }
 @keyframes stPhone {
-  0%, 10% { opacity: 0; transform: translateX(40px); }
-  15% { opacity: 1; transform: translateX(0); }
-  94% { opacity: 1; transform: translateX(0); }
-  100% { opacity: 0; transform: translateX(0); }
+  0%, 10% { opacity: 0; transform: translateY(34px); }
+  15% { opacity: 1; transform: translateY(0); }
+  94% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
 }
 /* home page: shown first; the menu click at about 3 s opens AI İşler; it comes back while the browser is faded out */
 @keyframes stHome {

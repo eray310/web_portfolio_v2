@@ -5,7 +5,7 @@
   grid-template-columns: 238px minmax(0, 1fr);
   align-items: center;
   column-gap: clamp(22px, 3.4vw, 46px);
-  padding: 38px 0 4px;
+  padding: 62px 0 4px;
 }
 
 .ap-concept {

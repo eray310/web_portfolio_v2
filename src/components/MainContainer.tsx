@@ -1,3 +1,4 @@
+import ZihnimDoor from "./ZihnimDoor";
 import { lazy, PropsWithChildren, Suspense, useEffect, useState } from "react";
 import About from "./About";
 import Brands from "./Brands";
@@ -64,6 +65,7 @@ const MainContainer = ({ children }: PropsWithChildren) => {
             <Brands />
             <Career />
             <Work />
+            <ZihnimDoor />
             {hasWebGL() ? (
               <ErrorBoundary fallback={<ToolsFallback />}>
                 <Suspense fallback={<div className="techstack" aria-hidden="true" />}>

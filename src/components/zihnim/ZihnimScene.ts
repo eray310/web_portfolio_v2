@@ -244,7 +244,7 @@ const VERT = /* glsl */ `
           a *= 1.0 + 2.5 * exp(-pow((t - L) * 14.0, 2.0)) * (1.0 - step(0.995, L));
           a *= mix(1.0, 0.4, Wr);
         }
-      } else if (coverK > -0.5) a *= 0.62 * smoothstep(0.0, 0.4, coverK);
+      } else if (coverK > -0.5) a *= 0.45 * smoothstep(0.0, 0.4, coverK) * clamp(40000.0 / (dist * dist), 0.06, 1.0); // far away its points share a few pixels: each gives less, so the square keeps one brightness
     }
     // the shell, the tracts and the inner dust open around the camera (a corridor of view)
     if (ki == 0 || ki == 6 || ki == 7) a *= smoothstep(uOpenNear, uOpenFar, dist);

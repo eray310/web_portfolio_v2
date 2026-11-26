@@ -167,3 +167,79 @@ the hall to them. That link is temporary.
   close to white where beam dust and the far light overlap; the tail of the bird can read as legs; Kurgu and Deney
   are still inside the brain and built at start. Not tried: real phones, Safari, Firefox, a real trackpad.
   pendereckisgarden.pl could not be entered (its cookie notice offers only "Accept"); no reference images were given.
+
+## Isik Yolu, final brief of the first stretch (branch `design/isik-yolu`; local only, not pushed)
+This section replaces the one above where they differ.
+
+### Direction, story, the square
+The inside of the mind is dark; a picture exists only where light falls; points are unfinished work. The brain is a
+door. The story is Eray's own way into the work, in seven chapters; real works stand in each as evidence. The motif is
+the SQUARE: 01 one cover, 02 many squares, 03 squares that begin to move, 04 one square opening into many forms, 05 the
+whole road as a landscape of squares seen from above. No bird or figure made of points, no neon tunnel, no speed lines,
+no bloom (the site must not resemble ataberksoylu.com).
+
+### Chapters (`stations` in `zihnimWorld.ts`: n, label, title, line, hint, quote, t)
+- 00 Kapı: "Her şey bir şarkı kapağıyla başladı." / "Işığı izle; nereye vardığını gör." / hint "Tekerlekle ilerle" (phone: "Kaydırarak ilerle")
+- 01 Başlangıç: "Kendi şarkılarıma kapak yapıyordum." / "Bir şarkıya yüz vermek, ilk tasarımlarımdı."
+- 02 Görsel Hafıza: "Önce görmeyi öğrendim." / "Kapaklardan markalara: görsel bir dil kurmak." / hint "Bir kareye dokun"
+- 03 Hareket: "Grafik tasarım bana yetmedi." / "Hareket daha dinamik, daha etkili geldi."
+- 04 Yapay zekâ: "İşimi büyütmek isterken yapay zekâ geldi." / "Bir fikir artık onlarca biçim alabiliyor."
+- 05 Zirve: title "Yukarıdan bakınca yol görünüyor." (a working title, not from Eray) and the quote "Dağa tırman, seni dünya
+  görsün diye değil, dünyayı görebilmen için." with the credit "— david mccullough jr."
+- 06 Ben: "Ben Eray Ömeroğlu." / "Motion Designer · Art Director · Video Editor · AI Artist" / "Sıradaki hikâye senin." / Projeni anlat
+
+Done in full: 00, 01, 02. 03 and 04 keep their scenes inside the brain with the new numbers and texts. 05 and 06 use the
+old final (the brain seen from behind): 05 at route time 0.935, 06 at 1.
+
+### What changed against the round before
+- No bird. The guide is a seed of light: it runs ahead in the beam, waits, and in the hall it opens and its points
+  fly to where the light lines land (`bird` array of `buildGuide` now holds those places; `uMorph` in `updateGuide`).
+- The far light of the tunnel is a square cover, not the Motosan poster. No song cover is in the repository, so it is
+  an abstract square of points in a warm gradient (`coverColor`, `light.cover`). The beam dust carries its colours.
+  At the end of the tunnel its points leave for the screens of the hall (`uSplit`, `light.cover.split`); then all ten
+  works are written, Motosan first.
+- The centre of the tunnel no longer burns white: far dust is dimmed (`light.tunnel.farDim`), the cover's points give
+  less light the farther they are, the glow plane is low (`light.cover.glow`). Measured on a 60 x 60 px crop of the
+  centre at 1440 px, route time 0.30: saturation 1.7 before, 19 after; the only white left is the seed.
+- Phones: the hall has its own layout (`gorselPortrait`), three near works stepped in height and depth, none cut.
+  It is chosen when the page loads; turning the phone afterwards does not change it.
+- UI: card with one text pattern; the route on the right shows 00..06 (the name beside the current one); "Bölümler"
+  on phones; "Siteye geç"; a door screen once per session (`zihnim-kapi` in sessionStorage); keys 0..6.
+
+### Tempo (route time; `light.t`, `light.after`)
+outside 0-0.11, way in 0.11-0.19, tunnel 0.19-0.40, opening of the hall 0.40-0.52, look-around 0.52-0.62, cut
+0.625-0.655, 03 at 0.74, 04 at 0.87, 05 at 0.935, 06 at 1. One wheel notch (100 px) moves the route by 0.012.
+
+### Draft for the next rounds (not built)
+- 03 Hareket (next round): move Kurgu Masası out of the brain onto the axis, after the hall. The link is a shutter: the
+  light lines of the hall begin to blink in a slow rhythm tied to the route position, the still squares of the hall
+  slide into one row and begin to move a step at a time (a square per "frame"), and the row runs past the camera into
+  one large screen: Voop. No curved film strip. The temporary cut after the hall goes away, and the brain no longer has
+  to build Kurgu at start.
+- 04 Yapay zekâ: the beam passes a prism (a plane where the beam splits into a few thin beams, teal, ice, a little
+  lavender). One square (the site) is shown and its SAME points rearrange into desktop, phone and app screens along the
+  split beams: one idea, many forms.
+- 05 Zirve: the camera climbs steeply above the axis and looks back and down: the cover, the hall, the row of moving
+  squares and the prism lie along the axis as a landscape of squares, each a patch of its own colour. The quote stands
+  here. 06: the beams join, turn toward the camera for the first time and fall on an empty screen; name, roles, brief.
+
+### Settings
+`zihnimWorld.ts`: `stations` (chapters), `light` (axis, times, entry, cover, tunnel, hall, opening, sharp), `coverColor`,
+`gorselWide` / `gorselPortrait`, `calmStops`, `guideSpots`. Shaders and loading of point sets: `ZihnimScene.ts`.
+Builders: `worldGeometry.ts` (`buildWorld`, `buildTunnel`, `buildHall`, `buildGuide`). Page: `ZihnimPage.tsx`.
+
+### Site fixes in this round
+`utils/lang.ts` (`enLang`) and `lang="en"` on English terms (loading marquee, Starters service, Career role, AboutPage
+titles and scene headings, OrbitPage scene names, brief service cards); "Hoş geldin"; home title and descriptions with
+the four roles; About copy; `zihnim/index.html` meta without noindex; `/zihnim` in the sitemap; main menu with Zihnim;
+phone first screen with "İşleri gör" and "Hikâyemi izle"; dark loading screen; `ZihnimDoor` on the home page.
+
+### Measured (Chrome, Windows, RTX 4060, 144 Hz, against `b1a2681`)
+GPU, two runs: median 6.9-7.0 ms, p95 7.1-7.2 ms in both versions (cold start + wheel, trip, pointer, phone emulation).
+Software WebGL, one run: cold start 34.7 / 34.7 ms median (p95 62.5 / 90.2), trip 34.7 / 34.7, pointer 34.7 / 34.7,
+phone trip 20.9 / 13.9 (old / new).
+
+### Open
+The far cover reads as a warm glow more than a crisp square until the camera is close; no deep link for the works;
+`hallSeen` layout does not follow a rotation of the phone; og image for /zihnim missing; the brain still builds Kurgu
+and Deney at start; 60-90 s for the whole journey was not timed. Not tried: real phones, Safari, Firefox, real trackpad.

@@ -369,8 +369,9 @@
         var(--backgroundColor) 62%);
   }
 
+  /* the menu is two rows on a phone (five links): the intro starts under it */
   .landing-intro {
-    top: 76px;
+    top: 100px;
     right: 0;
   }
 
@@ -393,15 +394,16 @@
     align-items: center;
     gap: 10px;
     min-height: 44px;
-    margin-top: 20px;
-    padding: 0 18px;
+    margin-top: 16px;
+    margin-right: 6px;
+    padding: 0 14px;
     box-sizing: border-box;
     border: 1px solid rgba(94, 234, 212, 0.45);
     border-radius: 44px;
     background-color: rgba(10, 14, 23, 0.6);
     font-size: 13px;
     font-weight: 600;
-    letter-spacing: 2px;
+    letter-spacing: 0.6px;
     color: #eae5ec;
     white-space: nowrap;
   }

@@ -112,7 +112,7 @@ export const light = {
    * the camera reaches it, its points leave for the screens of the hall (one square, many squares) between the
    * route times `split`.
    */
-  cover: { side: 13, at: TUNNEL_LEN - VIEW_DIST - 110, points: 0.06, split: [0.378, 0.44] as [number, number], glow: 0.16 },
+  cover: { side: 13, at: TUNNEL_LEN - VIEW_DIST - 110, points: 0.06, split: [0.378, 0.44] as [number, number], glow: 0.07 },
   /** The hall: point count, height the light lines come down from, floor level under the viewing spot, the far glow of the first work. */
   hall: { count: { desktop: 46000, light: 18000 }, ceiling: 150, floor: -17 },
   /** The hall's opening: each line starts `each` after the one before, comes down in `line`, and its work is written in `write` (route time). */

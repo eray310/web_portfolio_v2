@@ -469,3 +469,21 @@
 .loading-still .loading-box {
   opacity: 1;
 }
+
+/* The opening screen belongs to the same family as the site: warm black ground, off-white type, turquoise accent.
+   The order and the timing of the animation are unchanged. */
+.loading-screen {
+  background-color: #0c0a0b;
+}
+.loading-header {
+  color: #eae5ec;
+}
+.loading-marquee {
+  color: rgba(234, 229, 236, 0.13);
+}
+.loading-marquee span::before {
+  background-color: rgba(94, 234, 212, 0.5);
+}
+.loading-button {
+  box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.45);
+}

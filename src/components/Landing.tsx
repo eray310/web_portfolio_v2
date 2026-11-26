@@ -25,15 +25,18 @@ const Landing = ({ children }: PropsWithChildren) => {
             {/* Phones only: replaces the vertical link at the right edge. */}
             <a
               className="landing-cta"
-              href="#experience"
+              href="#work"
               data-cursor="disable"
               onClick={(e) => {
                 e.preventDefault();
-                scrollToSection("#experience");
+                scrollToSection("#work");
               }}
             >
-              Deneyimimi Gör
+              İşleri gör
               <TbNotes aria-hidden="true" />
+            </a>
+            <a className="landing-cta landing-cta-story" href="/zihnim" data-cursor="disable">
+              Hikâyemi izle
             </a>
           </div>
         </div>

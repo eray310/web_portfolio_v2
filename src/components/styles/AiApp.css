@@ -427,50 +427,10 @@
   background: var(--accentColor);
 }
 
-/* Demoyu durdur / oynat: a plain, visible button */
-.ap-ctl {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  margin: 14px auto 0;
-  padding: 0 18px;
-  font: inherit;
-  font-size: 14.5px;
-  color: #eae5ec;
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 999px;
-  transition: background-color 0.2s ease, transform 0.15s ease;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-user-select: none;
-  user-select: none;
-}
-.ap-ctl svg {
-  width: 20px;
-  height: 20px;
-  color: var(--accentColor);
-}
 .ap-fig {
   display: flex;
   flex-direction: column;
 }
-@media (hover: hover) and (pointer: fine) {
-  .ap-ctl:hover {
-    background: rgba(255, 255, 255, 0.12);
-  }
-}
-.ap-ctl:active {
-  transform: scale(0.97);
-}
-.ap-ctl:focus-visible {
-  outline: 2px solid var(--accentColor);
-  outline-offset: 3px;
-}
-
 /* Narrow screens: one big phone, the progress under it in two columns */
 @media only screen and (max-width: 700px) {
   .ap-app {
@@ -492,8 +452,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ap-app *,
-  .ap-ctl {
+  .ap-app * {
     animation: none !important;
     transition: none !important;
   }

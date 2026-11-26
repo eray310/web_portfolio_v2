@@ -5,7 +5,7 @@
  *  - playerOpen: a video player is open; the background calms down so it does not compete with it
  *  - briefOpen:  the brief form covers the page; the scene stops drawing
  *
- * The state of the "Arka planı durdur" control, shared by every copy of it on the page (the opening
+ * The scene's shared state (the old "Arka planı durdur" button is gone: "Sakin görünüm" in the Görünüm menu, see utils/viewMode.ts, calms the scene instead) (the opening
  * and the footer) through a tiny store: `live` (the scene is drawing and can be stopped), `paused`.
  */
 /**

@@ -3,7 +3,8 @@ import { MdArrowForward, MdPause, MdPlayArrow } from "react-icons/md";
 import { aiHero, aiWorks, type AiWork } from "../data/aiWorks";
 import { prefersReducedMotion } from "../utils/motion";
 import SpaceBackground from "./ai/SpaceBackground";
-import SpaceToggle from "./ai/SpaceToggle";
+import ViewMenu from "./ViewMenu";
+import { useCalmView } from "../utils/viewMode";
 import { spaceBus } from "./ai/spaceBus";
 import { VideoStage, WebStage } from "./ai/stages";
 import AppDemo from "./ai/AppDemo";
@@ -44,6 +45,19 @@ const HeroVideo = () => {
   const [playing, setPlaying] = useState(false);
   // True once the visitor has chosen: from then on the page leaves the video as it is.
   const chosen = useRef(reduced);
+  const calm = useCalmView();
+  const calmRef = useRef(calm);
+  calmRef.current = calm;
+  // "Sakin görünüm": the looping showreel waits for the visitor's own Play
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || chosen.current) return;
+    if (calm) el.pause();
+    else {
+      videoBudget.claim("hero");
+      void el.play().catch(() => {});
+    }
+  }, [calm]);
 
   useEffect(() => {
     const el = ref.current;
@@ -51,7 +65,7 @@ const HeroVideo = () => {
     const io = new IntersectionObserver(
       ([e]) => {
         if (chosen.current) return;
-        if (e.isIntersecting) {
+        if (e.isIntersecting && !calmRef.current) {
           videoBudget.claim("hero");
           void el.play().catch(() => {});
         } else el.pause();
@@ -125,7 +139,7 @@ const AiWorksPage = () => {
   useEffect(() => {
     // The home page keeps the body locked until its intro is over; this page scrolls freely.
     document.body.style.overflowY = "auto";
-    document.body.style.backgroundColor = "#080b11";
+    document.body.style.backgroundColor = "#0c0a0b";
     window.scrollTo(0, 0);
   }, []);
 
@@ -235,13 +249,14 @@ const AiWorksPage = () => {
             ))}
           </ul>
         </nav>
+        <ViewMenu className="ai-view" />
       </header>
 
       <main id="main" tabIndex={-1}>
         <section className="ai-hero" aria-labelledby="ai-title">
           <div className="ai-hero-text">
             <h1 id="ai-title">
-              AI <span>İşler</span>
+              AI İşler
             </h1>
             <p className="ai-lead">{aiHero.lead}</p>
           </div>
@@ -250,7 +265,6 @@ const AiWorksPage = () => {
             <button type="button" className="ai-cta ai-cta-big" onClick={(e) => open([], e.currentTarget)}>
               Projeni anlat <MdArrowForward aria-hidden="true" />
             </button>
-            <SpaceToggle className="ai-space-ctl-hero" />
           </div>
         </section>
 
@@ -291,7 +305,6 @@ const AiWorksPage = () => {
         <p>
           Tasarım ve motion — <span>Eray Ömeroğlu</span>
         </p>
-        <SpaceToggle className="ai-space-ctl-foot" />
       </footer>
 
       {brief && (

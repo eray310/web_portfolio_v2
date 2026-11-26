@@ -9,7 +9,7 @@ html {
   min-height: 100svh;
   color: #eae5ec;
   font-family: var(--ui-font);
-  background: #05070c; /* the space background (see ai/SpaceBackground.tsx) draws over this */
+  background: #0c0a0b; /* the space background (see ai/SpaceBackground.tsx) draws over this */
 }
 
 /* ── Header ── */
@@ -36,6 +36,24 @@ html {
 
 .ai-top nav {
   position: relative;
+  margin-left: auto;
+}
+
+/* the Görünüm menu sits at the end of the header; on narrow screens only its icon shows */
+@media only screen and (max-width: 900px) {
+  .ai-view .vm-btn {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+  .ai-view .vm-btn span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
 }
 
 .ai-top nav ul {
@@ -135,14 +153,6 @@ main:focus {
   color: #ffffff;
 }
 
-.ai-hero h1 span {
-  background-image: linear-gradient(0deg, #0d9488, #5eead4 70%, #ffffff);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: var(--accentColor);
-}
-
 .ai-lead {
   max-width: 560px;
   margin: 24px 0 0;
@@ -164,7 +174,7 @@ main:focus {
 .ai-hero-frame {
   position: relative;
   overflow: hidden;
-  background: #05070c;
+  background: #0c0a0b;
   border: 1px solid rgba(94, 234, 212, 0.28);
   border-radius: 22px;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 90px rgba(94, 234, 212, 0.12);
@@ -562,7 +572,7 @@ main:focus {
 .ai-space-still {
   position: absolute;
   inset: 0;
-  background-color: #05070c;
+  background-color: #0c0a0b;
   background-size: 900px 900px, auto, auto;
   background-repeat: repeat, no-repeat, no-repeat;
 }
@@ -585,46 +595,7 @@ main:focus {
 .ai-space-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(5, 8, 14, 0.7) 0%, rgba(5, 8, 14, 0.46) 36%, rgba(5, 8, 14, 0.12) 62%, rgba(5, 8, 14, 0) 80%);
-}
-
-/* "Arka planı durdur": a small text button in the normal page flow (under the opening call and in the
-   footer), so it never covers writing, the showreel or any control. */
-.ai-space-ctl {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 18px;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  color: #eae5ec;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: border-color 0.16s cubic-bezier(0.23, 1, 0.32, 1), transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.ai-space-ctl:active {
-  transform: scale(0.97);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .ai-space-ctl {
-    min-height: 36px;
-    padding: 0 14px;
-    font-size: 13px;
-  }
-
-  .ai-space-ctl:hover {
-    border-color: var(--accentColor);
-  }
-}
-
-.ai-space-ctl:focus-visible {
-  outline: 2px solid var(--accentColor);
-  outline-offset: 3px;
+  background: linear-gradient(90deg, rgba(12, 10, 11, 0.7) 0%, rgba(12, 10, 11, 0.46) 36%, rgba(12, 10, 11, 0.12) 62%, rgba(12, 10, 11, 0) 80%);
 }
 
 .ai-hero-cta {
@@ -652,18 +623,13 @@ main:focus {
 
 @media only screen and (max-width: 767px) {
   .ai-space-shade {
-    background: rgba(5, 8, 14, 0.4);
+    background: rgba(12, 10, 11, 0.4);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ai-space-canvas,
-  .ai-space-ctl {
+  .ai-space-canvas {
     transition: none;
-  }
-
-  .ai-space-ctl:active {
-    transform: none;
   }
 }
 

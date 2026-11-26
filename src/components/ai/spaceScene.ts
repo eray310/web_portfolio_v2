@@ -58,6 +58,8 @@ export type StopInfo = {
 
 export type SpaceApi = {
   setPaused: (paused: boolean) => void;
+  /** "Sakin görünüm": no ambient motion, no pointer push; the scene still follows the scroll (it draws only while the page moves). */
+  setCalm: (calm: boolean) => void;
   isPaused: () => boolean;
   refresh: () => void;
   quality: () => number;
@@ -227,7 +229,8 @@ const BG_FRAG = /* glsl */ `
     float asp = uRes.x / uRes.y;
     vec2 p = (uv - uVp) * vec2(asp, 1.0);
     // charcoal black to night blue
-    vec3 col = mix(vec3(0.016, 0.022, 0.035), vec3(0.028, 0.052, 0.105), smoothstep(0.0, 1.0, uv.y * 0.7 + 0.25 * (1.0 - uv.x)));
+    // the site's warm black, lifting to a deep, slightly cool tone toward the upper left
+    vec3 col = mix(vec3(0.043, 0.036, 0.04), vec3(0.03, 0.042, 0.066), smoothstep(0.0, 1.0, uv.y * 0.7 + 0.25 * (1.0 - uv.x)));
     // one very far, soft nebula up and to the right of the vanishing point: it tells the direction
     vec2 np = (p - vec2(0.22, 0.2)) * vec2(1.0, 1.35);
     float n = uQ > 0.5 ? fbm(np * 1.7 + vec2(uTime * 0.004, -uTime * 0.003)) : noise(np * 2.4);
@@ -322,7 +325,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     },
   });
   // The pointer flow field (mouse only; none on a phone or for "Hareketi azalt"): a tiny picture the shaders read.
-  const flow = light || still ? null : createFlowField({ enabled: () => !spaceBus.briefOpen && !paused });
+  const flow = light || still ? null : createFlowField({ enabled: () => !spaceBus.briefOpen && !paused && !calmView });
   const flowTex = flow ? new DataTexture(flow.data as Uint8Array<ArrayBuffer>, flow.cols, flow.rows, RGBAFormat, UnsignedByteType) : null;
   if (flowTex) {
     flowTex.minFilter = LinearFilter;
@@ -469,6 +472,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
   let swayY = 0;
   let lastMove = 0;
   let paused = false;
+  let calmView = false;
   let raf = 0;
   let last = 0;
   let w = 0;
@@ -583,7 +587,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     }
     const dt = Math.min(0.25, last ? (t - last) / 1000 : 0.016);
     last = t;
-    time += dt;
+    if (!calmView) time += dt;
     if (flow && flowTex) {
       flow.update(dt);
       if (flow.changed) flowTex.needsUpdate = true;
@@ -602,7 +606,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     // a player that is open calms the background so it does not compete with it
     const calmPlayer = spaceBus.playerOpen ? 1 : 0;
     const speed = cur.speed * (1 - 0.7 * calmPlayer);
-    travel += dt * 7.5 * speed + (sCur - prev) * 38;
+    travel += (calmView ? 0 : dt * 7.5 * speed) + (sCur - prev) * 38;
 
     // tiny camera sway from the pointer; it settles back to the centre when the pointer rests
     if (!light) {
@@ -650,7 +654,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     const bt = Math.min(1, Math.max(0, (f0 - 0.25) / 0.5));
     const bs = bt * bt * (3 - 2 * bt);
     const vClear = lb0 && lb1 ? { cx: lb0.cx + (lb1.cx - lb0.cx) * bs, cy: lb0.cy + (lb1.cy - lb0.cy) * bs, rx: lb0.rx + (lb1.rx - lb0.rx) * bs, ry: lb0.ry + (lb1.ry - lb0.ry) * bs, amount: 1 } : { cx: 0.7, cy: 0.5, rx: 0.3, ry: 0.4, amount: 0 };
-    volume.update({ clear: vClear, shiftU: vClear.amount ? vClear.cx + (0.5 - vClear.cx) * 0.85 - vp.x : 0, aspect: camera.aspect, fov: camera.fov, dt: still ? 0 : dt, s: sCur, px: idleP ? 0 : pointerX, py: idleP ? 0 : pointerY, calm: calmPlayer * (1 - Math.min(1, Math.max(0, (Math.abs(sCur - 2) - 0.4) / 0.8))), pushK: flow && vtf && level < 3 ? (level === 0 ? 1 : level === 1 ? 0.7 : 0.4) : 0 });
+    volume.update({ clear: vClear, shiftU: vClear.amount ? vClear.cx + (0.5 - vClear.cx) * 0.85 - vp.x : 0, aspect: camera.aspect, fov: camera.fov, dt: still || calmView ? 0 : dt, s: sCur, px: idleP ? 0 : pointerX, py: idleP ? 0 : pointerY, calm: calmPlayer * (1 - Math.min(1, Math.max(0, (Math.abs(sCur - 2) - 0.4) / 0.8))), pushK: flow && vtf && level < 3 ? (level === 0 ? 1 : level === 1 ? 0.7 : 0.4) : 0 });
     // the process story: drawn into the box the page reports (the sticky box, or the card of the step on a phone)
     {
       const sb = spaceBus.story;
@@ -658,7 +662,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
       const on = !!sbox && sb.show > 0.001;
       story.setDrawFraction(volFrac);
       story.update({
-        dt: still ? 0 : dt,
+        dt: still || calmView ? 0 : dt,
         u: sb.u,
         show: on ? sb.show * (1 - 0.7 * (spaceBus.briefOpen ? 1 : 0)) : 0,
         box: sbox ? { cx: (sbox.x + sbox.w / 2) / w, cy: 1 - (sbox.y + sbox.h / 2) / h, w: sbox.w / w, h: sbox.h / h } : { cx: 0.5, cy: 0.5, w: 0.3, h: 0.3 },
@@ -721,7 +725,9 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
       canvas.dataset.frames = String(frames);
       if (flow) canvas.dataset.flow = flow.energy.toFixed(3);
     }
-    if (!paused && !document.hidden && !spaceBus.briefOpen) raf = requestAnimationFrame(frame);
+    // calm view: draw only while the page moves (the scroll still changes the composition)
+    const settling = Math.abs(sTarget - sCur) > 0.0008 || performance.now() - lastScrollT < 400;
+    if (!paused && !document.hidden && !spaceBus.briefOpen && (!calmView || settling)) raf = requestAnimationFrame(frame);
     else last = 0;
   };
 
@@ -739,6 +745,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
   let stillRaf = 0;
   const onScroll = () => {
     lastScrollT = performance.now();
+    if (calmView) kick();
     // "Hareketi azalt": no loop, but the story steps still have to follow the scroll (one still frame each time)
     if (still && !stillRaf && (spaceBus.story.show > 0.001 || story.visible())) {
       stillRaf = requestAnimationFrame(() => {
@@ -806,6 +813,10 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
       } else kick();
     },
     isPaused: () => paused,
+    setCalm(c: boolean) {
+      calmView = c;
+      kick();
+    },
     refresh() {
       stops = opts.stops();
       stopsScrollY = window.scrollY;

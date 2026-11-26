@@ -51,8 +51,8 @@ const byTitle = (start: string) => projects.find((p) => p.title.startsWith(start
 
 // ── the route: knots of camera positions (pos) and look targets (target), evenly spaced in route time 0..1
 export const route: { pos: V3; target: V3 }[] = [
-  { pos: [0, 84, 176], target: [0, -6, -8] }, //  0 overview: the whole brain
-  { pos: [0, 64, 122], target: [0, 10, 24] }, //   1 coming down to the front of the fissure
+  { pos: [-62, 70, 132], target: [8, -8, 2] }, // 0 opening frame: three-quarter view, the brain fills the frame
+  { pos: [-16, 58, 124], target: [0, 8, 22] }, //  1 swinging round to the front of the fissure
   { pos: [0, 26, 96], target: [-8, 13, 34] }, //   2 Fikir Çekirdeği: the entrance corridor, the core ahead
   { pos: [-14, 19, 70], target: [-42, 12, 24] }, // 3 turning into the left lobe
   { pos: [-27, 15, 54], target: [-54, 11, 8] }, //  4 Görsel Hafıza
@@ -61,7 +61,7 @@ export const route: { pos: V3; target: V3 }[] = [
   { pos: [27, -6, -30], target: [4, -21, -72] }, // 7 down and back
   { pos: [8, -12, -42], target: [2, -22, -82] }, // 8 Deney Alanı
   { pos: [42, 20, -116], target: [0, 4, -70] }, // 9 out through the back of the brain, looking back at it
-  { pos: [0, 50, -206], target: [0, 6, -24] }, //  10 Birlikte Üretelim: the whole brain again, from behind
+  { pos: [0, 46, -172], target: [0, 0, -18] }, //  10 Birlikte Üretelim: the whole brain again, from behind
 ];
 const knotT = (i: number) => i / (route.length - 1);
 
@@ -106,19 +106,26 @@ export const worldConfig = {
    * 7 tracts. `near` scales points closer than `near.dist` (fewer, a little larger, softer).
    */
   particles: {
-    minPx: 1.4,
-    maxPx: 4.4,
+    minPx: 1.25,
+    maxPx: 3.4,
     edge: 1.1,
-    exposure: 0.9,
-    alpha: [0.44, 0.3, 0.8, 0.8, 0.72, 0.3, 0.34, 0.3],
+    exposure: 1.5,
+    alpha: [0.62, 0.34, 0.8, 0.5, 0.6, 0.3, 0.3, 0.26, 0.085],
     near: { dist: 28, alpha: 0.4 },
+    /** Above `knee` px a point grows only by `slope` of the perspective size: near surfaces stay fine grain. */
+    knee: 2.0,
+    slope: 0.4,
+    /** Seen from inside a lobe the shell is this much dimmer, so the works carry the frame. */
+    insideShell: 0.5,
+    /** Kind 8, the few near motes along the route: large, very soft, faint (depth without a blur pass). */
+    bokeh: { count: 380, maxPx: 30, light: 6 },
   },
   /**
    * Local life: every point moves around its own place along a smooth field (neighbours move together), so a surface
    * breathes slowly without drifting. Amplitude in scene units per kind; `speed` in radians per second; `scale` is the
    * spatial frequency of the field. While the camera travels the amplitude drops to `whileMoving`.
    */
-  motion: { amp: [0.5, 0.3, 0.12, 0.12, 0.4, 0.2, 0.7, 0.45], speed: 0.32, scale: 0.055, whileMoving: 0.35 },
+  motion: { amp: [0.5, 0.3, 0.12, 0.12, 0.4, 0.2, 0.7, 0.45, 0.9], speed: 0.32, scale: 0.055, whileMoving: 0.35 },
   /**
    * Light waves: `slots` waves run at the same time with their own period (s). Each starts at a point of the world,
    * spreads along the surface (radius grows to `reach`), leaves a short coloured trail and fades back to the base colour.
@@ -158,23 +165,23 @@ export const worldConfig = {
   /** The first knot of the route on a portrait screen (phones). */
   overviewPortrait: { pos: [0, 196, 96] as V3, target: [0, -8, -14] as V3 },
   /** The brain: two hemispheres (centre x = ±hemiX), radii, the gap of the fissure. */
-  brain: { hemiX: 47, r: [47, 52, 94] as V3, gap: 3.2 },
+  brain: { hemiX: 40, r: [47, 52, 94] as V3, gap: 2.6 },
   core: { c: [0, 8, 0] as V3, r: 8 },
   /** Point counts (desktop / phone). The quality steps draw a share of them. */
   count: { desktop: 260000, light: 90000 },
   /** Wheel: pixels of wheel for the whole route; the follow rate (1/s) once the wheel stops; largest step of one event. */
   /** snapReach 0: the camera stays exactly where the visitor stops (no pull onto a station). */
-  wheel: { routePx: 6400, follow: 9, maxStep: 240, snapAfter: 260, snapReach: 0 },
+  wheel: { routePx: 6800, follow: 6.5, maxStep: 240, snapAfter: 260, snapReach: 0 },
   /** Phone: a vertical drag of this many screen heights runs the whole route. */
   touch: { routeScreens: 3.4 },
   /** A trip started by a button: seconds per whole route, and the limits. */
-  trip: { perRoute: 2.6, min: 1.1, max: 3.0 },
+  trip: { perRoute: 3.4, min: 1.6, max: 4.2 },
   /** Limited look-around by dragging (desktop) or sideways (phone), radians. */
   look: { yaw: 0.38, pitch: 0.18, damping: 7 },
   /** How close (route time) counts as "at a station". */
   stationReach: 0.025,
   /** Real pictures: they fade in between these camera distances (far -> near); farther they are particles only. */
-  picture: { far: 108, near: 60, load: 160 },
+  picture: { far: 108, near: 60, load: 160, dimFar: 84, dimNear: 38, dim: 0.42 },
   /** The shell opens around the camera: points closer than `near` disappear, fully visible from `far`. */
   shellOpen: { near: 18, far: 46 },
   ambient: { speed: 1 },
@@ -232,7 +239,7 @@ const poster = (p: Project) => fileUrl(p.poster!);
  * A point placed as seen from the camera at route knot `k`: `d` units ahead, `x` to the right, `y` up.
  * The pictures of a place are laid out this way, so they compose around the page's card (lower left) and route (right).
  */
-const seen = (k: number, d: number, x: number, y: number): V3 => {
+export const seen = (k: number, d: number, x: number, y: number): V3 => {
   const { pos: C, target: T } = route[k];
   const f = [T[0] - C[0], T[1] - C[1], T[2] - C[2]];
   const fl = Math.hypot(f[0], f[1], f[2]);
@@ -245,34 +252,30 @@ const seen = (k: number, d: number, x: number, y: number): V3 => {
 const G = 4; // route knot of Görsel Hafıza
 const D = 8; // route knot of Deney Alanı
 /** Görsel Hafıza: [title, distance, right, up, width, extra turn]: layers from near to far, kept clear of the card. */
+// three near works carry the frame (clear of each other); the rest recede behind them in two dimmer layers
 const gorselList: [string, number, number, number, number, number?][] = [
-  ["Motosan", 36, -1.4, 1.8, 6],
-  ["RES360", 40, 10, -6.9, 7, -0.12],
-  ["Next Telekom", 44, -14.4, 7.5, 6.5, 0.15],
-  ["Lay", 50, 23.4, 7.4, 7.5, -0.18],
-  ["PayPal", 54, 4.2, -11.9, 7],
-  ["Uber Motion", 60, -11.7, 11.8, 8, 0.12],
-  ["Fidan Properties", 64, 27.5, -9.4, 8.5, -0.2],
-  ["Motivasyon vs Disiplin", 70, 13.7, 16.8, 8.5],
-  ["Allesta", 76, -8.9, -14.9, 9, 0.1],
-  ["Siux", 82, 37, 2, 9.5, -0.15],
+  ["Motosan", 31, 0, 1.2, 8.6],
+  ["Lay", 35, 13.6, 2.6, 7.6, -0.26],
+  ["Next Telekom", 35, -14, 4.4, 7.6, 0.26],
+  ["RES360", 50, 24.5, -14.5, 7.5, -0.34],
+  ["PayPal", 52, 9.5, -14.5, 7],
+  ["Uber Motion", 56, -35, 12, 7.5, 0.36],
+  ["Fidan Properties", 70, -40, -6, 8.5, 0.3],
+  ["Motivasyon vs Disiplin", 72, 4, 22, 8.5],
+  ["Allesta", 74, -19, -8, 8.5, 0.2],
+  ["Siux", 78, 30, 21, 9, -0.2],
 ];
 const kurguList: [string, number][] = [
-  ["The Lock", 0.12],
-  ["Allvex", 0.26],
-  ["Voop", 0.42],
-  ["La Vita", 0.58],
-  ["Regnum Riva", 0.74],
-  ["Elaris", 0.88],
+  ["The Lock", 0.2],
+  ["Allvex", 0.36],
+  ["Voop", 0.53],
+  ["La Vita", 0.7],
+  ["Regnum Riva", 0.83],
+  ["Elaris", 0.94],
 ];
 /** The film strip of Kurgu Masası: a curve through the right lobe; its frames sit at `u` along it. */
-export const filmStrip: V3[] = [
-  [44, 15, 4],
-  [52, 4, -8],
-  [57, 8, -24],
-  [48, -2, -44],
-  [64, 5, -62],
-];
+/** Laid out as seen from the station: a gentle arc that comes from the far left, passes the camera (Voop, facing it) and leaves to the right. */
+export const filmStrip: V3[] = [seen(6, 60, -52, 4), seen(6, 43, -28, 1.5), seen(6, 34, -5, 0.5), seen(6, 39, 17, 1.5), seen(6, 54, 36, 4)];
 export const kurguU: Record<string, number> = {};
 
 const web = aiWorks.find((w) => w.id === "web-sitesi")!;
@@ -287,7 +290,7 @@ export const works: Work[] = [
     const p = byTitle(t);
     const id = `k-${p.poster}`;
     kurguU[id] = u;
-    return { id, area: "kurgu-masasi" as AreaId, title: p.title, text: p.description, image: poster(p), tag: p.categories.join(" · "), video: fileUrl(p.video), at: [0, 0, 0] as V3, width: t === "Voop" ? 11 : 7.5 };
+    return { id, area: "kurgu-masasi" as AreaId, title: p.title, text: p.description, image: poster(p), tag: p.categories.join(" · "), video: fileUrl(p.video), at: [0, 0, 0] as V3, width: t === "Voop" ? 10.5 : 7.5 };
   }),
   {
     id: "d-web-ana",
@@ -297,8 +300,8 @@ export const works: Work[] = [
     image: url("ai-works/web-sitesi/portfolyo-masaustu.jpg"),
     tag: "Web Sitesi",
     link: { href: "/ai-isler#web-sitesi", label: "Web Sitesi örneğini AI İşler’de gör" },
-    at: seen(D, 44, 4, 4),
-    width: 26,
+    at: seen(D, 44, 6, 5.5),
+    width: 27,
   },
   {
     id: "d-web-hakkimda",
@@ -308,9 +311,9 @@ export const works: Work[] = [
     image: url("ai-works/web-sitesi/portfolyo-masaustu-2.jpg"),
     tag: "Web Sitesi",
     link: { href: "/hakkimda", label: "Hakkımda sayfasını aç" },
-    at: seen(D, 52, -25, 12),
-    width: 17,
-    turn: 0.25,
+    at: seen(D, 64, -30, 15),
+    width: 21,
+    turn: 0.32,
   },
   {
     id: "d-web-mobil",
@@ -320,15 +323,15 @@ export const works: Work[] = [
     image: url("ai-works/web-sitesi/portfolyo-mobil.jpg"),
     tag: "Web Sitesi",
     link: { href: "/ai-isler#web-sitesi", label: "Web Sitesi örneğini AI İşler’de gör" },
-    at: seen(D, 46, -14, 6),
-    width: 7.5,
+    at: seen(D, 39, -10.5, 2.5),
+    width: 7,
   },
   ...(
     [
-      ["app-hizmet", "Konu seçimi", seen(D, 48, -2, -11)],
-      ["app-saat", "Gün ve saat", seen(D, 48, 7, -11)],
-      ["app-ozet", "Özet", seen(D, 48, 16, -11)],
-      ["app-onay", "Onay", seen(D, 48, 25, -11)],
+      ["app-hizmet", "Konu seçimi", seen(D, 43, -1, -11.5)],
+      ["app-saat", "Gün ve saat", seen(D, 43, 7, -11.5)],
+      ["app-ozet", "Özet", seen(D, 43, 15, -11.5)],
+      ["app-onay", "Onay", seen(D, 43, 23, -11.5)],
     ] as [string, string, V3][]
   ).map(([f, t, at]) => ({
     id: `d-${f}`,
@@ -339,7 +342,7 @@ export const works: Work[] = [
     tag: "Konsept prototip",
     link: { href: "/ai-isler#uygulama", label: "Uygulama prototipini AI İşler’de gör" },
     at,
-    width: 6,
+    width: 5.6,
   })),
 ];
 export const worksOf = (id: string) => works.filter((w) => w.area === id);
@@ -352,9 +355,19 @@ export const workById = (id: string | null) => (id ? works.find((w) => w.id === 
 export const guideSpots: Record<StationId, V3> = {
   genel: [0, 8, 0],
   giris: [-2, 12, 24],
-  "gorsel-hafiza": seen(4, 27, 6.5, -1.5),
-  "kurgu-masasi": seen(6, 19, -3.5, 1.5),
+  "gorsel-hafiza": seen(4, 24, -3.6, -3.2),
+  "kurgu-masasi": seen(6, 20, -9.5, 4.5),
   "deney-alani": seen(8, 32, -8, 2),
   "birlikte-uretelim": seen(10, 34, 0, 5),
   "hareket-atolyesi": [0, 8, 0],
 };
+
+/** Görsel Hafıza's veil: a folded sheet of points in front of the archive (as seen from the station); it parts as the camera arrives. */
+export const veil = (() => {
+  const a = seen(4, 19, 0, 0);
+  const b = seen(4, 19, 1, 0);
+  const c = seen(4, 19, 0, 1);
+  const d = seen(4, 20, 0, 0);
+  const sub = (p: V3, q: V3): V3 => [p[0] - q[0], p[1] - q[1], p[2] - q[2]];
+  return { at: a, right: sub(b, a), up: sub(c, a), fwd: sub(d, a), halfW: 30, halfH: 18, from: 0.085, to: 0.012 };
+})();

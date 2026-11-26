@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { MdCheck, MdPause, MdPlayArrow } from "react-icons/md";
-import { prefersReducedMotion } from "../../utils/motion";
+import { MdCheck } from "react-icons/md";
+import { useCalmView } from "../../utils/viewMode";
 import type { AiStage } from "../../data/aiWorks";
 import { useActive } from "./useActive";
 import "../styles/AiApp.css";
@@ -13,9 +13,9 @@ import "../styles/AiApp.css";
  *  a time, 5 "Devam", 6 the summary shows service, day and time together, 7 "Onayla", a short processing state,
  *  then the success view, which rests for a few seconds before the demo starts over softly (about 17 s).
  *
- * It plays by itself, only while it is on screen and the tab is visible, and has a visible
- * "Demoyu durdur / oynat" button. Everything inside the phone is a picture: no focus, no clicks. With
- * "Hareketi azalt" it shows the completed screen and nothing runs.
+ * It plays by itself, only while it is on screen and the tab is visible. Everything inside the phone is a
+ * picture: no focus, no clicks. With "Sakin görünüm" (the Görünüm menu) or "Hareketi azalt" it shows the completed
+ * screen and nothing runs.
  */
 const SERVICES = [
   { n: "Web Sitesi Görüşmesi", d: "Sayfa yapısı ve içerik fikri" },
@@ -56,16 +56,18 @@ type AppStageData = Extract<AiStage, { kind: "app" }>;
 
 const AppDemo = ({ s }: { s: AppStageData }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const reduced = useRef(prefersReducedMotion()).current;
+  const reduced = useCalmView();
   const active = useActive(ref, 0.35);
   const [step, setStep] = useState(reduced ? DONE : 0);
-  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    if (reduced || paused || !active) return;
+    if (reduced) setStep(DONE);
+  }, [reduced]);
+  useEffect(() => {
+    if (reduced || !active) return;
     const t = window.setTimeout(() => setStep((n) => (n + 1 >= STEPS.length ? 0 : n + 1)), STEPS[step]);
     return () => window.clearTimeout(t);
-  }, [step, paused, active, reduced]);
+  }, [step, active, reduced]);
 
   const screen = step < 4 ? 0 : step < 9 ? 1 : 2;
   const service = step >= 2 && step !== 14 ? PICK.service : -1;
@@ -175,12 +177,6 @@ const AppDemo = ({ s }: { s: AppStageData }) => {
           ))}
         </ol>
       </div>
-      {!reduced && (
-        <button type="button" className="ap-ctl" onClick={() => setPaused((p) => !p)} aria-pressed={paused} data-cursor="disable">
-          {paused ? <MdPlayArrow aria-hidden="true" /> : <MdPause aria-hidden="true" />}
-          <span>{paused ? "Demoyu oynat" : "Demoyu durdur"}</span>
-        </button>
-      )}
       <figcaption>
         <span className="ai-sr">{s.summary}</span>
         {s.caption}

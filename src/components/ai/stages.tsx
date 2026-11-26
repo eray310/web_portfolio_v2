@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MdPlayArrow } from "react-icons/md";
-import { prefersReducedMotion } from "../../utils/motion";
+import { useCalmView } from "../../utils/viewMode";
 import type { AiStage } from "../../data/aiWorks";
 import { spaceBus } from "./spaceBus";
 import { useActive } from "./useActive";
@@ -27,7 +27,7 @@ type Vid = Extract<AiStage, { kind: "video" }>;
 /** Web Sitesi: a short demonstration of the real site (see the comment in AiStages.css). */
 export const WebStage = ({ s }: { s: Web }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const motion = useRef(!prefersReducedMotion()).current;
+  const motion = !useCalmView();
   const active = useActive(ref, 0.3);
   return (
     <figure className="st-fig">
@@ -73,7 +73,7 @@ export const VideoStage = ({ s, id }: { s: Vid; id: string }) => {
   const vid = useRef<HTMLVideoElement>(null);
   const full = useRef<HTMLVideoElement>(null);
   const head = useRef<HTMLSpanElement>(null);
-  const motion = useRef(!prefersReducedMotion()).current;
+  const motion = !useCalmView();
   const active = useActive(ref, 0.35);
   const [open, setOpen] = useState(false);
 
@@ -95,6 +95,10 @@ export const VideoStage = ({ s, id }: { s: Vid; id: string }) => {
     if (!v) return;
     return videoBudget.register(id, () => v.pause());
   }, [id]);
+  // "Sakin görünüm": the silent preview stops; "Tam videoyu aç" still plays the real video
+  useEffect(() => {
+    if (!motion) vid.current?.pause();
+  }, [motion]);
 
   // The playhead follows the preview (one cheap frame callback, only while it plays).
   useEffect(() => {

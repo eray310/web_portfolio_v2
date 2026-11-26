@@ -111,7 +111,9 @@
   color: var(--zh-dim);
 }
 
+/* wide screens: the route on the right is the place menu; the list of places is the phone's "Alanlar" menu */
 .zh-top nav {
+  display: none;
   grid-column: 2;
   grid-row: 1;
 }
@@ -130,7 +132,6 @@
   border: 0;
 }
 .zh-area-btn,
-.zh-motion,
 .zh-menu-btn {
   min-height: 44px;
   padding: 0 18px;
@@ -151,27 +152,17 @@
   cursor: default;
 }
 .zh-area-btn:active,
-.zh-motion:active,
 .zh-menu-btn:active {
   transform: scale(0.97);
 }
 @media (hover: hover) and (pointer: fine) {
-  .zh-area-btn:not(.is-on):not(:disabled):hover,
-  .zh-motion:hover {
+  .zh-area-btn:not(.is-on):not(:disabled):hover {
     background: rgba(238, 233, 228, 0.16);
   }
 }
-.zh-motion {
+.zh-view {
   grid-column: 3;
   grid-row: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.zh-motion svg {
-  width: 20px;
-  height: 20px;
-  color: var(--zh-accent);
 }
 .zh-menu-btn {
   display: none;
@@ -193,11 +184,16 @@
   position: absolute;
   top: 0;
   left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   min-height: 34px;
-  padding: 0 14px;
+  padding: 0 12px 0 8px;
   font-size: 14px;
-  color: #0c0a0b;
-  background: rgba(238, 233, 228, 0.92);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--zh-ink);
+  background: rgba(12, 10, 11, 0.62);
   border: 0;
   border-radius: 999px;
   white-space: nowrap;
@@ -211,13 +207,24 @@
   opacity: 0 !important;
   pointer-events: none !important;
 }
+.zh .zh-label::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  background: var(--zh-accent);
+  border-radius: 50%;
+}
 .zh .zh-label.is-core {
-  color: var(--zh-ink);
-  background: rgba(12, 10, 11, 0.55);
-  border: 1px solid rgba(238, 233, 228, 0.35);
-  display: inline-flex;
-  align-items: center;
+  color: var(--zh-dim);
   pointer-events: none !important;
+}
+.zh .zh-label.is-core::before {
+  background: rgba(238, 233, 228, 0.7);
+}
+@media (hover: hover) and (pointer: fine) {
+  .zh .zh-label:not(.is-core):hover {
+    background: rgba(238, 233, 228, 0.16);
+  }
 }
 
 /* the route: one track, the stations on it, the camera's place as a fill (vertical on the right; across the bottom on phones) */
@@ -730,8 +737,23 @@
 /* phones: the places live in one menu; panels fill the bottom of the screen */
 @media only screen and (max-width: 760px) {
   .zh-top {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px;
     padding-bottom: 34px;
+  }
+  /* the menu's name is read out; on a narrow screen only its icon shows */
+  .zh-view .vm-btn {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+  .zh-view .vm-btn span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
   .zh-how {
     font-size: 14px;
@@ -744,7 +766,7 @@
   }
   .zh-top nav {
     display: none;
-    grid-column: 1 / span 2;
+    grid-column: 1 / span 3;
     grid-row: 3;
   }
   .zh-top nav.is-open {
@@ -761,11 +783,6 @@
     width: 100%;
     justify-content: flex-start;
     text-align: left;
-  }
-  .zh-motion {
-    grid-column: 1 / span 2;
-    grid-row: 4;
-    justify-self: start;
   }
   .zh-panel-wrap {
     padding: 0;

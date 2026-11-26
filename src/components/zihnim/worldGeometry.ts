@@ -2,12 +2,12 @@
  * The points of "Eray'ın Zihni", generated once on the CPU (seeded: the world is always the same).
  *
  * kind: 0 shell (the two lobes), 1 idea core, 2 Görsel Hafıza, 3 Kurgu Masası, 4 Deney Alanı, 5 fibre paths,
- * 6 dust, 7 inner tracts. Every point carries its own colour (aC): the colour follows the form (the crowns of the
+ * 6 dust, 7 inner tracts, 8 near motes along the route (large, soft, few). Every point carries its own colour (aC): the colour follows the form (the crowns of the
  * folds are light, the grooves dim; the fissure and the lower parts turn icy; a little lavender at the back).
  * Points of a real picture keep the picture's colour and an image index (aImg): the scene fades them out when the
  * sharp picture (a textured plane) fades in.
  */
-import { route, stations, worldConfig as W, works, filmStrip, kurguU, type V3, type Work } from "./zihnimWorld";
+import { route, stations, veil, worldConfig as W, works, filmStrip, kurguU, type V3, type Work } from "./zihnimWorld";
 
 export type Samples = { w: number; h: number; lum: Float32Array; rgb: Float32Array };
 export type Frame = { id: string; c: V3; right: V3; up: V3; normal: V3; w: number; h: number; img: number };
@@ -22,6 +22,8 @@ const CORE_LOBES: V3[] = [
 ];
 /** aPath of a picture's points (fill and outline) is FRAME_BASE + the picture's index: the scene moves frames as one. */
 export const FRAME_BASE = 100;
+/** aPath of the veil in front of Görsel Hafıza's archive. */
+export const VEIL_PATH = 50;
 const rng = (seed: number) => {
   let s = seed >>> 0;
   return () => {
@@ -100,7 +102,7 @@ function catmull(P: V3[], u: number): V3 {
  * Point size range (scene units) per kind; within a range most points are small and a few are larger (pow 3), so a
  * surface reads as fine grain with a few highlights instead of equal hard dots.
  */
-const SIZE: Record<number, [number, number]> = { 0: [0.2, 0.7], 1: [0.12, 0.42], 2: [0.1, 0.2], 3: [0.1, 0.22], 4: [0.1, 0.36], 5: [0.1, 0.24], 6: [0.22, 0.95], 7: [0.12, 0.4] };
+const SIZE: Record<number, [number, number]> = { 0: [0.2, 0.7], 1: [0.12, 0.42], 2: [0.1, 0.2], 3: [0.1, 0.22], 4: [0.1, 0.36], 5: [0.1, 0.24], 6: [0.22, 0.95], 7: [0.12, 0.4], 8: [0.22, 0.6] };
 
 export function buildWorld(total: number, imgs: Record<string, Samples | null>): World {
   const r = rng(90817);
@@ -131,7 +133,7 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
   const nShell = N(0.42);
   let made = 0;
   let guard = 0;
-  while (made < nShell && guard < nShell * 12) {
+  while (made < nShell && guard < nShell * 40) {
     guard++;
     const side = r() < 0.5 ? -1 : 1;
     const a = r() * TAU;
@@ -151,15 +153,18 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
     const bx = side * B.hemiX + dx * rx * k;
     const by = dy * ry * k - 4;
     const bz = dz * B.r[2] * k;
-    const rg = ridged(bx * 0.07 + 11, by * 0.07 + 3, bz * 0.07);
-    if (r() > 0.05 + 0.95 * smooth(0.3, 0.75, rg)) continue;
-    const disp = rg * 4.2 - 1.8;
+    const rg = ridged(bx * 0.058 + 11, by * 0.058 + 3, bz * 0.058);
+    if (r() > 0.03 + 0.97 * smooth(0.32, 0.78, rg)) continue;
+    // not every region is equally dense: wide, soft patches of the surface stay almost dark
+    const patch = noise3(bx * 0.02 + 5, by * 0.02 + 1, bz * 0.02 + 9);
+    if (r() > 0.22 + 0.78 * smooth(0.34, 0.62, patch)) continue;
+    const disp = rg * 5.4 - 2.2;
     const x = bx + dx * disp;
     if (x * side < B.gap) continue; // the fissure between the lobes
     const y = by + dy * disp;
     const z = bz + dz * disp;
     // colour follows the form: light crests, dim grooves; icy lower parts and fissure; a little lavender at the back
-    let c = scale(P.offWhite, 0.3 + 0.7 * rg);
+    let c = scale(P.offWhite, 0.16 + 0.9 * rg * rg);
     c = mix(c, scale(P.ice, 0.42 + 0.5 * rg), 0.55 * smooth(5, -42, y));
     c = mix(c, scale(P.teal, 0.5 + 0.5 * rg), 0.5 * smooth(22, 4, Math.abs(x)) * smooth(-30, 20, y));
     c = mix(c, scale(P.lavender, 0.45 + 0.5 * rg), 0.4 * smooth(-50, -85, z) * smooth(10, -25, y));
@@ -315,7 +320,8 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
     const side = r() < 0.5 ? -1 : 1;
     const hole = r() < 0.45;
     if (hole && Math.floor(u * 260) % 2 === 0) continue;
-    put([c[0], c[1] + side * (HALF - (hole ? 1.4 : 0)) + gauss(r) * 0.04, c[2]], hole ? scale(P.ice, 0.85) : mix(P.offWhite, P.ice, u), 3, u);
+    if (r() < 0.45) continue;
+    put([c[0], c[1] + side * (HALF - (hole ? 1.4 : 0)) + gauss(r) * 0.04, c[2]], scale(hole ? P.ice : mix(P.offWhite, P.ice, u), hole ? 0.5 : 0.38), 3, u);
   }
   for (let k = 0; k < Math.floor(nK * 0.12); k++) {
     const cellU = Math.floor(r() * 34) / 34 + 0.5 / 34;
@@ -324,7 +330,7 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
     const edgeV = r() < 0.5;
     const lx = edgeV ? (r() < 0.5 ? -1 : 1) * 3.6 : (r() - 0.5) * 7.2;
     const ly = edgeV ? (r() - 0.5) * (HALF * 2 - 4) : (r() < 0.5 ? -1 : 1) * (HALF - 2);
-    put([c[0] + tg[0] * lx, c[1] + ly, c[2] + tg[2] * lx], scale(P.offWhite, 0.55), 3, cellU);
+    put([c[0] + tg[0] * lx, c[1] + ly, c[2] + tg[2] * lx], scale(P.offWhite, 0.3), 3, cellU);
   }
   const kList = works.filter((w) => w.area === "kurgu-masasi");
   const perK = Math.floor((nK * 0.62) / kList.length);
@@ -337,7 +343,7 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
     const right = norm(cross([0, 1, 0], normal));
     const at: V3 = [c[0] + normal[0] * 0.3, c[1], c[2] + normal[2] * 0.3];
     w.at = at;
-    picture(w, at, scale(right, -1), [0, 1, 0], normal, imgId++, w.width > 9 ? Math.floor(perK * 1.6) : perK, 3);
+    picture(w, at, right, [0, 1, 0], normal, imgId++, w.width > 9 ? Math.floor(perK * 1.6) : perK, 3);
   }
 
   // Deney Alanı: folded membranes (contour bands show their shape) around a browser, a phone and app screens
@@ -371,18 +377,51 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
     picture(w, w.at, f.right, f.up, f.normal, imgId++, w.width > 15 ? perD * 2 : perD, 4);
   }
 
-  // ── dust: sparse inside the lobes; a far field around everything (it fills the screen around the overview)
-  while (i < total) {
-    if (r() < 0.45) {
-      put([gauss(r) * 60, gauss(r) * 30 - 4, gauss(r) * 70], scale(P.grey, 0.5 + 0.3 * r()), 6, r(), -1, -1, 0.6);
+  // ── the veil of Görsel Hafıza: a hanging, folded sheet in front of the archive; denser along its folds
+  const nVeil = N(0.022);
+  for (let k = 0, g = 0; k < nVeil && g < nVeil * 10; g++) {
+    const lx = (r() * 2 - 1) * veil.halfW;
+    const ly = (r() * 2 - 1) * veil.halfH;
+    const foldK = Math.abs(Math.sin(lx * 0.42 + 0.6 * Math.sin(ly * 0.12)));
+    if (r() > 0.12 + 0.88 * smooth(0.55, 0.98, foldK)) continue;
+    if (r() > smooth(veil.halfH, veil.halfH * 0.55, Math.abs(ly)) * smooth(veil.halfW, veil.halfW * 0.7, Math.abs(lx)) + 0.08) continue;
+    k++;
+    const lz = 2.4 * Math.sin(lx * 0.42) + gauss(r) * 0.15;
+    const p: V3 = [0, 1, 2].map((d) => veil.at[d] + veil.right[d] * lx + veil.up[d] * ly + veil.fwd[d] * lz) as V3;
+    put(p, scale(mix(P.offWhite, P.ice, 0.35 + 0.3 * r()), 0.3 + 0.4 * foldK), 2, lx / veil.halfW, VEIL_PATH);
+  }
+
+  // ── near motes: a few large, soft points around the camera's route (foreground parallax on every stretch)
+  const nMote = Math.min(W.particles.bokeh.count, N(0.004));
+  for (let k = 0; k < nMote; k++) {
+    const f = r() * (route.length - 1);
+    const a = Math.min(route.length - 2, Math.floor(f));
+    const t = f - a;
+    const A = route[a].pos;
+    const Bp = route[a + 1].pos;
+    const th = r() * TAU;
+    const ph = Math.acos(2 * r() - 1);
+    const rad = 9 + r() * 22;
+    put([A[0] + (Bp[0] - A[0]) * t + Math.sin(ph) * Math.cos(th) * rad, A[1] + (Bp[1] - A[1]) * t + Math.cos(ph) * rad * 0.7, A[2] + (Bp[2] - A[2]) * t + Math.sin(ph) * Math.sin(th) * rad], mix(P.offWhite, r() < 0.3 ? P.teal : P.ice, 0.25 + 0.4 * r()), 8, r());
+  }
+
+  // ── dust: sparse inside the lobes; a far field around everything, in soft banks with dark gaps between them
+  let dustGuard = 0;
+  while (i < total && dustGuard < total * 6) {
+    dustGuard++;
+    if (r() < 0.28) {
+      put([gauss(r) * 60, gauss(r) * 30 - 4, gauss(r) * 70], scale(P.grey, 0.4 + 0.3 * r()), 6, r(), -1, -1, 0.6);
     } else {
       const a = r() * TAU;
       const b = Math.acos(2 * r() - 1);
-      const rad = 180 + Math.pow(r(), 0.7) * 260;
+      const rad = 170 + Math.pow(r(), 0.7) * 280;
       const p: V3 = [Math.sin(b) * Math.cos(a) * rad * 1.3, Math.sin(b) * Math.sin(a) * rad * 0.7, Math.cos(b) * rad];
-      put(p, mix(scale(P.grey, 0.45), scale(P.ice, 0.5), smooth(-100, 100, p[1])), 6, r());
+      const bank = noise3(p[0] * 0.007 + 3, p[1] * 0.012, p[2] * 0.007 + 17);
+      if (r() > 0.06 + 0.94 * smooth(0.46, 0.7, bank)) continue;
+      put(p, mix(scale(P.grey, 0.45), scale(P.ice, 0.55), smooth(-100, 100, p[1]) * (0.5 + 0.5 * bank)), 6, r());
     }
   }
+  while (i < total) put([gauss(r) * 60, gauss(r) * 30 - 4, gauss(r) * 70], scale(P.grey, 0.4), 6, r(), -1, -1, 0.6);
   // shuffle the order: a lower quality step draws only the first part of the buffer, which is then an even sample of
   // every kind (in build order it would drop the dust first and then whole places)
   const order = new Uint32Array(total);

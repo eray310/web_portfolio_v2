@@ -37,8 +37,8 @@ import {
   Vector4,
   WebGLRenderer,
 } from "three";
-import { guideSpots, readyAreas, route, stations, worldConfig as W, works, type StationId, type V3 } from "./zihnimWorld";
-import { FRAME_BASE, buildGuide, buildWorld, sampleImage, type Samples } from "./worldGeometry";
+import { guideSpots, readyAreas, route, stations, veil, worldConfig as W, works, type StationId, type V3 } from "./zihnimWorld";
+import { FRAME_BASE, VEIL_PATH, buildGuide, buildWorld, sampleImage, type Samples } from "./worldGeometry";
 
 export type SceneOptions = {
   canvas: HTMLCanvasElement;
@@ -87,8 +87,10 @@ const VERT = /* glsl */ `
   attribute float aPath;
   attribute float aImg;
   uniform float uTime, uScale, uPR, uMinPx, uMaxPx, uEdge, uExposure, uLife, uMove, uFinal;
-  uniform float uAlpha[8];
-  uniform float uAmp[8];
+  uniform float uAlpha[9];
+  uniform float uAmp[9];
+  uniform float uKnee, uSlope, uInside, uBokehPx, uBokehLight, uVeil;
+  uniform vec3 uVeilA, uVeilR;
   uniform float uMScale, uMSpeed;
   uniform float uOpenNear, uOpenFar, uOutside, uNearDist, uNearAlpha;
   uniform vec4 uHemi;
@@ -116,6 +118,14 @@ const VERT = /* glsl */ `
     // a frame of a real work: it opens (Görsel), aligns (Kurgu) or settles (Deney) as one piece
     float fr = aPath - ${FRAME_BASE.toFixed(1)};
     float fade = 0.0;
+    // the veil of Görsel Hafıza parts to both sides as the camera arrives
+    float veilK = 1.0;
+    if (abs(aPath - ${VEIL_PATH.toFixed(1)}) < 0.5) {
+      float sd = dot(p - uVeilA, uVeilR);
+      float open = smoothstep(0.0, 1.0, uVeil * 1.35 - 0.35 * abs(sd) / 30.0);
+      p += uVeilR * (sd < 0.0 ? -1.0 : 1.0) * open * (9.0 + abs(sd) * 0.55);
+      veilK = 1.0 - 0.8 * open;
+    }
     if (fr > -0.5) {
       vec4 FC = uFrameC[int(fr + 0.5)];
       vec4 FO = uFrameO[int(fr + 0.5)];
@@ -190,7 +200,9 @@ const VERT = /* glsl */ `
 
     float a = uAlpha[ki] * uExposure * bright * smoothstep(2.5, 8.0, dist);
     // the shell, the tracts and the inner dust open around the camera (a corridor of view)
-    if (ki == 0 || ki >= 6) a *= smoothstep(uOpenNear, uOpenFar, dist);
+    if (ki == 0 || ki == 6 || ki == 7) a *= smoothstep(uOpenNear, uOpenFar, dist);
+    if (ki == 0) a *= mix(uInside, 1.0, uOutside);
+    a *= veilK;
     // seen from outside, the far side of each lobe stays dim: the near surface (and its folds) reads as a volume
     if (ki == 0 && uOutside > 0.001) {
       float sx = p.x < 0.0 ? -1.0 : 1.0;
@@ -205,13 +217,23 @@ const VERT = /* glsl */ `
     // a closed frame is only a faint line; it brightens as it opens
     if (fr > -0.5) a *= mix(0.035, 1.0, pow(uFrameO[int(fr + 0.5)].w, 1.5));
     // up close: fewer, softer points
-    a *= mix(uNearAlpha, 1.0, smoothstep(uNearDist * 0.45, uNearDist, dist));
+    if (ki != 8) a *= mix(uNearAlpha, 1.0, smoothstep(uNearDist * 0.45, uNearDist, dist));
 
-    // size: clamped in css px; a point smaller than the minimum keeps the minimum size with less light
+    // size: clamped in css px; a point smaller than the minimum keeps the minimum size with less light. Above the knee
+    // a point grows slower than the perspective, so a near surface stays fine grain instead of a field of equal discs.
     float px = sz * uScale / max(dist, 0.001);
-    float pxc = clamp(px, uMinPx, uMaxPx);
-    a *= pow(min(1.0, px / uMinPx), 1.35);
-    vSoft = clamp(uEdge / pxc, 0.1, 0.75);
+    float pxc;
+    if (ki == 8) {
+      // a near mote: a large, very soft disc; the same light spread over its area
+      pxc = clamp(px, 3.0, uBokehPx);
+      a *= clamp(uBokehLight / pxc, 0.0, 1.0) * smoothstep(3.0, 9.0, dist);
+      vSoft = 0.92;
+    } else {
+      float pk = px > uKnee ? uKnee + (px - uKnee) * uSlope : px;
+      pxc = clamp(pk, uMinPx, uMaxPx);
+      a *= pow(min(1.0, px / uMinPx), 1.35);
+      vSoft = clamp(uEdge / pxc, 0.1, 0.75);
+    }
     vCol = vec4(col, a);
     gl_PointSize = pxc * uPR;
   }
@@ -225,7 +247,7 @@ const FRAG = /* glsl */ `
     float d = length(gl_PointCoord - 0.5) * 2.0;
     float a = (1.0 - smoothstep(1.0 - vSoft, 1.0, d)) * vCol.a;
     if (a < 0.002) discard;
-    float body = mix(0.7, 1.0, 1.0 - d * d);
+    float body = exp(-d * d * 1.5);
     gl_FragColor = vec4(vCol.rgb * body * a, a);
   }
 `;
@@ -339,6 +361,14 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       uMove: { value: 1 },
       uFinal: { value: 0 },
       uAlpha: { value: PW.alpha },
+      uKnee: { value: PW.knee },
+      uSlope: { value: PW.slope },
+      uInside: { value: PW.insideShell },
+      uBokehPx: { value: PW.bokeh.maxPx },
+      uBokehLight: { value: PW.bokeh.light },
+      uVeil: { value: 0 },
+      uVeilA: { value: v3(veil.at) },
+      uVeilR: { value: v3(veil.right) },
       uAmp: { value: W.motion.amp },
       uMScale: { value: W.motion.scale },
       uMSpeed: { value: W.motion.speed },
@@ -846,6 +876,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     gu.uLavK.value = sstep(tD + 0.02, tD + 0.06, s);
     gu.uRest.value = sstep(tF - 0.03, tF, s);
     mat.uniforms.uFinal.value = sstep(tF - gm.final.from, tF, s);
+    mat.uniforms.uVeil.value = sstep(tG - veil.from, tG - veil.to, s);
   };
 
   // ── labels follow the places, without overlapping and never under the page's controls
@@ -865,7 +896,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       // inside the brain only nearby places are named; at the final none (the composition speaks for itself)
       const outside = mat.uniforms.uOutside.value > 0.5;
       const ok =
-        tmp.z < 1 && Math.abs(tmp.x) < 1.02 && Math.abs(tmp.y) < 1.02 && dist > 26 && dist < (outside ? 420 : 150) && !el.classList.contains("is-on") && s < tF - 0.04 && (id !== "birlikte-uretelim" || s < 0.08);
+        tmp.z < 1 && Math.abs(tmp.x) < 1.02 && Math.abs(tmp.y) < 1.02 && dist > 26 && dist < (outside ? 420 : 95) && !el.classList.contains("is-on") && s < tF - 0.04 && (id !== "birlikte-uretelim" || s < 0.08);
       list.push({ el, x: clamp((tmp.x * 0.5 + 0.5) * width, 70, width - 70), y: clamp((1 - (tmp.y * 0.5 + 0.5)) * height, 70, height - 90), ok });
     });
     const box = (l: { el: HTMLElement }) => ({ w: l.el.offsetWidth || 130, h: l.el.offsetHeight || 36 });
@@ -873,7 +904,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       const host = canvas.parentElement;
       const cr = canvas.getBoundingClientRect();
       avoid = host
-        ? Array.from(host.querySelectorAll<HTMLElement>(".zh-route-track, .zh-route i, .zh-route .is-on span, .zh-card, .zh-top nav, .zh-motion, .zh-menu-btn, .zh-brand > *, .zh-hint")).map((e) => {
+        ? Array.from(host.querySelectorAll<HTMLElement>(".zh-route-track, .zh-route i, .zh-route .is-on span, .zh-card, .zh-top nav, .zh-view, .zh-menu-btn, .zh-brand > *, .zh-hint")).map((e) => {
             const b = e.getBoundingClientRect();
             return { l: b.left - cr.left - 4, r: b.right - cr.left + 4, t: b.top - cr.top - 4, b: b.bottom - cr.top + 4 };
           })
@@ -956,7 +987,12 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       s += (sTarget - s) * (1 - Math.exp(-dt * W.wheel.follow));
       if (Math.abs(sTarget - s) < 0.00002) s = sTarget;
     }
-    const pathGoal = trip ? 1 : 0;
+    let pathGoal = trip ? 1 : 0;
+    if (!trip && !reduced && life > 0 && s < T[1] * 0.85) {
+      pathSlot = -1;
+      pathT = ((time % 6.5) / 6.5) * 1.5 - 0.15;
+      pathGoal = 0.75 * (1 - s / (T[1] * 0.85));
+    }
     pathWave += (pathGoal - pathWave) * (1 - Math.exp(-dt * (pathGoal ? 6 : 1.6)));
     mat.uniforms.uPathWave.value = pathWave;
     mat.uniforms.uPathT.value = pathT;
@@ -1006,6 +1042,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       p.fade += (target - p.fade) * (1 - Math.exp(-dt * 6));
       if (Math.abs(target - p.fade) > 0.004) fadeBusy = true;
       p.mat.opacity = p.fade;
+      p.mat.color.setScalar(W.picture.dim + (1 - W.picture.dim) * sstep(W.picture.dimFar, W.picture.dimNear, d));
       p.mesh.visible = p.fade > 0.005;
       if (p.mesh.visible) {
         tmpM.copy(p.basis).scale(sc1.set(1, Math.max(0.001, p.open), 1)).setPosition(c);

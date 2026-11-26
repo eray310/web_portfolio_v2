@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { MdArrowForward } from "react-icons/md";
 import { aiSteps } from "../../data/aiWorks";
-import { prefersReducedMotion } from "../../utils/motion";
+import { useCalmView } from "../../utils/viewMode";
 import { spaceBus, spaceControl } from "./spaceBus";
 import { storyConfig } from "./storyConfig";
 import StoryArt from "./StoryArt";
@@ -37,7 +37,7 @@ const ProcessStory = ({ onBrief }: { onBrief: (el: HTMLElement) => void }) => {
   const sec = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const figs = useRef<(HTMLDivElement | null)[]>([]);
-  const reduced = useRef(prefersReducedMotion()).current;
+  const reduced = useCalmView();
   const [active, setActive] = useState(0);
   const [wide, setWide] = useState(() => (typeof window === "undefined" ? true : window.matchMedia("(min-width: 1001px)").matches));
   const gl = useSyncExternalStore(spaceControl.subscribe, () => spaceControl.get().gl, () => false);

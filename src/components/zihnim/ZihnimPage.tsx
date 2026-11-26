@@ -1,7 +1,9 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
-import { MdArrowBack, MdArrowForward, MdClose, MdExpandLess, MdExpandMore, MdOpenInNew, MdPause, MdPlayArrow } from "react-icons/md";
+import { MdArrowBack, MdArrowForward, MdClose, MdExpandLess, MdExpandMore, MdOpenInNew, MdPlayArrow } from "react-icons/md";
 import { prefersReducedMotion } from "../../utils/motion";
 import { hasWebGL } from "../../utils/webgl";
+import { useCalmView } from "../../utils/viewMode";
+import ViewMenu from "../ViewMenu";
 import { areaById, readyAreas, stations, story, workById, worksOf, type StationId, type Work } from "./zihnimWorld";
 import type { SceneApi } from "./ZihnimScene";
 import "./zihnim.css";
@@ -134,7 +136,7 @@ const ZihnimPage = () => {
   const [work, setWork] = useState<string | null>(null);
   const [showWorks, setShowWorks] = useState(false);
   const [brief, setBrief] = useState(false);
-  const [paused, setPaused] = useState(false);
+  const calmView = useCalmView();
   const [menu, setMenu] = useState(false);
   const [hint, setHint] = useState(() => !readHint());
   const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches);
@@ -242,8 +244,8 @@ const ZihnimPage = () => {
     ui.current?.toggleAttribute("inert", !!work || brief);
   }, [work, brief, mode]);
   useEffect(() => {
-    scene.current?.setPaused(paused);
-  }, [paused, mode]);
+    scene.current?.setPaused(calmView);
+  }, [calmView, mode]);
 
   const go = useCallback((id: StationId) => {
     setMenu(false);
@@ -319,10 +321,7 @@ const ZihnimPage = () => {
                   </li>
                 </ul>
               </nav>
-              <button type="button" className="zh-motion" aria-pressed={paused} onClick={() => setPaused((p) => !p)}>
-                {paused ? <MdPlayArrow aria-hidden="true" /> : <MdPause aria-hidden="true" />}
-                <span>{paused ? "Hareketi başlat" : "Hareketi durdur"}</span>
-              </button>
+              <ViewMenu className="zh-view" />
             </>
           )}
         </header>

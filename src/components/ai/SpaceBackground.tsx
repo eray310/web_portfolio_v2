@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { prefersReducedMotion } from "../../utils/motion";
 import type { SpaceApi, StopInfo } from "./spaceScene";
 import { spaceControl } from "./spaceBus";
+import { viewMode } from "../../utils/viewMode";
 
 /**
  * The AI İşler background. A decorative canvas (no click, no keyboard focus) behind the page:
@@ -80,6 +81,7 @@ const SpaceBackground = ({ rootRef }: { rootRef: React.RefObject<HTMLElement> })
           try {
             const scene = createSpaceScene({ canvas: el, light, still: reduced, stops });
             api.current = scene;
+            scene.setCalm(viewMode.calm());
             spaceControl.set({ gl: true });
             // boxes move with the scroll: the scene reads them again when they can have changed
             const refresh = () => scene.refresh();
@@ -128,10 +130,13 @@ const SpaceBackground = ({ rootRef }: { rootRef: React.RefObject<HTMLElement> })
     []
   );
 
+  // "Sakin görünüm" (the Görünüm menu): the ambient motion stops, the scene still follows the scroll
+  useEffect(() => viewMode.subscribe(() => api.current?.setCalm(viewMode.calm())), []);
+
   return (
     <>
       <div className="ai-space" aria-hidden="true">
-        <div className="ai-space-still" style={{ backgroundImage: `${stars}, radial-gradient(55% 50% at 72% 45%, rgba(13, 148, 136, 0.13), transparent 70%), linear-gradient(180deg, #05070c, #091222 70%, #070d19)` }} />
+        <div className="ai-space-still" style={{ backgroundImage: `${stars}, radial-gradient(55% 50% at 72% 45%, rgba(13, 148, 136, 0.1), transparent 70%), linear-gradient(180deg, #0c0a0b, #0b0d12 70%, #0c0a0b)` }} />
         <canvas ref={canvas} className={`ai-space-canvas${live ? " is-live" : ""}`} tabIndex={-1} />
         <div className="ai-space-shade" />
       </div>

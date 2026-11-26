@@ -442,3 +442,24 @@
     margin-top: 12px;
   }
 }
+@media screen and (max-width: 767px) {
+  .landing-intro {
+    top: 92px;
+  }
+  .landing-line {
+    margin-top: 6px;
+  }
+  .landing-cta {
+    margin-top: 8px;
+  }
+}
+/* the narrowest phones: the greeting sits beside the second row of the menu (it is on the left, the links on the right) */
+@media screen and (max-width: 360px) {
+  .landing-intro {
+    top: 78px;
+  }
+  .landing-line {
+    margin-top: 4px;
+    font-size: 14px;
+  }
+}

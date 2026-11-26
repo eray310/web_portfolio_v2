@@ -9,7 +9,7 @@
  * Points of a real picture keep the picture's colour and an image index (aImg): the scene fades them out when the
  * sharp picture (a textured plane) fades in.
  */
-import { coverColor, guideSpots, hallView, light, route, worldConfig as W, works, filmStrip, kurguU, type V3, type Work } from "./zihnimWorld";
+import { coverColor, galAt, galX, guideSpots, hallView, light, route, worldConfig as W, works, filmStrip, type V3, type Work } from "./zihnimWorld";
 
 export type Samples = { w: number; h: number; lum: Float32Array; rgb: Float32Array };
 export type Frame = { id: string; c: V3; right: V3; up: V3; normal: V3; w: number; h: number; img: number };
@@ -28,7 +28,9 @@ export const FRAME_BASE = 100;
 export const LINE_BASE = 200;
 export const BEACON = 60;
 /** Picture indices: the works of the hall come first (0..), the frames of the brain start here. */
-export const BRAIN_FRAMES = 10;
+export const BRAIN_FRAMES = 16;
+/** The frames of the gallery (03) come after the works of the hall. */
+export const GALLERY_FRAMES = 10;
 const rng = (seed: number) => {
   let s = seed >>> 0;
   return () => {
@@ -45,11 +47,6 @@ const smooth = (a: number, b: number, x: number) => {
 const mix = (a: V3, b: V3, t: number): V3 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 const scale = (a: V3, k: number): V3 => [a[0] * k, a[1] * k, a[2] * k];
 const sub = (a: V3, b: V3): V3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
-const norm = (a: V3): V3 => {
-  const l = Math.hypot(a[0], a[1], a[2]) || 1;
-  return [a[0] / l, a[1] / l, a[2] / l];
-};
-const cross = (a: V3, b: V3): V3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 
 // ── 3D value noise and ridged fractal noise (the folds of the lobes)
 const hash3 = (x: number, y: number, z: number) => {
@@ -291,43 +288,6 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
     return { normal: [Math.sin(ang), 0, Math.cos(ang)] as V3, right: [Math.cos(ang), 0, -Math.sin(ang)] as V3, up: [0, 1, 0] as V3 };
   };
   let imgId = BRAIN_FRAMES;
-
-  // Kurgu Masası: a film strip winding through the right lobe; frames are real video covers; the Voop frame is the stop
-  const kStation = route[6].pos;
-  const nK = N(0.11);
-  const HALF = 12;
-  const tangentAt = (u: number): V3 => norm(sub(catmull(filmStrip, Math.min(1, u + 0.004)), catmull(filmStrip, Math.max(0, u - 0.004))));
-  for (let k = 0; k < Math.floor(nK * 0.2); k++) {
-    const u = r();
-    const c = catmull(filmStrip, u);
-    const side = r() < 0.5 ? -1 : 1;
-    const hole = r() < 0.45;
-    if (hole && Math.floor(u * 260) % 2 === 0) continue;
-    if (r() < 0.45) continue;
-    put([c[0], c[1] + side * (HALF - (hole ? 1.4 : 0)) + gauss(r) * 0.04, c[2]], scale(hole ? P.ice : mix(P.offWhite, P.ice, u), hole ? 0.5 : 0.38), 3, u);
-  }
-  for (let k = 0; k < Math.floor(nK * 0.12); k++) {
-    const cellU = Math.floor(r() * 34) / 34 + 0.5 / 34;
-    const tg = tangentAt(cellU);
-    const c = catmull(filmStrip, cellU);
-    const edgeV = r() < 0.5;
-    const lx = edgeV ? (r() < 0.5 ? -1 : 1) * 3.6 : (r() - 0.5) * 7.2;
-    const ly = edgeV ? (r() - 0.5) * (HALF * 2 - 4) : (r() < 0.5 ? -1 : 1) * (HALF - 2);
-    put([c[0] + tg[0] * lx, c[1] + ly, c[2] + tg[2] * lx], scale(P.offWhite, 0.3), 3, cellU);
-  }
-  const kList = works.filter((w) => w.area === "kurgu-masasi");
-  const perK = Math.floor((nK * 0.62) / kList.length);
-  for (const w of kList) {
-    const u = kurguU[w.id];
-    const c = catmull(filmStrip, u);
-    const tg = tangentAt(u);
-    let normal = norm(cross([0, 1, 0], tg));
-    if (normal[0] * (kStation[0] - c[0]) + normal[2] * (kStation[2] - c[2]) < 0) normal = scale(normal, -1);
-    const right = norm(cross([0, 1, 0], normal));
-    const at: V3 = [c[0] + normal[0] * 0.3, c[1], c[2] + normal[2] * 0.3];
-    w.at = at;
-    picture(w, at, right, [0, 1, 0], normal, imgId++, w.width > 9 ? Math.floor(perK * 1.6) : perK, 3);
-  }
 
   // Deney Alanı: folded membranes (contour bands show their shape) around a browser, a phone and app screens
   const dc: V3 = [2, -22, -82];
@@ -734,5 +694,59 @@ export function buildHall(total: number, imgs: Record<string, Samples | null>, f
     const p: V3 = [hallView[0] + gauss(r) * 46, hallView[1] + H.floor + Math.pow(r(), 1.6) * (H.ceiling + 20), hallView[2] - 40 + gauss(r) * 60];
     put(p, scale(mix(P.grey, P.ice, 0.3), 0.3 + 0.25 * r()), 10, 0);
   }
+  return B.done(frames);
+}
+
+/** The frames of the gallery (03): real video covers in ONE row, Voop last and largest. Sets each work's place. */
+export function galleryFrames(imgs: Record<string, Samples | null>): Frame[] {
+  const list = works.filter((w) => w.area === "kurgu-masasi");
+  list.sort((a, b) => Number(a.title.startsWith("Voop")) - Number(b.title.startsWith("Voop")));
+  const A = light.axis;
+  return list.map((w, k) => {
+    const voop = k === list.length - 1;
+    const width = voop ? light.gallery.voop : 7.2;
+    const s = imgs[w.id];
+    const h = s ? (width * s.h) / s.w : width * 1.6;
+    const c = galAt(galX(k), voop ? 1.5 : 0);
+    w.at = c;
+    w.width = width;
+    return { id: w.id, c, right: [1, 0, 0] as V3, up: A.up, normal: scale(A.d, -1), w: width, h, img: GALLERY_FRAMES + k };
+  });
+}
+
+/**
+ * The gallery: the covers as points (kind 2, they are there from the start: t = 0), two thin warm rails that run with
+ * the row (the light of a projector), and a little warm dust. No curved strip.
+ */
+export function buildGallery(total: number, imgs: Record<string, Samples | null>, frames: Frame[]): World {
+  const B = bag(total, 90210);
+  const { r, put } = B;
+  const warm: V3 = [1.0, 0.82, 0.58];
+  const list = works.filter((w) => w.area === "kurgu-masasi");
+  const per = Math.floor((total * 0.74) / frames.length);
+  frames.forEach((f, k) => {
+    const s = imgs[f.id] ?? imgs[list[k]?.id];
+    const count = k === frames.length - 1 ? per * 2 : Math.floor(per * 0.8);
+    for (let got = 0, g = 0; got < count && g < count * 30; g++) {
+      const u = r();
+      const v = r();
+      if (s) {
+        const cell = Math.floor(v * s.h) * s.w + Math.floor(u * s.w);
+        if (r() > 0.16 + 0.84 * Math.pow(s.lum[cell], 0.85)) continue;
+      }
+      const lx = (u - 0.5) * f.w;
+      const ly = (0.5 - v) * f.h;
+      put([f.c[0] + lx, f.c[1] + f.up[1] * ly, f.c[2] + f.up[2] * ly], colorAt(s, u, v, scale(warm, 0.6)), 2, 0, FRAME_BASE + f.img, f.img);
+      got++;
+    }
+  });
+  const x0 = light.gallery.startX - 30;
+  const x1 = galX(5) + 40;
+  for (let q = 0; q < Math.floor(total * 0.14); q++) {
+    const x = x0 + r() * (x1 - x0);
+    const top = r() < 0.5;
+    put(galAt(x, top ? 11.5 : -10.5, gauss(r) * 0.05), scale(warm, 0.3 + 0.25 * r()), 10, 0, -1, -1, 1.4);
+  }
+  while (!B.full()) put(galAt(x0 + r() * (x1 - x0), gauss(r) * 9, 4 + r() * 26), scale(warm, 0.22 + 0.2 * r()), 10, 0);
   return B.done(frames);
 }

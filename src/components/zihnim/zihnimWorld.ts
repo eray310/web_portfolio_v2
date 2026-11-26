@@ -60,7 +60,7 @@ export const route: { pos: V3; target: V3 }[] = [
   { pos: [27, 9, 12], target: [52, 4, -20] }, //    6 Kurgu Masası
   { pos: [27, -6, -30], target: [4, -21, -72] }, // 7 down and back
   { pos: [8, -12, -42], target: [2, -22, -82] }, // 8 Deney Alanı
-  { pos: [42, 20, -116], target: [0, 4, -70] }, // 9 out through the back of the brain, looking back at it
+  { pos: [0, 176, 44], target: [0, -8, -12] }, //   9 05 Zirve: the camera has climbed high above; the brain lies below
   { pos: [0, 46, -172], target: [0, 0, -18] }, //  10 Birlikte Üretelim: the whole brain again, from behind
 ];
 /**
@@ -86,7 +86,7 @@ const along = (d: number, x = 0, y = 0): V3 => [AX0[0] + AXD[0] * d + x, AX0[1] 
 export const light = {
   axis: { p: AX0, d: AXD, up: AXU, len: TUNNEL_LEN },
   /** Route times: the opening frame, the fissure, the tunnel (from, to), the hall's viewing spot, the end of the look-around, the cut (from, to). */
-  t: { swing: 0.06, fissure: 0.11, inside: 0.155, tunnel0: 0.19, tunnel1: 0.4, hall: 0.52, hallEnd: 0.62, cut0: 0.625, cut1: 0.655 },
+  t: { swing: 0.06, fissure: 0.11, inside: 0.155, tunnel0: 0.19, tunnel1: 0.4, hall: 0.52, hallEnd: 0.6, gal0: 0.675, gal1: 0.74, cut0: 0.775, cut1: 0.805 },
   /** Camera on the way in: positions and look targets at t = 0, swing, fissure, inside, tunnel0. */
   entry: [
     { pos: [-62, 70, 132] as V3, target: [8, -8, 2] as V3 },
@@ -103,7 +103,26 @@ export const light = {
   dissolve: [0.125, 0.19] as [number, number],
   leak: 78,
   /** Route times of knots 5..10 of `route` after the cut. */
-  after: [0.655, 0.74, 0.805, 0.87, 0.935, 1],
+  after: [0.805, 0.87, 0.935, 1],
+  /**
+   * 03 Hareket: a long gallery outside the brain, below the hall and across the axis. Its frames (real video covers)
+   * wait behind the works of the hall as faint points (`galleryStart`); between the route times `gather` they come
+   * forward one by one into ONE row, while the camera comes down to the row and then trucks sideways along it. On the
+   * way the frames move a step at a time (`step`, tied to the route position). Voop is the large screen at the end.
+   * `shutter`: the light lines of the hall fall into a slow, shallow rhythm (route position, not a clock).
+   */
+  gallery: {
+    count: { desktop: 24000, light: 9000 },
+    drop: 36,
+    ahead: 34,
+    gap: 21,
+    dist: 30,
+    startX: -16,
+    voop: 13,
+    gather: [0.585, 0.675] as [number, number],
+    step: { rate: 520, amp: 0.55 },
+    shutter: { from: 0.575, to: 0.61, amp: 0.4, rate: 380 },
+  },
   /** The tunnel: point count (desktop / phone), half size of the beam's section, radius of the faint outer streaks. */
   tunnel: { count: { desktop: 20000, light: 8000 }, beam: [6, 6] as [number, number], outer: 26, streaks: 30, wrap: 240, farDim: [60, 210, 0.1] as V3 },
   /**
@@ -153,6 +172,12 @@ export const coverColor = (u: number, v: number): V3 => {
   return k < 0.5 ? m(a, b, k * 2) : m(b, c, k * 2 - 1);
 };
 export const coverAt: V3 = along(light.cover.at);
+/** A point of the gallery: `x` along the row, `y` up, `back` toward the camera's side of the row. */
+export const galAt = (x: number, y = 0, back = 0): V3 => along(light.view + light.gallery.ahead - back, x, y - light.gallery.drop);
+/** x of the k-th frame of the row (0..5); the last one is Voop, a little apart. */
+export const galX = (k: number) => (k < 5 ? k * light.gallery.gap : 5 * light.gallery.gap + 8);
+/** Where the k-th frame of the gallery waits in the hall, high up behind the works. */
+export const galleryStart = (k: number): V3 => hallSeen(66 + 5 * k, (k - 2.5) * 11, 24 + (k % 2) * 7);
 
 /**
  * The seven chapters of the story (00..06): Eray's own way into this work. One text pattern for each: number, label,
@@ -203,7 +228,7 @@ export const stations: Chapter[] = [
     line: "Hareket daha dinamik, daha etkili geldi.",
     facts: ["MODD Group · Motion Designer", "After Effects · Premiere Pro"],
     hint: "Voop’ta dur, izle",
-    t: light.after[1],
+    t: light.t.gal1,
   },
   {
     id: "deney-alani",
@@ -213,9 +238,9 @@ export const stations: Chapter[] = [
     line: "Bir fikir artık onlarca biçim alabiliyor.",
     facts: ["Görsel ve video üretiminde güncel yapay zekâ araçları"],
     link: { href: "/ai-isler", label: "AI İşler’i gör" },
-    t: light.after[3],
+    t: light.after[1],
   },
-  { id: "zirve", n: "05", label: "Zirve", title: "Zirve", line: "", quote: { text: "Dağa tırman, seni dünya görsün diye değil, dünyayı görebilmen için.", by: "David McCullough Jr.", note: "sevdiğim söz" }, t: light.after[4] },
+  { id: "zirve", n: "05", label: "Zirve", title: "Zirve", line: "", quote: { text: "Dağa tırman, seni dünya görsün diye değil, dünyayı görebilmen için.", by: "David McCullough Jr.", note: "sevdiğim söz" }, t: light.after[2] },
   { id: "birlikte-uretelim", n: "06", label: "Ben", title: "Ben Eray Ömeroğlu.", line: "Motion Designer · Art Director · Video Editor · AI Artist", t: 1 },
 ];
 /** Extra stops of the calm view (station to station, no flights): the tunnel as one still frame. */
@@ -316,10 +341,10 @@ export const worldConfig = {
   brain: { hemiX: 40, r: [47, 52, 94] as V3, gap: 2.6 },
   core: { c: [0, 8, 0] as V3, r: 8 },
   /** Point counts (desktop / phone). The quality steps draw a share of them. */
-  count: { desktop: 200000, light: 70000 },
+  count: { desktop: 173000, light: 60000 },
   /** Wheel: pixels of wheel for the whole route; the follow rate (1/s) once the wheel stops; largest step of one event. */
   /** snapReach 0: the camera stays exactly where the visitor stops (no pull onto a station). */
-  wheel: { routePx: 10400, follow: 7.5, maxStep: 240, snapAfter: 260, snapReach: 0 },
+  wheel: { routePx: 15600, follow: 7.5, maxStep: 240, snapAfter: 260, snapReach: 0 },
   /** Phone: a vertical drag of this many screen heights runs the whole route. */
   touch: { routeScreens: 3.4 },
   /** A trip started by a button: seconds per whole route, and the limits. */
@@ -531,7 +556,7 @@ export const guideSpots: Record<StationId, V3> = {
   genel: [0, 15, 108],
   giris: along(46, 0, 1),
   "gorsel-hafiza": PORTRAIT ? hallSeen(26, 0, 2.4) : hallSeen(24, -3.6, -3.2),
-  "kurgu-masasi": seen(6, 20, -9.5, 4.5),
+  "kurgu-masasi": galAt(galX(5) - 10, 5, 10),
   "deney-alani": seen(8, 32, -8, 2),
   "birlikte-uretelim": seen(10, 34, 0, 5),
   "hareket-atolyesi": [0, 8, 0],

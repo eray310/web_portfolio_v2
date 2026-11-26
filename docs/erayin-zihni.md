@@ -308,3 +308,54 @@ list of brands. Camera: `light.hallMove` (look up 46 units, 7 higher, both gone 
 ### Measured (Chrome, Windows, RTX 4060, 144 Hz, against `b1a2681`)
 GPU, two runs: median 6.9-7.0 ms, p95 7.1 ms in both versions. Software WebGL, one run: cold start 34.7 / 34.8 ms
 median (p95 69.4 / 90.3), trip 34.7 / 34.7, pointer 34.7 / 34.7, phone trip 20.8 / 13.9 (old / new).
+
+## Transitions round (branch `design/isik-yolu`; local only, not pushed)
+This section replaces the ones above where they differ.
+
+### Eray's answers, applied
+- "Ormandaki Ev" is the SONG title of the second cover (the words "Her Gece" are not used as a title).
+- AI tools: one line, no names: "Görsel ve video üretiminde güncel yapay zekâ araçları" (card of 04; `data/tools.ts` has one
+  entry "Yapay zekâ" with this note; it also becomes one more ball in the tool stack of the home page).
+- 02 carries no year and no employer. 03 says "MODD Group · Motion Designer" without dates.
+- Helper text (facts, "Kişisel çalışma · Kolaj") is 13 px at 62 % of the ink colour (about 6.6:1 on the ground).
+- The png originals live in `source-assets/` (ignored); the site serves the webp and jpg versions.
+
+### Transitions (route time; `light.t`, `light.after`, `light.gallery`)
+| Transition | Camera | Light | Share of the route | State |
+| --- | --- | --- | --- | --- |
+| 00 -> 01 | swing to the fissure, in | the brain comes apart, the beam opens | 0 - 0.19 | built |
+| 01 -> 02 | dolly along the axis, then look up and settle | cover colours, then off-white lines | 0.19 - 0.52 | built |
+| 02 -> 03 "the motion waiting behind comes forward" | down from the hall to the row, then truck sideways | lines of the hall in a slow shutter, warm rails | 0.60 - 0.74 | built |
+| 03 -> 04 | none: the place changes under a soft veil of light | lavender and ice veil (`.zh-veil`) | 0.775 - 0.805 | NOT a camera move yet |
+| 04 -> 05 "the climb" | crane up out of the room of 04 to high above the brain | the screens of 04 fade, the land stays | 0.87 - 0.935 | built in a plain form |
+| 05 -> 06 | from above down behind the brain (old final view) | unchanged | 0.935 - 1 | old |
+
+02 -> 03 in detail: the six video covers of 03 are a point set of their own (`buildGallery`, frames 10..15,
+`galleryFrames`). They wait high up behind the works of the hall as faint points (`galleryStart`), come forward one after
+the other into ONE row (`gallery.gather`), and once in the row they move one step at a time with the route position
+(`gallery.step`; Voop comes to rest). The lines of the hall dim and return in a shallow rhythm (`gallery.shutter`,
+`uShutA`, `uShutP`). The camera blends from the pose of the hall to the start of the row (`camAt`, `galCam`), then trucks
+to Voop, which is the large screen. No curved strip. In the calm view there is no shutter and no stepping.
+
+### Point sets
+The brain no longer holds Kurgu: 173k points at start on a desktop (was 200k), 60k on a phone (was 70k). With the tunnel
+the page starts with 193k points (was 220k). Tunnel 20k, hall 46k, gallery 24k are made on the way and freed after the
+veil; the largest total is 263k at 02 (brain + tunnel + hall + gallery). `data-points` on the canvas shows the total.
+
+### Not done in this round
+The prism room of 04 and a camera move from 03 into it; the landscape of all places under 05 (only the brain lies below);
+the single screen of 06 and the light that turns to the camera; 05 -> 06 is the old flight.
+
+### Other
+- `public/og/zihnim.jpg` was looked at and made again: the first cover alone, sharp, no interface (`/zihnim?og` hides the
+  two other covers for this picture).
+- `wheel.routePx` 15600. Scripted timing, one 100 px notch every 0.3 s and 3.5 s rest at six chapters: 62 s (125 notches).
+- Phone first screen of the home page: a line "Görsele hareket, hikâyeye karakter." and the two links under the roles.
+  Measured on the emulated pictures: gap between the text block and the visible top of the cap 26 px at 390 x 844 and
+  22 px at 340 x 740. On Eray's phone the cap was measured at about 460 px; the emulation shows it at about 368 px, so
+  the real gap has to be looked at on the device.
+- Measured against `b1a2681`: GPU two runs, median 6.9-7.0 ms, p95 7.1 ms in both. Software WebGL one run: cold start
+  34.8 / 34.7 ms median, trip 34.7 / 27.8, pointer 34.7 / 27.8, phone trip 20.9 / 13.9 (old / new).
+
+### Next round
+Görev B: /hakkimda as an album inner sleeve (see the brief), on a new branch from the last commit here.

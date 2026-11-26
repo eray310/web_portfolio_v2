@@ -343,6 +343,7 @@ const ZihnimPage = () => {
   return (
     <div className="zh" data-mode={mode}>
       <canvas ref={canvas} className={`zh-canvas${work || brief ? " is-blocked" : ""}`} aria-hidden="true" tabIndex={-1} />
+      <div className="zh-veil" aria-hidden="true" />
       <div ref={ui} className="zh-ui">
         <header className="zh-top">
           <div className="zh-brand">

@@ -37,8 +37,8 @@ import {
   Vector4,
   WebGLRenderer,
 } from "three";
-import { calmStops, coverAt, guideSpots, light as LY, readyAreas, route, stations, worldConfig as W, works, type StationId, type V3 } from "./zihnimWorld";
-import { BEACON, FRAME_BASE, LINE_BASE, buildGuide, buildHall, buildTunnel, buildWorld, hallFrames, sampleImage, type Samples, type World } from "./worldGeometry";
+import { calmStops, coverAt, galAt, galX, galleryStart, guideSpots, light as LY, readyAreas, route, stations, worldConfig as W, works, type StationId, type V3 } from "./zihnimWorld";
+import { BEACON, FRAME_BASE, LINE_BASE, buildGallery, buildGuide, buildHall, buildTunnel, buildWorld, galleryFrames, hallFrames, sampleImage, type Samples, type World } from "./worldGeometry";
 
 export type SceneOptions = {
   canvas: HTMLCanvasElement;
@@ -92,6 +92,7 @@ const VERT = /* glsl */ `
   uniform float uKnee, uSlope, uInside, uBokehPx, uBokehLight;
   uniform float uBrain, uReach, uCut, uCamAx, uWrap, uMouth, uSplit, uCoverS;
   uniform vec3 uCoverC, uCoverU, uFarDim;
+  uniform float uShutA, uShutP;
   uniform vec3 uAxisP, uAxisD;
   uniform float uLine[${MAX_FRAMES}];
   uniform float uMScale, uMSpeed;
@@ -243,6 +244,8 @@ const VERT = /* glsl */ `
           a *= 1.0 - smoothstep(L * 1.06 - 0.06, L * 1.06, t);
           a *= 1.0 + 2.5 * exp(-pow((t - L) * 14.0, 2.0)) * (1.0 - step(0.995, L));
           a *= mix(1.0, 0.4, Wr);
+          // the shutter: a slow, shallow rhythm of the lines before the journey turns to motion (route position, no clock)
+          a *= 1.0 - uShutA * (0.5 + 0.5 * sin(uShutP + float(li) * 1.7));
         }
       } else if (coverK > -0.5) a *= 0.45 * smoothstep(0.0, 0.4, coverK) * clamp(40000.0 / (dist * dist), 0.06, 1.0); // far away its points share a few pixels: each gives less, so the square keeps one brightness
     }
@@ -266,6 +269,10 @@ const VERT = /* glsl */ `
       float wr = uFrameO[int(fr + 0.5)].w * 1.14;
       a *= 1.0 - smoothstep(wr - 0.14, wr, t);
       a *= 1.0 + 1.8 * exp(-pow((t - wr + 0.07) * 16.0, 2.0)) * (1.0 - step(1.13, wr));
+      // the three leading works are the one focus of the hall: the works behind them stay clearly fainter;
+      // the frames of the gallery are faint points while they wait far away
+      if (fr > 2.5 && fr < 9.5) a *= 0.42;
+      if (fr > 9.5) a *= mix(0.3, 1.0, smoothstep(78.0, 42.0, dist));
     }
     // up close: fewer, softer points
     if (ki < 8) a *= mix(uNearAlpha, 1.0, smoothstep(uNearDist * 0.45, uNearDist, dist));
@@ -434,6 +441,8 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       uCoverC: { value: v3(coverAt) },
       uCoverU: { value: v3(LY.axis.up) },
       uFarDim: { value: v3(LY.tunnel.farDim) },
+      uShutA: { value: 0 },
+      uShutP: { value: 0 },
       uAxisP: { value: v3(LY.axis.p) },
       uAxisD: { value: v3(LY.axis.d) },
       uLine: { value: lineU },
@@ -491,7 +500,9 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   };
   let tunnel: Chunk | null = null;
   let hall: Chunk | null = null;
+  let gallery: Chunk | null = null;
   const hallF = hallFrames(samples);
+  const galF = galleryFrames(samples);
 
   // ── the guide: a second small Points object, same renderer
   const ggeo = new BufferGeometry();
@@ -532,7 +543,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const areaOf = Object.fromEntries(works.map((w) => [w.id, w.area]));
   const workImage = Object.fromEntries(works.map((w) => [w.id, w.image]));
   const orderIn: Record<string, number> = {};
-  const planes = [...hallF, ...world.frames].map((f) => {
+  const planes = [...hallF, ...galF, ...world.frames].map((f) => {
     const area = areaOf[f.id];
     orderIn[area] = (orderIn[area] ?? -1) + 1;
     const m = new MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, depthTest: false, side: DoubleSide, toneMapped: false });
@@ -591,6 +602,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     img.src = import.meta.env.BASE_URL + image;
     return { mesh, m };
   };
+  const ogShot = new URLSearchParams(window.location.search).has("og");
   const coverC = v3(coverAt);
   const coverMain = makeCover(LY.cover.image, LY.cover.side, LY.cover.aspect, coverC);
   const coverOthers = LY.cover.others.map((c) => makeCover(c.image, c.side, c.aspect, coverC.clone().add(new Vector3(c.x, 0, 0)).addScaledVector(coverUp, c.y).addScaledVector(v3(LY.axis.d), c.back)));
@@ -671,8 +683,15 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const posCurve = new CatmullRomCurve3(LY.entry.map((k) => v3(k.pos)), false, "centripetal");
   const tarCurve = new CatmullRomCurve3(LY.entry.map((k) => v3(k.target)), false, "centripetal");
   const entryT = [0, LT.swing, LT.fissure, LT.inside, LT.tunnel0];
-  const afterPos = new CatmullRomCurve3(route.slice(5).map((k) => v3(k.pos)), false, "centripetal");
-  const afterTar = new CatmullRomCurve3(route.slice(5).map((k) => v3(k.target)), false, "centripetal");
+  const afterPos = new CatmullRomCurve3(route.slice(7).map((k) => v3(k.pos)), false, "centripetal");
+  const afterTar = new CatmullRomCurve3(route.slice(7).map((k) => v3(k.target)), false, "centripetal");
+  const GA = LY.gallery;
+  const galCam = (xc: number, pos: Vector3, look: Vector3) => {
+    pos.set(...galAt(xc, 1.2, GA.dist));
+    look.set(...galAt(xc, 0.6, 0));
+  };
+  const gp = new Vector3();
+  const gq = new Vector3();
   const axP = v3(LY.axis.p);
   const axD = v3(LY.axis.d);
   const axU = v3(LY.axis.up);
@@ -697,6 +716,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       look.copy(pos).addScaledVector(axD, 120);
     } else if (x < cutMid) {
       const a = sstep(LT.tunnel1, LT.hall, x);
+      const afterHall = x > LT.hallEnd;
       const arrive = 1 - (1 - a) * (1 - a); // quick out of the tunnel, slow onto the viewing spot
       const b = sstep(LT.hall, LT.hallEnd, Math.min(x, LT.hallEnd));
       pos.copy(axP).addScaledVector(axD, LY.mouth + (LY.view - LY.mouth) * arrive + LY.push[0] * b);
@@ -706,6 +726,20 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       const up = 1 - sstep(LT.tunnel1 + 0.03, LT.hall, x);
       look.addScaledVector(axU, LY.hallMove.lookUp * up * sstep(LT.tunnel1, LT.tunnel1 + 0.03, x));
       pos.addScaledVector(axU, LY.hallMove.rise * up * sstep(LT.tunnel1, LT.tunnel1 + 0.03, x));
+      if (afterHall) {
+        // 02 -> 03: no cut. The camera comes DOWN from the hall to the row (the look tips down first), then trucks
+        // SIDEWAYS along it; the row runs past a calm camera and ends at the large screen (Voop).
+        if (x <= LT.gal0) {
+          const u = (x - LT.hallEnd) / (LT.gal0 - LT.hallEnd);
+          galCam(GA.startX, gp, gq);
+          pos.lerp(gp, ease(u));
+          look.lerp(gq, ease(Math.min(1, u * 1.35)));
+        } else {
+          const v = (x - LT.gal0) / (LT.gal1 - LT.gal0);
+          const e = v < 1 ? 1 - Math.pow(1 - v, 1.7) : 1 + (v - 1) * 0.12;
+          galCam(GA.startX + (galX(5) - 3.5 - GA.startX) * e, pos, look);
+        }
+      }
     } else {
       const u = pw(x, LY.after);
       afterPos.getPoint(u, pos);
@@ -792,7 +826,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     // fewer points: each remaining point carries a little more light, so the forms keep their weight
     mat.uniforms.uExposure.value = PW.exposure * Math.pow(1 / q.points, 0.35);
     geo.setDrawRange(0, Math.round(world.n * q.points));
-    for (const c of [tunnel, hall]) if (c) c.g.setDrawRange(0, Math.round(c.n * q.points));
+    for (const c of [tunnel, hall, gallery]) if (c) c.g.setDrawRange(0, Math.round(c.n * q.points));
   };
   const resize = () => {
     width = Math.max(1, canvas.clientWidth);
@@ -1051,17 +1085,19 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       p.line = sstep(a, a + O.line, s);
       p.write = sstep(a + O.line * 0.8, a + O.line + O.write, s);
     }
+    // 03: the video frames wait high up behind the works of the hall; one after the other they come forward into ONE
+    // row. Once in the row they move a step at a time as the route moves (still frame -> moving frame); Voop comes to
+    // rest as the large screen.
     for (const p of kurgu) {
-      const a = tK - gm.kurgu.from + gm.kurgu.each * p.order;
-      const k = 1 - sstep(a, a + gm.kurgu.len, s);
       const i = p.order;
-      // out of line: off the strip, up or down, along it; they snap into the strip one after another
-      p.off
-        .copy(v3(p.f.normal))
-        .multiplyScalar(4 + 3 * (i % 3))
-        .addScaledVector(v3(p.f.up), (i % 2 ? 1 : -1) * (3 + i))
-        .addScaledVector(v3(p.f.right), ((i % 3) - 1) * 3)
-        .multiplyScalar(k);
+      const a = GA.gather[0] + 0.009 * i;
+      const k = ease(sstep(a, GA.gather[1] - 0.009 * (5 - i), s));
+      p.off.set(...galleryStart(i)).sub(p.center).multiplyScalar(1 - k);
+      if (!reduced) {
+        const rest = i === 5 ? 1 - sstep(LT.gal1 - 0.035, LT.gal1 - 0.004, s) : 1;
+        const step = Math.round(Math.sin(s * GA.step.rate + i * 1.3)) * GA.step.amp * k * rest * sstep(LT.gal0 - 0.02, LT.gal0 + 0.01, s);
+        p.off.addScaledVector(axU, step);
+      }
     }
     for (const p of deney) {
       const i = p.order;
@@ -1127,7 +1163,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     gu.uMorph.value = morph;
     gu.uLift.value = 0;
     gu.uGather.value = 1;
-    gu.uStripK.value = sstep(tK - 0.075, tK - 0.045, s) * (1 - sstep(tK - 0.026, tK - 0.004, s));
+    gu.uStripK.value = 0;
     gu.uMemK.value = 0.78 * sstep(tD - 0.08, tD - 0.035, s) * (1 - sstep(tD + 0.02, tD + 0.07, s));
     gu.uTintK.value = sstep(tG - 0.01, tG + 0.035, s);
     gu.uIceK.value = sstep(tK, tK + 0.04, s);
@@ -1286,7 +1322,17 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     mat.uniforms.uCut.value = cutK;
     mat.uniforms.uCamAx.value = camera.position.clone().sub(axP).dot(axD);
     mat.uniforms.uReach.value = 8 + (LY.axis.len + 400) * sstep(LT.fissure * 0.6, LT.tunnel0, s);
-    const wantTunnel = frames > 3 && s < cutMid + 0.03;
+    const wantTunnel = frames > 3 && s < LT.hall + 0.06;
+    const wantGallery = s > LT.tunnel1 && s < cutMid + 0.03;
+    if (wantGallery && !gallery) {
+      gallery = makeChunk(buildGallery(light ? GA.count.light : GA.count.desktop, samples, galF));
+      applyQuality();
+    } else if (!wantGallery && gallery) gallery = freeChunk(gallery);
+    if (gallery) gallery.pts.visible = inLight;
+    mat.uniforms.uShutA.value = reduced ? 0 : GA.shutter.amp * sstep(GA.shutter.from, GA.shutter.to, s) * (1 - sstep(LT.gal0 - 0.02, LT.gal0 + 0.02, s));
+    mat.uniforms.uShutP.value = s * GA.shutter.rate;
+    // where the journey changes place without a flight, a soft veil of light covers the change (never a black cut)
+    canvas.parentElement?.style.setProperty("--zh-veil", (0.22 * (1 - cutK)).toFixed(3));
     const wantHall = s > 0.015 && s < cutMid + 0.03;
     if (wantTunnel && !tunnel) {
       tunnel = makeChunk(buildTunnel(light ? LY.tunnel.count.light : LY.tunnel.count.desktop, coverS));
@@ -1307,7 +1353,8 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     coverMain.m.opacity = coverMain.m.map ? sstep(LY.cover.sharp[0], LY.cover.sharp[1], coverDist) * coverOn : 0;
     coverMain.mesh.visible = coverMain.m.opacity > 0.004;
     for (const c of coverOthers) {
-      c.m.opacity = c.m.map ? sstep(LY.cover.join[0], LY.cover.join[1], s) * coverOn : 0;
+      // ?og: the picture for sharing is taken with the first cover alone
+      c.m.opacity = c.m.map && !ogShot ? sstep(LY.cover.join[0], LY.cover.join[1], s) * coverOn : 0;
       c.mesh.visible = c.m.opacity > 0.004;
     }
     points.visible = brainK > 0.001;
@@ -1329,8 +1376,11 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
         preparedNow = true;
       }
       const isHall = p.area === "gorsel-hafiza";
-      const shown = isHall ? (inLight ? sstep(0.85, 1, p.write) : 0) : brainK * cutK;
-      const target = p.state === "ready" ? (isHall ? sstep(LY.sharp.far, LY.sharp.near, d) : sstep(W.picture.far, W.picture.near, d)) * shown : 0;
+      const isGal = p.area === "kurgu-masasi";
+      // at the summit (05) the screens of 04 are gone: only the land below and the quote
+      const summit = 1 - sstep(LY.after[1] + 0.02, LY.after[2] - 0.012, s);
+      const shown = isHall ? (inLight ? sstep(0.85, 1, p.write) : 0) : isGal ? (inLight && s > LT.tunnel1 ? cutK : 0) : brainK * cutK * summit;
+      const target = p.state === "ready" ? (isHall || isGal ? sstep(LY.sharp.far, LY.sharp.near, d) : sstep(W.picture.far, W.picture.near, d)) * shown : 0;
       p.fade += (target - p.fade) * (1 - Math.exp(-dt * 6));
       if (Math.abs(target - p.fade) > 0.004) fadeBusy = true;
       p.mat.opacity = p.fade;
@@ -1381,7 +1431,8 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     canvas.dataset.guide = gpos.toArray().map((x) => x.toFixed(1)).join(",");
     canvas.dataset.morph = gmat.uniforms.uMorph.value.toFixed(2);
     canvas.dataset.time = time.toFixed(2);
-    canvas.dataset.sets = `brain${tunnel ? "+tunnel" : ""}${hall ? "+hall" : ""}`;
+    canvas.dataset.sets = `brain${tunnel ? "+tunnel" : ""}${hall ? "+hall" : ""}${gallery ? "+gallery" : ""}`;
+    canvas.dataset.points = String(world.n + (tunnel?.n ?? 0) + (hall?.n ?? 0) + (gallery?.n ?? 0));
 
     const busy =
       trip ||
@@ -1446,6 +1497,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       window.removeEventListener("keydown", onKey);
       freeChunk(tunnel);
       freeChunk(hall);
+      freeChunk(gallery);
       for (const c of [coverMain, ...coverOthers]) {
         c.mesh.geometry.dispose();
         c.m.map?.dispose();

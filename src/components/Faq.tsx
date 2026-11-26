@@ -50,7 +50,7 @@ const Faq = () => {
         <div className="faq-intro">
           <p className="faq-eyebrow">SSS · Sık sorulan sorular</p>
           <h3 id="faq-title">
-            Aklında <span>kalanlar.</span>
+            Aklında kalanlar.
           </h3>
           <p className="faq-lead">Cevabını burada bulamadıysan projeni birkaç cümleyle anlat, oradan devam edelim.</p>
           <button

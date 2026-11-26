@@ -1,15 +1,18 @@
-import { tools } from "../data/tools";
+import { toolGroups } from "../data/tools";
 import "./styles/ToolsFallback.css";
 
 /** Static replacement for the 3D tool balls. */
 const ToolsFallback = () => (
   <div className="tools-fallback">
     <h2>Kullandığım Araçlar</h2>
-    <ul>
-      {tools.map((tool) => (
-        <li key={tool.name}>{tool.name}</li>
+    <dl className="tools-groups">
+      {toolGroups.map((g) => (
+        <div key={g.title}>
+          <dt>{g.title}</dt>
+          <dd>{g.items.join(" · ")}</dd>
+        </div>
       ))}
-    </ul>
+    </dl>
   </div>
 );
 

@@ -11,3 +11,10 @@ export const tools: { name: string; color: string; note?: string }[] = [
 
 /** The tools that have a ball in the 3D stack of the home page (the general "Yapay zekâ" entry is text only). */
 export const ballTools = tools.filter((t) => !t.note);
+
+/** The tools in three groups, as text (the 3D balls stay as they are). */
+export const toolGroups: { title: string; items: string[] }[] = [
+  { title: "Motion & Kurgu", items: ["After Effects", "Premiere Pro", "CapCut"] },
+  { title: "Tasarım", items: ["Photoshop", "Illustrator", "InDesign"] },
+  { title: "Yapay Zekâ", items: ["Görsel ve video üretiminde güncel yapay zekâ araçları"] },
+];

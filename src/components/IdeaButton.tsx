@@ -3,7 +3,6 @@ import { MdArrowOutward } from "react-icons/md";
 import { TbNotes } from "react-icons/tb";
 import HoverLinks from "./HoverLinks";
 import { lockScroll, unlockScroll } from "./utils/scrollLock";
-import { scrollToSection } from "./utils/scrollToSection";
 import "./styles/IdeaButton.css";
 
 // The same three-step brief form that the project cards open (loaded on first use).
@@ -34,7 +33,7 @@ const coversContent = (el: HTMLElement) => {
 };
 
 /**
- * The two fixed controls of the page, kept together: "Deneyimimi Gör" and "Bir fikrim var".
+ * The two fixed controls of the page, kept together: "Hikâyemi izle" (/zihnim) and "Bir fikrim var".
  * They sit side by side in one row (they can never overlap each other) and the row moves
  * aside while it would cover a control or a line of text of the page. It reappears when it
  * has a keyboard focus, so it can always be reached.
@@ -76,15 +75,8 @@ const Dock = () => {
   return (
     <>
       <div ref={dock} className={`dock${tucked && !open ? " is-tucked" : ""}`}>
-        <a
-          className="resume-button"
-          href="#experience"
-          onClick={(e) => {
-            e.preventDefault();
-            scrollToSection("#experience");
-          }}
-        >
-          <HoverLinks text="Deneyimimi Gör" />
+        <a className="resume-button" href="/zihnim">
+          <HoverLinks text="Hikâyemi izle" />
           <span aria-hidden="true">
             <TbNotes />
           </span>

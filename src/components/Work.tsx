@@ -11,6 +11,7 @@ import {
 } from "../data/projects";
 import { projectInteractions } from "../data/interactive";
 import type { CreativeRequest } from "./creative/CreativeHost";
+import GraphicGrid from "./GraphicGrid";
 import "./styles/Work.css";
 
 // Loaded only when a visitor opens an interaction.
@@ -45,6 +46,8 @@ const canPreview = () =>
 
 const Work = () => {
   const [filter, setFilter] = useState<Filter>("all");
+  // "Grafik Tasarım": image-only works without video, shown as a plain grid instead of the gallery
+  const [graphic, setGraphic] = useState(false);
   const [index, setIndex] = useState(0);
   const [drag, setDrag] = useState(0); // drag distance in card steps
   const [dragging, setDragging] = useState(false);
@@ -122,6 +125,7 @@ const Work = () => {
   }, [count]);
 
   const chooseFilter = (f: Filter) => {
+    setGraphic(false);
     setFilter(f);
     setIndex(0);
     setDrag(0);
@@ -324,15 +328,22 @@ const Work = () => {
                 key={f}
                 type="button"
                 className="work-filter"
-                aria-pressed={filter === f}
+                aria-pressed={!graphic && filter === f}
                 onClick={() => chooseFilter(f)}
                 data-cursor="disable"
               >
                 {f === "all" ? "Tümü" : f}
               </button>
             ))}
+            <button type="button" className="work-filter" aria-pressed={graphic} onClick={() => setGraphic(true)} data-cursor="disable">
+              Grafik Tasarım
+            </button>
           </div>
 
+          {graphic ? (
+            <GraphicGrid />
+          ) : (
+          <>
           <div className="work-stage-wrap" ref={wrapRef}>
             {count === 0 ? (
               <p className="work-empty">Bu kategoride henüz proje yok.</p>
@@ -496,6 +507,8 @@ const Work = () => {
               </button>
             )}
           </div>
+          </>
+          )}
         </div>
       </div>
 

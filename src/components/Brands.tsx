@@ -1,7 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { brands, type Brand } from "../data/brands";
 import { brandVideos } from "../data/brandVideos";
-import { prefersReducedMotion } from "../utils/motion";
 import BrandGallery from "./BrandGallery";
 import "./styles/Brands.css";
 
@@ -17,13 +16,6 @@ const Brands = () => {
   // The brand whose video window is open, and the logo to give focus back to.
   const [openBrand, setOpenBrand] = useState<Brand | null>(null);
   const opener = useRef<HTMLElement | null>(null);
-  // The strip flows by itself and stands still while the pointer is over it, while a finger is on it and
-  // while keyboard focus is inside it. Focus inside also shows one plain text control ("Akışı durdur") so
-  // the movement can be switched off for good; it stays hidden for everyone else.
-  // With "Hareketi azalt" it stands still and is scrolled by hand instead (finger, drag, keys).
-  const reduced = prefersReducedMotion();
-  const [paused, setPaused] = useState(false);
-  const drag = useRef({ id: -1, x: 0, left: 0, moved: false });
   const close = useCallback(() => {
     setOpenBrand(null);
     opener.current?.focus?.();
@@ -32,9 +24,8 @@ const Brands = () => {
   const preview = shown.length === 0 && import.meta.env.DEV;
   if (shown.length === 0 && !preview) return null;
 
-  const count = preview ? PREVIEW_SLOTS.length : shown.length;
-  // Enough copies that one half of the strip is wider than any screen.
-  const copies = Math.max(1, Math.ceil(10 / count));
+
+  const copies = 1;
 
   const renderSet = (hidden: boolean) => (
     <ul className="brands-set" aria-hidden={hidden || undefined}>
@@ -102,71 +93,10 @@ const Brands = () => {
   return (
     <section className="brands-section" aria-labelledby="brands-title">
       <h2 id="brands-title">
-        Çalıştığım <span>Markalar</span>
+        Çalıştığım Markalar
       </h2>
-      <div className="brands-stage">
-        <div
-          className={`brands-marquee${paused ? " is-paused" : ""}`}
-          {...(reduced
-            ? { role: "region", "aria-label": "Çalıştığım markalar, yatay kaydırılır", tabIndex: 0 }
-            : {})}
-          onFocusCapture={(e) => {
-            // The strip stops on focus (CSS); a logo that is partly out of sight is brought in.
-            const t = e.target as HTMLElement;
-            const box = e.currentTarget;
-            if (t === box) return;
-            const r = t.getBoundingClientRect();
-            const m = box.getBoundingClientRect();
-            if (r.left < m.left + 8) box.scrollLeft -= m.left + 8 - r.left;
-            else if (r.right > m.right - 8) box.scrollLeft += r.right - (m.right - 8);
-          }}
-          onBlurCapture={(e) => {
-            // Back to the start of the loop once focus leaves, so the seam stays seamless.
-            if (!reduced && !e.currentTarget.contains(e.relatedTarget as Node | null)) e.currentTarget.scrollLeft = 0;
-          }}
-          onPointerDown={(e) => {
-            if (!reduced || e.pointerType !== "mouse" || e.button !== 0) return;
-            drag.current = { id: e.pointerId, x: e.clientX, left: e.currentTarget.scrollLeft, moved: false };
-          }}
-          onPointerMove={(e) => {
-            const d = drag.current;
-            if (d.id !== e.pointerId) return;
-            const dx = e.clientX - d.x;
-            if (Math.abs(dx) > 5) d.moved = true;
-            if (d.moved) e.currentTarget.scrollLeft = d.left - dx;
-          }}
-          onPointerUp={(e) => {
-            if (drag.current.id === e.pointerId) drag.current.id = -1;
-          }}
-          onClickCapture={(e) => {
-            // A drag that ends over a logo is not a click on it.
-            if (drag.current.moved) {
-              e.preventDefault();
-              e.stopPropagation();
-              drag.current.moved = false;
-            }
-          }}
-        >
-          <div
-            className="brands-track"
-            style={{ ["--brands-count" as string]: count * copies }}
-          >
-            {renderSet(false)}
-            {renderSet(true)}
-          </div>
-        </div>
-        {!reduced && (
-          <button
-            type="button"
-            className="brands-pause"
-            aria-pressed={paused}
-            onClick={() => setPaused((p) => !p)}
-            data-cursor="disable"
-          >
-            {paused ? "Akışı başlat" : "Akışı durdur"}
-          </button>
-        )}
-      </div>
+      {/* a still grid of logos, all off-white, the same optical size and spacing (no moving strip) */}
+      <div className="brands-grid">{renderSet(false)}</div>
       {preview && (
         <p className="brands-note">
           Önizleme: logo yok. PNG dosyasını <code>public/brands/</code> içine

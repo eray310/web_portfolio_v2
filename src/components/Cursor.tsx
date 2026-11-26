@@ -1,54 +1,49 @@
 import { useEffect, useRef } from "react";
+import { prefersReducedMotion } from "../utils/motion";
 import "./styles/Cursor.css";
-import gsap from "gsap";
+
+/**
+ * A small off-white dot that follows the mouse; over links, buttons and work cards it opens into a thin ring.
+ * No glow and no blend mode, so text under it stays readable. Touch screens and "Hareketi azalt" keep the system
+ * cursor (this one is not shown at all).
+ */
+const TARGET = "a, button, [role='button'], .work-card, label, summary";
 
 const Cursor = () => {
-  const cursorRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    let hover = false;
-    const cursor = cursorRef.current!;
-    const mousePos = { x: 0, y: 0 };
-    const cursorPos = { x: 0, y: 0 };
-    document.addEventListener("mousemove", (e) => {
-      mousePos.x = e.clientX;
-      mousePos.y = e.clientY;
-    });
-    requestAnimationFrame(function loop() {
-      if (!hover) {
-        const delay = 6;
-        cursorPos.x += (mousePos.x - cursorPos.x) / delay;
-        cursorPos.y += (mousePos.y - cursorPos.y) / delay;
-        gsap.to(cursor, { x: cursorPos.x, y: cursorPos.y, duration: 0.1 });
-        // cursor.style.transform = `translate(${cursorPos.x}px, ${cursorPos.y}px)`;
-      }
-      requestAnimationFrame(loop);
-    });
-    document.querySelectorAll("[data-cursor]").forEach((item) => {
-      const element = item as HTMLElement;
-      element.addEventListener("mouseover", (e: MouseEvent) => {
-        const target = e.currentTarget as HTMLElement;
-        const rect = target.getBoundingClientRect();
-
-        if (element.dataset.cursor === "icons") {
-          cursor.classList.add("cursor-icons");
-
-          gsap.to(cursor, { x: rect.left, y: rect.top, duration: 0.1 });
-          //   cursor.style.transform = `translate(${rect.left}px,${rect.top}px)`;
-          cursor.style.setProperty("--cursorH", `${rect.height}px`);
-          hover = true;
-        }
-        if (element.dataset.cursor === "disable") {
-          cursor.classList.add("cursor-disable");
-        }
-      });
-      element.addEventListener("mouseout", () => {
-        cursor.classList.remove("cursor-disable", "cursor-icons");
-        hover = false;
-      });
-    });
+    const el = ref.current;
+    if (!el) return;
+    const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (!fine || prefersReducedMotion()) return;
+    el.classList.add("is-on");
+    const at = { x: -50, y: -50 };
+    const now = { x: -50, y: -50 };
+    let raf = 0;
+    const loop = () => {
+      now.x += (at.x - now.x) * 0.35;
+      now.y += (at.y - now.y) * 0.35;
+      el.style.transform = `translate(${now.x}px, ${now.y}px)`;
+      raf = Math.abs(at.x - now.x) + Math.abs(at.y - now.y) > 0.2 ? requestAnimationFrame(loop) : 0;
+    };
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse") return;
+      at.x = e.clientX;
+      at.y = e.clientY;
+      el.classList.toggle("is-link", !!(e.target as Element | null)?.closest?.(TARGET));
+      el.classList.remove("is-out");
+      if (!raf) raf = requestAnimationFrame(loop);
+    };
+    const onLeave = () => el.classList.add("is-out");
+    window.addEventListener("pointermove", onMove, { passive: true });
+    document.documentElement.addEventListener("pointerleave", onLeave);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("pointermove", onMove);
+      document.documentElement.removeEventListener("pointerleave", onLeave);
+    };
   }, []);
-
-  return <div className="cursor-main" ref={cursorRef}></div>;
+  return <div className="cursor-main" ref={ref} aria-hidden="true" />;
 };
 
 export default Cursor;

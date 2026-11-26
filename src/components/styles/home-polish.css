@@ -1,0 +1,331 @@
+/* Ana sayfa, part 1 (safe visual fixes). One place for the overrides of this round, so the whole part can be undone by
+   removing this file and the few component changes listed in docs/ana-sayfa.md. The character and its area are not
+   touched here. */
+
+/* section numbers */
+.home-no {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--accentColor);
+}
+
+/* headings: one colour (off-white); turquoise stays for small accents only */
+h2.career-title,
+.what-box h2.what-title {
+  background: none;
+  -webkit-text-fill-color: #eee9e4;
+  color: #eee9e4;
+}
+h2.career-title > span,
+.work-section h2 > span,
+.brands-section h2 > span,
+.what-box h2.what-title span {
+  color: inherit;
+  -webkit-text-fill-color: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  font-style: normal;
+}
+
+/* ── FAQ: a calmer title, a narrow left column, a wider list ── */
+.faq-grid {
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+}
+.faq h3 {
+  font-size: clamp(44px, 5vw, 76px);
+  color: #eee9e4;
+}
+.faq h3 span {
+  color: inherit;
+}
+.faq-cta {
+  min-height: 48px;
+  padding: 0 18px;
+  color: #eee9e4;
+  background: transparent;
+  border: 1px solid rgba(238, 233, 228, 0.45);
+  border-radius: 4px;
+}
+.faq-cta:hover {
+  filter: none;
+  border-color: #eee9e4;
+}
+.faq-q {
+  font-size: clamp(18px, 1.55vw, 23px);
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+.faq-icon::before,
+.faq-icon::after {
+  height: 1px;
+  margin-top: -0.5px;
+  background: #eee9e4;
+}
+.faq-item.is-open .faq-icon {
+  transform: none;
+}
+@media (max-width: 960px) {
+  .faq-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .faq h3 {
+    font-size: clamp(40px, 11vw, 60px);
+  }
+}
+
+/* ── Contact ── */
+.contact-section .contact-container {
+  padding-top: clamp(48px, 10vh, 110px);
+}
+.contact-close {
+  margin: 0;
+  font-size: clamp(40px, 6.4vw, 104px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #eee9e4;
+  text-wrap: balance;
+}
+.contact-mail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  margin-top: clamp(24px, 4vh, 40px);
+}
+.contact-email {
+  font-size: clamp(22px, 3vw, 44px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: #eee9e4;
+  text-decoration: underline;
+  text-decoration-color: rgba(238, 233, 228, 0.35);
+  text-underline-offset: 8px;
+  overflow-wrap: anywhere;
+}
+.contact-copy-btn,
+.contact-brief {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 15px;
+  color: #eee9e4;
+  background: none;
+  border: 1px solid rgba(238, 233, 228, 0.35);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.contact-brief {
+  min-height: 52px;
+  padding: 0 22px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #0c0a0b;
+  background: var(--accentColor);
+  border-color: var(--accentColor);
+}
+.contact-copied {
+  font-size: 15px;
+  color: var(--accentColor);
+}
+.contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  margin-top: 28px;
+}
+.contact-actions .contact-social {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-size: 17px;
+  color: #eee9e4;
+}
+.contact-foot {
+  display: grid;
+  gap: 6px;
+  margin-top: clamp(40px, 8vh, 80px);
+  padding-top: 18px;
+  border-top: 1px solid rgba(238, 233, 228, 0.2);
+}
+.contact-foot p {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(238, 233, 228, 0.72);
+}
+.contact-copy-btn:focus-visible,
+.contact-brief:focus-visible,
+.contact-email:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 3px;
+}
+
+/* ── Brands: a still grid, all logos off-white, the same optical height ── */
+.brands-grid .brands-set {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(238, 233, 228, 0.16);
+  border-left: 1px solid rgba(238, 233, 228, 0.16);
+}
+.brands-grid .brands-item {
+  display: grid;
+  place-items: center;
+  height: 112px;
+  padding: 0 22px;
+  border-right: 1px solid rgba(238, 233, 228, 0.16);
+  border-bottom: 1px solid rgba(238, 233, 228, 0.16);
+}
+.brands-grid .brands-open {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+.brands-grid img {
+  max-width: 100%;
+  max-height: 46px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(0.93);
+  opacity: 0.88;
+}
+.brands-grid .brands-item--wide img {
+  max-height: 34px;
+}
+@media only screen and (max-width: 560px) {
+  .brands-grid .brands-set {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .brands-grid .brands-item {
+    height: 88px;
+  }
+}
+
+/* ── Tools: three groups as text ── */
+.tools-groups {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 clamp(16px, 3vw, 40px);
+  width: var(--cWidth);
+  max-width: 1240px;
+  margin: 18px auto 0;
+}
+.tools-groups > div {
+  padding-top: 10px;
+  border-top: 1px solid rgba(238, 233, 228, 0.3);
+}
+.tools-groups dt {
+  font-size: 14px;
+  color: var(--accentColor);
+}
+.tools-groups dd {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #eee9e4;
+}
+@media only screen and (max-width: 640px) {
+  .tools-groups {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+}
+
+/* ── Grafik Tasarım: image-only cards ── */
+.graphic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(14px, 2vw, 28px);
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.graphic-grid figure {
+  margin: 0;
+}
+.graphic-grid img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: #0c0a0b;
+}
+.graphic-grid figcaption {
+  display: grid;
+  gap: 2px;
+  margin-top: 10px;
+}
+.graphic-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #eee9e4;
+}
+.graphic-label {
+  font-size: 14px;
+  color: rgba(238, 233, 228, 0.72);
+}
+@media only screen and (max-width: 767px) {
+  .graphic-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* the tool groups sit at the foot of the 3D tools, below the balls */
+.techstack {
+  position: relative;
+}
+.techstack .tools-groups {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+}
+
+/* 01 Showreel on wide screens: in the right half, where the text of the sections is; the left half belongs to the
+   character, which is not touched */
+@media only screen and (min-width: 1025px) {
+  .home-reel {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    padding-left: 50%;
+  }
+}
+.home-reel {
+  width: min(1320px, var(--cWidth));
+  margin-inline: auto;
+}
+@media only screen and (min-width: 1025px) {
+  .home-reel {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding-left: 46%;
+  }
+  .home-reel-frame {
+    width: clamp(240px, 21vw, 320px);
+  }
+}
+@media only screen and (min-width: 1025px) {
+  .home-reel {
+    gap: clamp(24px, 3vw, 48px);
+    padding-left: 44%;
+  }
+  .home-reel h2 {
+    font-size: clamp(44px, 4.4vw, 72px);
+  }
+}

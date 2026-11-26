@@ -10,7 +10,7 @@ import {
   CylinderCollider,
   RapierRigidBody,
 } from "@react-three/rapier";
-import { ballTools, tools } from "../data/tools";
+import { ballTools, toolGroups, tools } from "../data/tools";
 
 // No icon files exist for these tools, so each ball gets a text label drawn on a canvas.
 
@@ -477,6 +477,14 @@ const TechStack = () => {
           <N8AO color="#0f002c" aoRadius={2} intensity={1.15} />
         </EffectComposer>
       </Canvas>
+      <dl className="tools-groups">
+        {toolGroups.map((g) => (
+          <div key={g.title}>
+            <dt>{g.title}</dt>
+            <dd>{g.items.join(" · ")}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 };

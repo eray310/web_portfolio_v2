@@ -1,4 +1,5 @@
 import ZihnimDoor from "./ZihnimDoor";
+import HomeShowreel from "./HomeShowreel";
 import { lazy, PropsWithChildren, Suspense, useEffect, useState } from "react";
 import About from "./About";
 import Brands from "./Brands";
@@ -16,6 +17,9 @@ import setSplitText from "./utils/splitText";
 import ErrorBoundary from "./ErrorBoundary";
 import ToolsFallback from "./ToolsFallback";
 import { hasWebGL } from "../utils/webgl";
+
+// last, so its overrides come after the styles of the sections
+import "./styles/home-polish.css";
 
 const TechStack = lazy(() => import("./TechStack"));
 
@@ -60,6 +64,7 @@ const MainContainer = ({ children }: PropsWithChildren) => {
         <div id="smooth-content">
           <div className="container-main">
             <Landing>{!isDesktopView && children}</Landing>
+            <HomeShowreel />
             <About />
             <WhatIDo />
             <Brands />

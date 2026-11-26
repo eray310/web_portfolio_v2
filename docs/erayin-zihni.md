@@ -359,3 +359,48 @@ the single screen of 06 and the light that turns to the camera; 05 -> 06 is the 
 
 ### Next round
 Görev B: /hakkimda as an album inner sleeve (see the brief), on a new branch from the last commit here.
+
+## The rest of the route (branch `design/isik-yolu`; local only, not pushed)
+This section replaces the ones above where they differ. The whole journey is now one continuous camera path on the
+light path: no dark cut and no veil anywhere (the old cut times in `light.t` are parked beyond 1; the brain's inner
+route, `route` knots 7..10, is no longer travelled).
+
+| Transition | Camera | Light | Route time |
+| --- | --- | --- | --- |
+| 00 -> 01 | swing to the fissure, in | the brain comes apart, the beam opens | 0 - 0.19 |
+| 01 -> 02 | dolly along the axis, look up, settle | cover colours, then off-white lines | 0.19 - 0.52 |
+| 02 -> 03 | down to the row, truck sideways | shutter of the hall's lines, warm beam on Voop | 0.60 - 0.74 |
+| 03 -> 04 "the light splits" | the truck goes on to Allesta, then a small slow arc | a thin prism, thin lavender / ice / teal beams | 0.74 - 0.885 |
+| 04 -> 05 "the climb" | crane up, the look tips back along the road | the places stay below as silhouettes | 0.885 - 0.935 |
+| 05 -> 06 "the light turns to you" | push in to one empty screen | the screen's light comes up | 0.945 - 1 |
+
+- 04 (`light.room`, `roomFrames`, `buildRoom`, frames 16..20): the Allesta poster in the middle and four REAL frames of
+  its making around it (`public/process/allesta/kurgu-kesit-1..3.jpg`, `kurgu-final-kare.jpg`), which open out of it
+  one after the other (`room.open`) and breathe a very little at rest (not in the calm view). The "colour trials" of
+  the old Hakkımda page are the same poster with CSS filters, not separate pictures, so they are NOT used as versions.
+  The old screens of 04 (site captures, concept app) are no longer in /zihnim.
+- 05 (`light.summit`, `buildSummit`): the camera stands high beyond the end of the road and looks back. Silhouettes made
+  only here (11k points desktop, 5k phone): the brain far away, the tunnel as a thin line, and the squares of the hall
+  (off-white), the gallery (warm) and the room (lavender). No ice-blue dawn light was built.
+- 06 (`light.screen`, `screenMat`): one empty rectangle of light that faces the visitor; the camera stops in front of
+  it; the final card stands before it. Nothing flows from the landscape into the screen yet.
+- 03: a warm beam of points from above and beside the row down onto Voop (`gallery.beam`). The frames come forward
+  earlier and over a longer stretch (`gallery.gather` 0.548 - 0.675, `gallery.each`); the share comes from the
+  look-around of the hall. Shutter: `gallery.shutter.amp` 0.62, only the light lines and their pools, tied to the route
+  position, none in the calm view.
+- `data/tools.ts`: the "Yapay zekâ" entry is text only (`ballTools` feeds the 3D stack of the home page).
+
+Point sets on a desktop (`data-points`): 193k at the start (brain 173k + tunnel 20k); the largest total is 263k at 02
+(brain + tunnel + hall + gallery); 258k at 03, 223k at 04, 199k at 05, 184k at 06. The brain stays in memory (hidden)
+for the whole journey after the way in; freeing it past the tunnel is open.
+
+Measured against `b1a2681` (Chrome, Windows, RTX 4060, 144 Hz): GPU two runs, median 6.9-7.0 ms, p95 7.1 ms in both.
+Software WebGL one run: cold start 34.7 / 41.6 ms median, trip 34.7 / 27.8, pointer 34.7 / 27.9, phone trip 20.9 / 14.0
+(old / new). Scripted journey, one 100 px notch every 0.3 s and 3.5 s rest at six chapters: 62 s.
+
+Open: the landscape of 05 is thin and has no dawn light; 05 -> 06 has no light that flows to the screen; the prism is a
+plain sheet of points; on phones the fan of 04 is cut at the sides; the first wheel notch moves the route by 0.008.
+Next round: Görev B (/hakkimda, the album inner sleeve) on a new branch `design/hakkimda-album` from the last commit here.
+For it: Career data is still inside `Career.tsx` (to be moved to a data file), the covers and collages are in
+`public/kapaklar` and `public/grafik` (webp + jpg), `utils/lang.ts`, `ViewMenu`, `utils/viewMode.ts` and the main menu of
+`Navbar.tsx` are ready to reuse; the old page is `OrbitPage.tsx`.

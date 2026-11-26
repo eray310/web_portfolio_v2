@@ -36,6 +36,7 @@ import {
 } from "three";
 import { spaceBus } from "./spaceBus";
 import { createFlowField } from "./flowField";
+import { createVolumeLayer } from "./volumeLayer";
 
 export type SpaceOptions = {
   canvas: HTMLCanvasElement;
@@ -430,6 +431,13 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
   const near = makeLayer(37, Math.round(90 * k), 260, 120, [2.4, 6.2], 1.5, { x: 0.8, y: 0.55 }, 16, 1.0, 1);
   const dust = makeLayer(53, Math.round(520 * k), 190, 80, [0.8, 1.8], 1.0, { x: 0.15, y: 0.05 }, 3.4, 0.6, 1);
 
+  // the particle volume (opening and Web Sitesi): one more Points object in this same scene
+  const volume = createVolumeLayer({ light, still, shared: shared as unknown as Record<string, { value: unknown }> });
+  scene.add(volume.points);
+  let volFrac = 1;
+  // read-only hook for tests: freeze the colour loop / breathing at a chosen moment
+  (canvas as unknown as { __volume?: unknown }).__volume = volume;
+
   // light trails (Reklam Filmi): a few short lines running along the drift
   const nTrail = light ? 10 : 22;
   const tr = rng(71);
@@ -586,7 +594,8 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     }
     const reading = performance.now() - lastScrollT > 300;
     const flowing = !!flow && flow.energy > 0.02; // the pointer is moving things: draw every frame
-    const every = level >= 3 ? 2 : reading && !flowing && !spaceBus.stageLive ? 2 : 1;
+    // the volume moves all the time: while it is on screen every frame is drawn (unless the machine is slowest)
+    const every = level >= 3 ? 2 : reading && !flowing && !spaceBus.stageLive && !volume.visible() ? 2 : 1;
     if (every > 1 && last && tick % every !== 0 && !paused && !document.hidden && !spaceBus.briefOpen) {
       raf = requestAnimationFrame(frame);
       return;
@@ -646,6 +655,12 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     const hasBox = pick ? 1 : 0;
 
     easeCounts(1 - Math.exp(-dt * 3));
+    // volume: thinner on slow machines (eased, so it never pops), pointer parallax only for a mouse at rest or moving
+    const volGoal = level === 0 ? 1 : level === 1 ? 0.75 : level === 2 ? 0.5 : 0.3;
+    volFrac += (volGoal - volFrac) * (1 - Math.exp(-dt * 2));
+    volume.setDrawFraction(volFrac);
+    const idleP = light || performance.now() - lastMove > 900;
+    volume.update({ dt: still ? 0 : dt, s: sCur, px: idleP ? 0 : pointerX, py: idleP ? 0 : pointerY, calm: calmPlayer, pushK: flow && vtf && level < 3 ? (level === 0 ? 1 : level === 1 ? 0.7 : 0.4) : 0 });
     shared.uTravel.value = travel;
     shared.uTime.value = time;
     shared.uClearC.value.copy(clearC);
@@ -791,6 +806,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
         l.geo.dispose();
         l.mat.dispose();
       });
+      volume.dispose();
       flow?.dispose();
       flowTex?.dispose();
       tgeo.dispose();

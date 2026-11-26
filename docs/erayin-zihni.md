@@ -421,3 +421,9 @@ For it: Career data is still inside `Career.tsx` (to be moved to a data file), t
 - Points on a desktop: 193k at the start; 239k at 01, 263k at 02 (largest), 258k at 03, 234k at 04, 210k at 05, 195k at 06.
 - Measured against `b1a2681`: GPU two runs, median 6.9-7.0 ms, p95 7.1-7.2 ms in both. Software WebGL one run:
   cold start 41.6 / 34.6 ms median, trip 34.7 / 27.8, pointer 34.7 / 27.8, phone trip 20.9 / 13.9 (old / new).
+
+## Sıradaki Zihnim dokunuşu (not; not applied yet)
+1. Brightness of the screen of 06: Eray will look and decide.
+2. Freeing the brain from memory: stays as it is; no separate technical round.
+3. At 05 the brain being visible matters more than a larger landscape; the landscape may stay as it is.
+4. Look at the frames of 04 at 340 px in the next Zihnim round.

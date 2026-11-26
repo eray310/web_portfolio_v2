@@ -1,32 +1,9 @@
 import { enLang } from "../utils/lang";
 import { useEffect, useRef, useState } from "react";
 import Starters from "./Starters";
+import { experience } from "../data/career";
 import "./styles/Career.css";
 
-const experience = [
-  {
-    id: "modd",
-    role: "Motion Designer",
-    company: "MODD Group",
-    date: "Ağu 2026 – Devam ediyor",
-    current: true,
-    text: "Markalar için sosyal medya ve reklam videoları üretiyorum. After Effects ve Premiere Pro ile animasyon, motion graphics ve kurgu süreçlerini yürütüyorum.",
-  },
-  {
-    id: "retro",
-    role: "Grafik Tasarımcı",
-    company: "Retro Yazılım",
-    date: "2025 – 2026",
-    text: "8’den fazla marka için sosyal medya içeriklerini konseptten teslimata kadar hazırladım. Reels, statik görseller ve reklam kampanyaları üzerinde çalıştım.",
-  },
-  {
-    id: "moreit",
-    role: "Grafik Tasarımcı",
-    company: "More IT",
-    date: "2025",
-    text: "Farklı markalar için görsel içerik konseptleri geliştirdim. Premiere Pro ile animasyonlu eğitim içerikleri hazırladım.",
-  },
-];
 
 /** How long the line takes to travel from the first to the last point. */
 const DRAW_MS = 2200;

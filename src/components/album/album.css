@@ -1,0 +1,521 @@
+/* /hakkimda: "Albüm iç kapağı". A printed inner sleeve: warm black ground, off-white type, thin rules, a clear grid.
+   Turquoise only in small accents (numbers, links, focus). No glass, no glow, no pills. */
+.alb {
+  --ink: #eee9e4;
+  --dim: rgba(238, 233, 228, 0.66);
+  --rule: rgba(238, 233, 228, 0.22);
+  --accent: #5eead4;
+  --ground: #0c0a0b;
+  --gut: clamp(16px, 4vw, 56px);
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: var(--ui-font);
+  background: var(--ground);
+}
+html.alb-root,
+html.alb-root body {
+  background: #0c0a0b;
+}
+.alb main {
+  width: min(1240px, calc(100% - 2 * var(--gut)));
+  margin: 0 auto;
+  padding-top: 104px;
+}
+.alb main:focus {
+  outline: none;
+}
+.alb h1,
+.alb h2,
+.alb h3,
+.alb p,
+.alb ol,
+.alb ul,
+.alb dl,
+.alb dd,
+.alb figure,
+.alb blockquote {
+  margin: 0;
+  padding: 0;
+}
+.alb ol,
+.alb ul {
+  list-style: none;
+}
+.alb li {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+.alb a {
+  color: inherit;
+}
+.alb a:focus-visible,
+.alb button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+/* the header is the site's own; on this page it sits on the page ground */
+.alb .header {
+  background: linear-gradient(180deg, #0c0a0b 55%, rgba(12, 10, 11, 0));
+}
+.alb .header a[aria-current="page"] {
+  color: var(--accent);
+}
+
+/* ── cover ── */
+.alb-cover {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(24px, 5vw, 80px);
+  align-items: end;
+  padding-bottom: clamp(48px, 8vh, 96px);
+  border-bottom: 1px solid var(--rule);
+}
+.alb-cover-art {
+  aspect-ratio: 1;
+  border: 1px solid var(--rule);
+}
+.alb-portrait {
+  display: block;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1;
+}
+.alb-kicker {
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+}
+.alb h1 {
+  margin: 10px 0 18px;
+  font-size: clamp(56px, 9.4vw, 148px);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+}
+.alb-roles {
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  color: var(--accent);
+}
+.alb-lead {
+  max-width: 30em;
+  margin-top: 10px;
+  font-size: clamp(17px, 1.5vw, 20px);
+  line-height: 1.5;
+}
+.alb-tracks {
+  margin-top: 28px;
+  border-top: 1px solid var(--rule);
+}
+.alb-tracks a {
+  display: grid;
+  grid-template-columns: 3.2em 1fr;
+  align-items: center;
+  min-height: 44px;
+  font-size: 16px;
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+}
+.alb-tracks b,
+.alb-no {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .alb-tracks a:hover span {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+}
+.alb-view {
+  margin-top: 18px;
+}
+.alb-view .vm-btn {
+  border-radius: 4px;
+}
+.alb-view .vm-pop {
+  right: auto;
+  left: 0;
+}
+
+/* ── a track ── */
+.alb-track {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+  gap: 24px clamp(24px, 5vw, 80px);
+  padding: clamp(56px, 10vh, 120px) 0;
+  border-bottom: 1px solid var(--rule);
+  scroll-margin-top: 80px;
+}
+.alb-track > header {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+}
+.alb-no {
+  font-size: 15px;
+  padding-top: 0.5em;
+}
+.alb h2 {
+  max-width: 22em;
+  font-size: clamp(28px, 3.6vw, 52px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.alb-track > :not(header) {
+  grid-column: 2;
+}
+.alb-fig figcaption {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.alb-fig figcaption span {
+  color: var(--dim);
+}
+.alb-fig figcaption b {
+  margin-right: 6px;
+  font-weight: 500;
+  color: var(--accent);
+}
+.alb-fig img,
+.alb-fig video {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* halftone: the picture is seen through a print screen of dots, in grey; once in view it turns sharp */
+.alb-ht {
+  position: relative;
+  overflow: hidden;
+  background: #151213;
+}
+.alb-ht > picture,
+.alb-ht > img,
+.alb-ht > video {
+  display: block;
+}
+.alb-ht img,
+.alb-ht video {
+  filter: grayscale(1) contrast(1.35) brightness(1.1);
+  transition: filter 0.9s ease;
+}
+.alb-ht::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at center, rgba(12, 10, 11, 0) 34%, #0c0a0b 40%);
+  background-size: 6px 6px;
+  transition: opacity 0.9s ease;
+  pointer-events: none;
+}
+.alb-ht.is-sharp img,
+.alb-ht.is-sharp video {
+  filter: none;
+}
+.alb-ht.is-sharp::after {
+  opacity: 0;
+}
+.alb-ht.is-calm img,
+.alb-ht.is-calm video,
+.alb-ht.is-calm::after {
+  transition: none;
+}
+
+.alb-covers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 28px);
+  align-items: end;
+}
+.alb-turn {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: clamp(16px, 3vw, 48px);
+  align-items: end;
+}
+.alb-motion {
+  position: relative;
+}
+.alb-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 0 14px 0 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.alb-play svg {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+.alb-motion figcaption {
+  margin-top: 8px;
+}
+.alb-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(8px, 1.4vw, 20px);
+  align-items: start;
+}
+.alb-note {
+  margin-top: 20px !important;
+  max-width: 40em;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--dim);
+}
+.alb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--accent) !important;
+  text-decoration: none;
+  justify-self: start;
+}
+.alb-link svg {
+  width: 18px;
+  height: 18px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .alb-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 5px;
+  }
+}
+
+.alb-rules {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(16px, 3vw, 40px);
+  counter-reset: rule;
+}
+.alb-rules li {
+  padding-top: 14px !important;
+  border-top: 1px solid var(--ink) !important;
+}
+.alb h3 {
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.alb-rules p,
+.alb-career p {
+  margin-top: 6px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--dim);
+}
+.alb-career li {
+  display: grid;
+  grid-template-columns: minmax(0, 12em) minmax(0, 1fr);
+  gap: 4px 24px;
+  padding: 18px 0 !important;
+  border-top: 1px solid var(--rule) !important;
+}
+.alb-career li:first-child {
+  border-top-color: var(--ink) !important;
+}
+.alb-career .alb-when {
+  margin: 0;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.alb-career h3 span {
+  font-weight: 400;
+  color: var(--dim);
+}
+.alb-career div p {
+  max-width: 40em;
+}
+
+/* credits: small and tight, like the credits of a sleeve */
+.alb-credits dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 12em) minmax(0, 1fr);
+  gap: 2px 24px;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule);
+}
+.alb-credits dt {
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: var(--dim);
+}
+.alb-credits dd {
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.alb-quote {
+  display: grid;
+  place-items: center;
+  min-height: min(86vh, 820px);
+  padding: 64px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.alb-quote blockquote {
+  max-width: 17em;
+  font-size: clamp(34px, 6vw, 92px);
+  text-align: center;
+}
+.alb-quote p {
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.alb-quote footer {
+  margin-top: 28px;
+  font-size: 15px;
+  letter-spacing: 0;
+  color: var(--dim);
+}
+.alb-end {
+  padding: clamp(64px, 12vh, 140px) 0 clamp(72px, 14vh, 160px);
+}
+.alb-acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+  margin-top: 28px;
+}
+.alb-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 24px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  color: #0c0a0b;
+  background: var(--accent);
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* the picture for sharing */
+.alb-og {
+  display: grid;
+  grid-template-columns: 630px 1fr;
+  align-items: center;
+  width: 1200px;
+  height: 630px;
+  min-height: 0;
+  overflow: hidden;
+}
+.alb-og .alb-portrait {
+  width: 630px;
+  height: 630px;
+}
+.alb-og-name {
+  font-size: 104px;
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+}
+.alb-og-roles {
+  margin-top: 26px !important;
+  font-size: 21px;
+  color: var(--accent);
+}
+
+@media only screen and (max-width: 860px) {
+  .alb main {
+    padding-top: 112px;
+  }
+  .alb-cover {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+  .alb-cover-art {
+    width: min(100%, 460px);
+  }
+  .alb-track {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+  .alb-track > :not(header) {
+    grid-column: 1;
+  }
+  .alb-track > header {
+    display: block;
+  }
+  .alb-no {
+    padding: 0 0 8px;
+  }
+  .alb-rules {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .alb-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .alb-career li,
+  .alb-credits dl > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media only screen and (max-width: 560px) {
+  .alb-covers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .alb-covers li:last-child {
+    grid-column: 1 / -1;
+  }
+  .alb-turn {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .alb-motion {
+    width: min(100%, 300px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .alb-ht img,
+  .alb-ht video,
+  .alb-ht::after {
+    transition: none;
+  }
+}
+/* the skip link shows only when it has the keyboard focus */
+.alb .skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 10000;
+  padding: 10px 14px;
+  font-size: 15px;
+  color: #0c0a0b;
+  background: var(--accent);
+  border-radius: 4px;
+  transform: translateY(-200%);
+}
+.alb .skip-link:focus {
+  transform: none;
+}
+/* room for the dots of the Ö under the y of the line above */
+.alb h1,
+.alb-og-name {
+  line-height: 1.02;
+}

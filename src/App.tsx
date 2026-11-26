@@ -4,6 +4,7 @@ import "./App.css";
 const CharacterModel = lazy(() => import("./components/Character"));
 const MainContainer = lazy(() => import("./components/MainContainer"));
 const OrbitPage = lazy(() => import("./components/OrbitPage"));
+const AlbumPage = lazy(() => import("./components/album/AlbumPage"));
 const AiWorksPage = lazy(() => import("./components/AiWorksPage"));
 const HakkimdaParticles = lazy(() => import("./components/particles/HakkimdaParticles"));
 const LegalPage = lazy(() => import("./components/LegalPage"));
@@ -55,11 +56,9 @@ const App = () => {
     );
   }
   if (isAboutPage()) {
-    return (
-      <Suspense>
-        <OrbitPage />
-      </Suspense>
-    );
+    // the earlier page is kept (file and address /hakkimda?eski) for comparison; it is not linked from anywhere
+    const old = new URLSearchParams(window.location.search).has("eski");
+    return <Suspense>{old ? <OrbitPage /> : <AlbumPage />}</Suspense>;
   }
   const webgl = hasWebGL();
   return (

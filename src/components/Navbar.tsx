@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import HoverLinks from "./HoverLinks";
+import SiteHeader from "./SiteHeader";
 import { scrollToSection } from "./utils/scrollToSection";
 import { gsap } from "gsap";
 import { ScrollSmoother } from "gsap/ScrollSmoother";
@@ -52,49 +52,7 @@ const Navbar = () => {
   }, []);
   return (
     <>
-      <header className="header">
-        <a href="/#" className="navbar-title" data-cursor="disable">
-          EÖ
-        </a>
-        <a
-          href="https://www.behance.net/erayomeroglu"
-          className="navbar-connect"
-          data-cursor="disable"
-          target="_blank"
-          rel="noreferrer"
-        >
-          behance.net/erayomeroglu
-        </a>
-        <nav aria-label="Ana menü">
-        <ul>
-          <li>
-            <a data-href="#work" href="#work">
-              <HoverLinks text="SEÇİLİ İŞLER" />
-            </a>
-          </li>
-          <li>
-            <a href="/ai-isler">
-              <HoverLinks text="AI İŞLER" />
-            </a>
-          </li>
-          <li>
-            <a data-href="#about" href="#about">
-              <HoverLinks text="HAKKIMDA" />
-            </a>
-          </li>
-          <li>
-            <a href="/zihnim">
-              <HoverLinks text="ZİHNİM" />
-            </a>
-          </li>
-          <li>
-            <a data-href="#contact" href="#contact">
-              <HoverLinks text="İLETİŞİM" />
-            </a>
-          </li>
-        </ul>
-        </nav>
-      </header>
+      <SiteHeader home />
 
       <div className="landing-circle1"></div>
       <div className="landing-circle2"></div>

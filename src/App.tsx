@@ -24,13 +24,14 @@ const isAiWorksPage = () => /^\/ai-isler\/?$/i.test(window.location.pathname);
 
 const isZihnimPage = () => /^\/zihnim\/?$/i.test(window.location.pathname);
 
-const isCookiePage = () => /^\/cerez-tercihleri\/?$/i.test(window.location.pathname);
+const legalPage = () => /^\/(kvkk|gizlilik|cerez-tercihleri)\/?$/i.exec(window.location.pathname)?.[1].toLowerCase() as "kvkk" | "gizlilik" | "cerez-tercihleri" | undefined;
 
 const App = () => {
-  if (isCookiePage()) {
+  const legal = legalPage();
+  if (legal) {
     return (
       <Suspense>
-        <LegalPage />
+        <LegalPage doc={legal} />
       </Suspense>
     );
   }

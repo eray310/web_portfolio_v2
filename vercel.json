@@ -1,12 +1,52 @@
 {
   "rewrites": [
-    { "source": "/hakkimda", "destination": "/hakkimda/index.html" },
-    { "source": "/hakkimda/", "destination": "/hakkimda/index.html" },
-    { "source": "/ai-isler", "destination": "/ai-isler/index.html" },
-    { "source": "/ai-isler/", "destination": "/ai-isler/index.html" },
-    { "source": "/zihnim", "destination": "/zihnim/index.html" },
-    { "source": "/zihnim/", "destination": "/zihnim/index.html" },
-    { "source": "/cerez-tercihleri", "destination": "/cerez-tercihleri/index.html" },
-    { "source": "/cerez-tercihleri/", "destination": "/cerez-tercihleri/index.html" }
+    {
+      "source": "/hakkimda",
+      "destination": "/hakkimda/index.html"
+    },
+    {
+      "source": "/hakkimda/",
+      "destination": "/hakkimda/index.html"
+    },
+    {
+      "source": "/ai-isler",
+      "destination": "/ai-isler/index.html"
+    },
+    {
+      "source": "/ai-isler/",
+      "destination": "/ai-isler/index.html"
+    },
+    {
+      "source": "/zihnim",
+      "destination": "/zihnim/index.html"
+    },
+    {
+      "source": "/zihnim/",
+      "destination": "/zihnim/index.html"
+    },
+    {
+      "source": "/cerez-tercihleri",
+      "destination": "/cerez-tercihleri/index.html"
+    },
+    {
+      "source": "/cerez-tercihleri/",
+      "destination": "/cerez-tercihleri/index.html"
+    },
+    {
+      "source": "/kvkk",
+      "destination": "/kvkk/index.html"
+    },
+    {
+      "source": "/kvkk/",
+      "destination": "/kvkk/index.html"
+    },
+    {
+      "source": "/gizlilik",
+      "destination": "/gizlilik/index.html"
+    },
+    {
+      "source": "/gizlilik/",
+      "destination": "/gizlilik/index.html"
+    }
   ]
 }

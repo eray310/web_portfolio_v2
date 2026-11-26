@@ -104,6 +104,8 @@ export default async function handler(req, res) {
   const filled = Number(body.t);
   if (clean(body.website, 200) || !(filled >= MIN_FILL_MS && filled <= MAX_FILL_MS)) return fail(res, 400, "rejected");
 
+  if (body.kind === "video-degerlendirme") return videoReview(res, body);
+
   const name = oneLine(body.name, 80);
   const email = oneLine(body.email, 120);
   const company = oneLine(body.company, 100);
@@ -179,6 +181,40 @@ export default async function handler(req, res) {
     return fail(res, 502, "provider_unreachable");
   }
   // Success is reported only when the provider accepted the request.
+  if (!provider.ok) return fail(res, 502, "provider_rejected");
+  return res.status(200).json({ ok: true });
+}
+
+/** "Videon ilk 3 saniyede durduruyor mu?": a link and an e-mail, nothing else. Marked as its own kind of request. */
+async function videoReview(res, body) {
+  const link = oneLine(body.link, 300);
+  const email = oneLine(body.email, 120);
+  const fields = {};
+  try {
+    const u = new URL(link);
+    if (!/^https?:$/.test(u.protocol) || /\s/.test(link) || !u.hostname.includes(".")) throw new Error("scheme");
+  } catch {
+    fields.link = "Geçerli bir bağlantı yaz (https://...).";
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) fields.email = "Geçerli bir e-posta yaz.";
+  if (Object.keys(fields).length) return fail(res, 400, "validation", fields);
+  const key = process.env.RESEND_API_KEY;
+  const to = process.env.IDEA_TO;
+  const from = process.env.IDEA_FROM;
+  if (!key || !to || !from) return fail(res, 503, "not_configured");
+  const text = ["Tür: video-degerlendirme", `Bağlantı: ${link}`, `E-posta: ${email}`].join("\n");
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:#111"><p><strong>Video değerlendirme isteği</strong></p><p>Bağlantı: <a href="${esc(link)}">${esc(link)}</a><br>E-posta: ${esc(email)}</p></div>`;
+  let provider;
+  try {
+    provider = await fetch(process.env.IDEA_API_URL || "https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from, to: [to], reply_to: email, subject: oneLine(`Video değerlendirme: ${link}`, 150), text, html, tags: [{ name: "tur", value: "video-degerlendirme" }] }),
+      signal: AbortSignal.timeout(10000),
+    });
+  } catch {
+    return fail(res, 502, "provider_unreachable");
+  }
   if (!provider.ok) return fail(res, 502, "provider_rejected");
   return res.status(200).json({ ok: true });
 }

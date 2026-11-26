@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
+import { copyright, DRAFT, docs, type LegalKey } from "./legalDocs";
 import "./styles/AiWorksPage.css";
 import "./styles/LegalPage.css";
 
 const DRAFT_STORAGE_KEY = "brief-draft-v1"; // same key as BriefFlow.tsx
-const copyright = `© ${new Date().getFullYear()} Eray Ömeroğlu. Tüm hakları saklıdır.`;
 
 /** What the site really stores or loads (checked in the code and in the production build). */
 const CookiePrefs = () => {
@@ -92,7 +92,8 @@ const CookiePrefs = () => {
   );
 };
 
-const LegalPage = () => {
+const LegalPage = ({ doc = "cerez-tercihleri" }: { doc?: LegalKey }) => {
+  const d = docs[doc];
   useEffect(() => {
     document.body.style.overflowY = "auto";
     document.body.style.backgroundColor = "#080b11";
@@ -127,6 +128,9 @@ const LegalPage = () => {
               <a href="/hakkimda">Hakkımda</a>
             </li>
             <li>
+              <a href="/zihnim">Zihnim</a>
+            </li>
+            <li>
               <a href="/#contact">İletişim</a>
             </li>
           </ul>
@@ -134,12 +138,31 @@ const LegalPage = () => {
       </header>
 
       <main id="main" tabIndex={-1} className="legal-main">
-        <h1>Çerez Tercihleri</h1>
-        <p className="legal-lead">Bu sayfa, sitede çerez veya benzeri teknolojilerin kullanılıp kullanılmadığını ve neleri değiştirebileceğini gösterir.</p>
-        <CookiePrefs />
+        <h1>{d.title}</h1>
+        {DRAFT && doc !== "cerez-tercihleri" && (
+          <p className="legal-draft" role="note">
+            <strong>Taslak.</strong> Bu metin yayından önce gözden geçirilmeli. Sarı işaretli yerler doğrulanamadı ya da bilgi bekliyor.
+          </p>
+        )}
+        {doc === "cerez-tercihleri" ? (
+          <>
+            <p className="legal-lead">Bu sayfa, sitede çerez veya benzeri teknolojilerin kullanılıp kullanılmadığını ve neleri değiştirebileceğini gösterir.</p>
+            <CookiePrefs />
+          </>
+        ) : (
+          <>
+            <p className="legal-lead">{d.lead}</p>
+            {d.body}
+          </>
+        )}
       </main>
 
       <footer className="ai-foot legal-foot">
+        <nav aria-label="Yasal sayfalar">
+          <a href="/kvkk">KVKK Aydınlatma Metni</a>
+          <a href="/gizlilik">Gizlilik</a>
+          <a href="/cerez-tercihleri">Çerez Tercihleri</a>
+        </nav>
         <p>{copyright}</p>
       </footer>
     </div>

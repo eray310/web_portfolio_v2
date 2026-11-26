@@ -1,0 +1,131 @@
+/* The video review strip: compact, thin rules, the print grid of the site. No pills, no glass. */
+.vreview {
+  position: relative;
+  z-index: 9;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: start;
+  width: min(1320px, var(--cWidth));
+  margin: 0 auto;
+  padding: clamp(40px, 7vh, 72px) 0;
+  border-top: 1px solid rgba(238, 233, 228, 0.2);
+  border-bottom: 1px solid rgba(238, 233, 228, 0.2);
+  color: #eee9e4;
+}
+.vreview h2 {
+  margin: 0;
+  font-size: clamp(28px, 3.2vw, 46px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.vreview-text p {
+  max-width: 40em;
+  margin: 14px 0 0;
+  font-size: 17px;
+  line-height: 1.55;
+  color: rgba(238, 233, 228, 0.82);
+}
+.vreview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  color: rgba(238, 233, 228, 0.82);
+}
+.vreview-tags li {
+  padding: 2px 12px;
+  border-left: 1px solid rgba(238, 233, 228, 0.3);
+}
+.vreview-tags li:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.vreview-form {
+  display: grid;
+  gap: 14px;
+}
+.vreview-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  color: rgba(238, 233, 228, 0.82);
+}
+.vreview-form input {
+  min-height: 48px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 16px;
+  color: #eee9e4;
+  background: transparent;
+  border: 1px solid rgba(238, 233, 228, 0.35);
+  border-radius: 4px;
+}
+.vreview-form input:focus-visible,
+.vreview-form button:focus-visible,
+.vreview-legal a:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 2px;
+}
+.vreview-form input[aria-invalid="true"] {
+  border-color: #ff9b8a;
+}
+.vreview-err {
+  font-size: 14px;
+  color: #ffb4a6;
+}
+.vreview-hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.vreview-legal {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(238, 233, 228, 0.78);
+}
+.vreview-legal a {
+  color: var(--accentColor);
+  text-underline-offset: 3px;
+}
+.vreview-form button {
+  justify-self: start;
+  min-height: 48px;
+  padding: 0 22px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0c0a0b;
+  background: #eee9e4;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.vreview-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.vreview-status {
+  min-height: 1.4em;
+  margin: 0;
+  font-size: 15px;
+}
+.vreview-status.is-ok {
+  color: var(--accentColor);
+}
+.vreview-status.is-error {
+  color: #ffb4a6;
+}
+@media only screen and (max-width: 860px) {
+  .vreview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

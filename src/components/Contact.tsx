@@ -64,6 +64,10 @@ const Contact = () => {
             <span lang="en">Motion Designer · Art Director · Video Editor · AI Artist</span> — Eray Ömeroğlu
           </p>
           <nav className="contact-legal" aria-label="Yasal sayfalar">
+            <a href="/kvkk">KVKK Aydınlatma Metni</a>
+            <span aria-hidden="true"> · </span>
+            <a href="/gizlilik">Gizlilik</a>
+            <span aria-hidden="true"> · </span>
             <a href="/cerez-tercihleri">Çerez Tercihleri</a>
           </nav>
           <p className="contact-copyright">© {new Date().getFullYear()} Eray Ömeroğlu. Tüm hakları saklıdır.</p>

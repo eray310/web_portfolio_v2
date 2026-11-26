@@ -526,6 +526,16 @@ const BriefFlow = ({ initialServices, onClose, lock, unlock }: Props) => {
               {status === "sending" ? "Gönderiliyor…" : status === "error" ? message : ""}
             </p>
 
+            {step === 2 && (
+              <p className="bf-legal">
+                Veri sorumlusu Eray Ömeroğlu'dur. Adın, e-postan ve brief'in yalnızca projeni değerlendirip sana dönmek için işlenir; pazarlama için kullanılmaz. Bilgilerin barındırma ve e-posta hizmetleri (Vercel, Resend, Gmail) üzerinden yurt dışına aktarılabilir. Ayrıntılar ve haklarının tamamı için{" "}
+                <a href="/kvkk" target="_blank" rel="noopener noreferrer" data-cursor="disable">
+                  Aydınlatma metni
+                </a>
+                'ne bak.
+              </p>
+            )}
+
             <div className="bf-actions">
               {step > 0 ? (
                 <button type="button" className="bf-secondary" onClick={back} disabled={status === "sending"} data-cursor="disable">

@@ -6,6 +6,7 @@ import Brands from "./Brands";
 import Career from "./Career";
 import Contact from "./Contact";
 import Faq from "./Faq";
+import VideoReview from "./VideoReview";
 import Cursor from "./Cursor";
 import Landing from "./Landing";
 import Navbar from "./Navbar";
@@ -81,6 +82,7 @@ const MainContainer = ({ children }: PropsWithChildren) => {
               <ToolsFallback />
             )}
             <Faq />
+            <VideoReview />
             <Contact />
           </div>
         </div>

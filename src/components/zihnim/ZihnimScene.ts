@@ -368,6 +368,9 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const samples: Record<string, Samples | null> = {};
   await Promise.all(works.map(async (w) => (samples[w.id] = await sampleImage(w.image))));
   if (!o.alive()) throw new Error("cancelled");
+  // the first song cover: the far light of the tunnel takes its colours from the real picture
+  const coverS = await sampleImage(import.meta.env.BASE_URL + LY.cover.image, 96);
+  if (!o.alive()) throw new Error("cancelled");
   const world = buildWorld(light ? W.count.light : W.count.desktop, samples);
   const guide = buildGuide(light ? Math.round(W.guide.count * 0.75) : W.guide.count, samples);
 
@@ -558,7 +561,39 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   });
   // the far glow of the square cover: the one light the tunnel is seen by (a cheap additive plane, kept low)
   const f0 = hallF[0];
-  const glowCol = new Vector3(0.92, 0.5, 0.36);
+  const glowCol = new Vector3(0.45, 0.7, 0.8);
+  // the real covers as sharp pictures: the first one where the tunnel ends (sharp for a moment at the arrival), then the
+  // two others beside it, smaller: three squares. They go when the squares leave for the screens of the hall.
+  const coverUp = v3(LY.axis.up);
+  const coverN = v3(LY.axis.d).multiplyScalar(-1);
+  const makeCover = (image: string, side: number, aspect: number, at: Vector3) => {
+    const m = new MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, depthTest: false, toneMapped: false });
+    const w = aspect >= 1 ? side : side * aspect;
+    const h = aspect >= 1 ? side / aspect : side;
+    const mesh = new Mesh(new PlaneGeometry(w, h), m);
+    mesh.matrixAutoUpdate = false;
+    mesh.matrix.makeBasis(new Vector3(1, 0, 0), coverUp, coverN).setPosition(at);
+    mesh.matrixWorldNeedsUpdate = true;
+    mesh.renderOrder = 3;
+    mesh.visible = false;
+    scene.add(mesh);
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => {
+      if (disposed) return;
+      const tex = new Texture(img);
+      tex.colorSpace = SRGBColorSpace;
+      tex.needsUpdate = true;
+      m.map = tex;
+      m.needsUpdate = true;
+      kick();
+    };
+    img.src = import.meta.env.BASE_URL + image;
+    return { mesh, m };
+  };
+  const coverC = v3(coverAt);
+  const coverMain = makeCover(LY.cover.image, LY.cover.side, LY.cover.aspect, coverC);
+  const coverOthers = LY.cover.others.map((c) => makeCover(c.image, c.side, c.aspect, coverC.clone().add(new Vector3(c.x, 0, 0)).addScaledVector(coverUp, c.y).addScaledVector(v3(LY.axis.d), c.back)));
   const glowMat = new ShaderMaterial({
     blending: CustomBlending,
     blendSrc: OneFactor,
@@ -668,6 +703,9 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       pos.x += LY.push[1] * b;
       pos.addScaledVector(axU, -1.2 * arrive + LY.push[2] * b);
       look.copy(pos).addScaledVector(axD, 120).lerp(first0, 0.2 * arrive);
+      const up = 1 - sstep(LT.tunnel1 + 0.03, LT.hall, x);
+      look.addScaledVector(axU, LY.hallMove.lookUp * up * sstep(LT.tunnel1, LT.tunnel1 + 0.03, x));
+      pos.addScaledVector(axU, LY.hallMove.rise * up * sstep(LT.tunnel1, LT.tunnel1 + 0.03, x));
     } else {
       const u = pw(x, LY.after);
       afterPos.getPoint(u, pos);
@@ -682,8 +720,18 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const tD = tOf("deney-alani");
   const tF = tOf("birlikte-uretelim");
   const spots = stations.map((x) => v3(guideSpots[x.id]));
+  // after a turn of the phone the page reloads with the hall laid out for the new shape; the journey goes on from here
   let s = 0;
-  let sTarget = 0;
+  try {
+    const kept = window.sessionStorage.getItem("zihnim-s");
+    if (kept) {
+      s = clamp(+kept || 0, 0, 1);
+      window.sessionStorage.removeItem("zihnim-s");
+    }
+  } catch {
+    /* no storage: the journey starts at the door */
+  }
+  let sTarget = s;
   let trip: Trip | null = null;
   let yaw = 0;
   let pitch = 0;
@@ -1241,11 +1289,11 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     const wantTunnel = frames > 3 && s < cutMid + 0.03;
     const wantHall = s > 0.015 && s < cutMid + 0.03;
     if (wantTunnel && !tunnel) {
-      tunnel = makeChunk(buildTunnel(light ? LY.tunnel.count.light : LY.tunnel.count.desktop));
+      tunnel = makeChunk(buildTunnel(light ? LY.tunnel.count.light : LY.tunnel.count.desktop, coverS));
       applyQuality();
     } else if (!wantTunnel && tunnel) tunnel = freeChunk(tunnel);
     if (wantHall && !hall) {
-      hall = makeChunk(buildHall(light ? LY.hall.count.light : LY.hall.count.desktop, samples, hallF));
+      hall = makeChunk(buildHall(light ? LY.hall.count.light : LY.hall.count.desktop, samples, hallF, coverS));
       applyQuality();
     } else if (!wantHall && hall) hall = freeChunk(hall);
     if (tunnel) tunnel.pts.visible = inLight;
@@ -1253,7 +1301,15 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     glow.visible = inLight && s > LT.fissure;
     const split = sstep(LY.cover.split[0], LY.cover.split[1], s);
     mat.uniforms.uSplit.value = split;
-    glowMat.uniforms.uK.value = LY.cover.glow * (1 - split) * sstep(30, 200, camera.position.distanceTo(glowAt)) * cutK;
+    const coverDist = camera.position.distanceTo(glowAt);
+    glowMat.uniforms.uK.value = LY.cover.glow * (1 - split) * sstep(30, 200, coverDist) * cutK;
+    const coverOn = inLight && s > LT.fissure ? 1 - sstep(LY.cover.split[0], LY.cover.split[0] + 0.014, s) : 0;
+    coverMain.m.opacity = coverMain.m.map ? sstep(LY.cover.sharp[0], LY.cover.sharp[1], coverDist) * coverOn : 0;
+    coverMain.mesh.visible = coverMain.m.opacity > 0.004;
+    for (const c of coverOthers) {
+      c.m.opacity = c.m.map ? sstep(LY.cover.join[0], LY.cover.join[1], s) * coverOn : 0;
+      c.mesh.visible = c.m.opacity > 0.004;
+    }
     points.visible = brainK > 0.001;
 
     updateMoments();
@@ -1390,6 +1446,11 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       window.removeEventListener("keydown", onKey);
       freeChunk(tunnel);
       freeChunk(hall);
+      for (const c of [coverMain, ...coverOthers]) {
+        c.mesh.geometry.dispose();
+        c.m.map?.dispose();
+        c.m.dispose();
+      }
       glow.geometry.dispose();
       glowMat.dispose();
       canvas.removeEventListener("wheel", onWheel);

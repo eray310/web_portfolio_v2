@@ -596,6 +596,18 @@ const colorAt = (s: Samples | null, u: number, v: number, fallback: V3): V3 => {
   return [s.rgb[cell * 3], s.rgb[cell * 3 + 1], s.rgb[cell * 3 + 2]];
 };
 const hallWorks = () => works.filter((w) => w.area === "gorsel-hafiza");
+/** The coloured cells of a picture (its paper and greys left out): the colours its light carries. */
+const vivid = (s: Samples | null): V3[] => {
+  const out: V3[] = [];
+  if (!s) return out;
+  for (let q = 0; q < s.w * s.h; q++) {
+    const c: V3 = [s.rgb[q * 3], s.rgb[q * 3 + 1], s.rgb[q * 3 + 2]];
+    const mx = Math.max(c[0], c[1], c[2]);
+    const mn = Math.min(c[0], c[1], c[2]);
+    if (mx > 0.2 && (mx - mn) / mx > 0.32) out.push(c);
+  }
+  return out;
+};
 
 /** The frames of the works of the hall (cheap; the scene needs them before the points of the hall exist). */
 export function hallFrames(imgs: Record<string, Samples | null>): Frame[] {
@@ -613,7 +625,7 @@ export function hallFrames(imgs: Record<string, Samples | null>): Frame[] {
  * few faint, long streaks that run with the axis (they give the perspective and the speed). No rings, no walls.
  * t = distance along the axis / length (the scene lets the beam reach out of the fissure first).
  */
-export function buildTunnel(total: number): World {
+export function buildTunnel(total: number, cover: Samples | null): World {
   const B = bag(total, 7717);
   const { r, put } = B;
   const P = W.palette;
@@ -624,14 +636,16 @@ export function buildTunnel(total: number): World {
   const to = light.tunnel.wrap * 2;
   const [bw, bh] = light.tunnel.beam;
   const nBeam = Math.floor(total * 0.72);
+  const pal = vivid(cover);
   for (let k = 0; k < nBeam; k++) {
     const d = from + r() * (to - from);
     // soft-edged section; a little denser along the middle
     const x = (r() + r() - 1) * bw * 1.25;
     const y = (r() + r() - 1) * bh * 1.25;
     // the beam comes from the square cover at its end: its dust carries the colours of the cover across its section
-    const c = coverColor(0.5 + x / (bw * 2.5), 0.5 - y / (bh * 2.5));
-    put(at(d, x, y), mix(P.offWhite, c, 0.7), 9, d / A.len, -1, -1, 0.7 + 0.6 * r());
+    // the dust carries the COLOURS of the cover (its turquoise, blues and a little orange), not its pale paper
+    const c = pal.length ? pal[Math.floor(r() * pal.length)] : coverColor(0.5 + x / (bw * 2.5), 0.5 - y / (bh * 2.5));
+    put(at(d, x, y), mix(P.offWhite, c, 0.78), 9, d / A.len, -1, -1, 0.7 + 0.6 * r());
   }
   // the faint outside: long streaks parallel to the axis, each a gentle curve
   const streaks = Array.from({ length: light.tunnel.streaks }, () => ({ a: r() * TAU, rad: 9 + r() * light.tunnel.outer, d0: from + r() * (to - from), len: 90 + r() * 200, bend: (r() - 0.5) * 9, c: mix(scale(P.grey, 0.7), r() < 0.2 ? P.lavender : P.ice, 0.35) }));
@@ -653,7 +667,7 @@ export function buildTunnel(total: number): World {
  * Line points: kind 10, aPath = LINE_BASE + picture, t 0 (top) .. 1 (at the work); the floor pool has t = 2.
  * Picture points: kind 2, t = how far down the picture (0 top .. 1 bottom).
  */
-export function buildHall(total: number, imgs: Record<string, Samples | null>, frames: Frame[]): World {
+export function buildHall(total: number, imgs: Record<string, Samples | null>, frames: Frame[], cover: Samples | null): World {
   const B = bag(total, 31337);
   const { r, put } = B;
   const P = W.palette;
@@ -698,12 +712,22 @@ export function buildHall(total: number, imgs: Record<string, Samples | null>, f
   // the square cover at the end of the tunnel (BEACON): each of its points is stored at the place on a screen it will
   // fly to; the shader holds it in the square (t = across, seed = up) until the camera arrives: one square, many squares
   for (let q = 0; q < Math.floor(total * light.cover.points); q++) {
-    const u = r();
-    const v = r();
+    let u = r();
+    let v = r();
+    // about a fifth of the points draw the edge of the square: a thin, clear line, so it reads as a square from far away
+    const edge = r() < 0.2;
+    if (edge) {
+      if (r() < 0.5) u = r() < 0.5 ? 0 : 1;
+      else v = r() < 0.5 ? 0 : 1;
+    }
     const f = frames[q % frames.length];
     const lx = (r() - 0.5) * f.w;
     const ly = (r() - 0.5) * f.h;
-    put([f.c[0] + f.right[0] * lx, f.c[1] + ly, f.c[2] + f.right[2] * lx], coverColor(u, 1 - v), 10, u, BEACON, -1, 4, v);
+    // the paper of the cover is pale: its points are kept low so the square never adds up to white; the colours keep their light
+    const raw = colorAt(cover, u, 1 - v, coverColor(u, 1 - v));
+    const sat = (Math.max(raw[0], raw[1], raw[2]) - Math.min(raw[0], raw[1], raw[2])) / Math.max(0.01, Math.max(raw[0], raw[1], raw[2]));
+    const cc = edge ? scale(P.offWhite, 0.9) : scale(raw, 0.3 + 0.9 * Math.min(1, sat * 2));
+    put([f.c[0] + f.right[0] * lx, f.c[1] + ly, f.c[2] + f.right[2] * lx], cc, 10, u, BEACON, -1, edge ? 3 : 4, v);
   }
   // the air of the hall: very sparse dust, a little more in the height above the works
   while (!B.full()) {

@@ -112,7 +112,26 @@ export const light = {
    * the camera reaches it, its points leave for the screens of the hall (one square, many squares) between the
    * route times `split`.
    */
-  cover: { side: 13, at: TUNNEL_LEN - VIEW_DIST - 110, points: 0.06, split: [0.378, 0.44] as [number, number], glow: 0.07 },
+  cover: {
+    side: 13,
+    at: TUNNEL_LEN - VIEW_DIST - 110,
+    points: 0.07,
+    split: [0.381, 0.44] as [number, number],
+    glow: 0.05,
+    /** The real first cover (Eray's own song cover) and the two that join it at the arrival, smaller. Names are the ones written on the covers. */
+    image: "kapaklar/sabah-olmadan.jpg",
+    title: "Sabah Olmadan",
+    aspect: 863 / 801,
+    others: [
+      { image: "kapaklar/her-gece.jpg", title: "Her Gece", aspect: 850 / 857, side: 6.6, x: -11.2, y: -0.4, back: 5 },
+      { image: "kapaklar/yeterli-degil.jpg", title: "Yeterli Değil", aspect: 855 / 572, side: 7.6, x: 11.6, y: -0.6, back: 5 },
+    ],
+    /** The cover turns sharp between these distances; the two others arrive between these route times. */
+    sharp: [230, 80] as [number, number],
+    join: [0.352, 0.372] as [number, number],
+  },
+  /** Görsel dil: the camera comes out of the tunnel looking up into the height of the hall and settles down onto the leading work. */
+  hallMove: { lookUp: 46, rise: 7 },
   /** The hall: point count, height the light lines come down from, floor level under the viewing spot, the far glow of the first work. */
   hall: { count: { desktop: 46000, light: 18000 }, ceiling: 150, floor: -17 },
   /** The hall's opening: each line starts `each` after the one before, comes down in `line`, and its work is written in `write` (route time). */
@@ -139,13 +158,66 @@ export const coverAt: V3 = along(light.cover.at);
  * The seven chapters of the story (00..06): Eray's own way into this work. One text pattern for each: number, label,
  * a title of at most two lines, one sentence, at most one hint. `title` is also the station's name for screen readers.
  */
-export const stations: { id: StationId; n: string; label: string; title: string; line: string; hint?: string; quote?: { text: string; by: string }; t: number }[] = [
+export type Chapter = {
+  id: StationId;
+  n: string;
+  label: string;
+  /** Small line above the title: period, role or place. Only real data. */
+  meta?: string;
+  title: string;
+  line: string;
+  /** Two or three lines of facts, from the site's own data (Career, tools, projects) and Eray's material. */
+  facts?: string[];
+  hint?: string;
+  link?: { href: string; label: string };
+  quote?: { text: string; by: string; note: string };
+  t: number;
+};
+export const stations: Chapter[] = [
   { id: "genel", n: "00", label: "Kapı", title: "Her şey bir şarkı kapağıyla başladı.", line: "Işığı izle; nereye vardığını gör.", hint: "Tekerlekle ilerle", t: 0 },
-  { id: "giris", n: "01", label: "Başlangıç", title: "Kendi şarkılarıma kapak yapıyordum.", line: "Bir şarkıya yüz vermek, ilk tasarımlarımdı.", t: light.t.inside },
-  { id: "gorsel-hafiza", n: "02", label: "Görsel Hafıza", title: "Önce görmeyi öğrendim.", line: "Kapaklardan markalara: görsel bir dil kurmak.", hint: "Bir kareye dokun", t: light.t.hall },
-  { id: "kurgu-masasi", n: "03", label: "Hareket", title: "Grafik tasarım bana yetmedi.", line: "Hareket daha dinamik, daha etkili geldi.", t: light.after[1] },
-  { id: "deney-alani", n: "04", label: "Yapay zekâ", title: "İşimi büyütmek isterken yapay zekâ geldi.", line: "Bir fikir artık onlarca biçim alabiliyor.", t: light.after[3] },
-  { id: "zirve", n: "05", label: "Zirve", title: "Yukarıdan bakınca yol görünüyor.", line: "", quote: { text: "Dağa tırman, seni dünya görsün diye değil, dünyayı görebilmen için.", by: "david mccullough jr." }, t: light.after[4] },
+  {
+    id: "giris",
+    n: "01",
+    label: "Başlangıç",
+    meta: "Kendi şarkılarım",
+    title: "Kendi şarkılarıma kapak yapıyordum.",
+    line: "Bir şarkıya yüz vermek, ilk tasarımlarımdı.",
+    facts: ["3 kapak · Sabah Olmadan, Her Gece, Yeterli Değil"],
+    t: light.t.inside,
+  },
+  {
+    id: "gorsel-hafiza",
+    n: "02",
+    label: "Görsel dil",
+    meta: "2025 – 2026 · Retro Yazılım",
+    title: "Önce görmeyi öğrendim.",
+    line: "Kapaklardan kolajlara, kampanyalardan markalara.",
+    facts: ["Retro Yazılım · Grafik Tasarımcı · 2025 – 2026 · 8’den fazla marka", "Photoshop · Illustrator · InDesign", "Öndeki üç iş: Kişisel çalışma · Kolaj"],
+    hint: "Bir kareye dokun",
+    t: light.t.hall,
+  },
+  {
+    id: "kurgu-masasi",
+    n: "03",
+    label: "Hareket",
+    meta: "Ağu 2026 – · MODD Group",
+    title: "Grafik tasarım bana yetmedi.",
+    line: "Hareket daha dinamik, daha etkili geldi.",
+    facts: ["MODD Group · Motion Designer · Ağu 2026 – Devam ediyor", "After Effects · Premiere Pro"],
+    hint: "Voop’ta dur, izle",
+    t: light.after[1],
+  },
+  {
+    id: "deney-alani",
+    n: "04",
+    label: "Yapay zekâ",
+    title: "İşimi büyütmek isterken yapay zekâ geldi.",
+    line: "Bir fikir artık onlarca biçim alabiliyor.",
+    facts: ["Örnek: Allesta | Yapay Zekâ Destekli Reklam", "Araçlar: yakında eklenecek"],
+    link: { href: "/ai-isler", label: "AI İşler’i gör" },
+    t: light.after[3],
+  },
+  { id: "zirve", n: "05", label: "Zirve", title: "Zirve", line: "", quote: { text: "Dağa tırman, seni dünya görsün diye değil, dünyayı görebilmen için.", by: "David McCullough Jr.", note: "sevdiğim söz" }, t: light.after[4] },
   { id: "birlikte-uretelim", n: "06", label: "Ben", title: "Ben Eray Ömeroğlu.", line: "Motion Designer · Art Director · Video Editor · AI Artist", t: 1 },
 ];
 /** Extra stops of the calm view (station to station, no flights): the tunnel as one still frame. */
@@ -331,31 +403,41 @@ const D = 8; // route knot of Deney Alanı
 /** Görsel Hafıza: [title, distance, right, up, width, extra turn]: layers from near to far, kept clear of the card. */
 /** A portrait screen (a phone) is narrow: there the three near works are stepped in height and depth so none is cut. */
 const PORTRAIT = typeof window !== "undefined" && window.innerWidth / Math.max(1, window.innerHeight) < 0.8;
-const gorselPortrait: [string, number, number, number, number, number?][] = [
-  ["Motosan", 36, 0, 12, 8.6],
-  ["Lay", 40, 6.3, -3.4, 7],
-  ["Next Telekom", 40, -6.3, -3.4, 7],
-  ["RES360", 58, 14, 17, 7],
-  ["PayPal", 60, -15, 18, 7],
-  ["Uber Motion", 64, 0, 33, 7],
-  ["Fidan Properties", 74, 20, 2, 8],
-  ["Motivasyon vs Disiplin", 76, -21, 3, 8],
-  ["Allesta", 80, 9, 42, 8],
-  ["Siux", 82, -10, 44, 8.5],
+/** Eray's personal graphic works (not client work): always labelled "Kişisel çalışma · Kolaj". */
+const PERSONAL: Record<string, { title: string; image: string }> = {
+  kendrick: { title: "Kendrick Lamar kolajı", image: "grafik/kendrick-lamar-kolaj.jpg" },
+  novak: { title: "Novak × Sinner kolajı", image: "grafik/novak-sinner-kolaj.jpg" },
+  blonded: { title: "blonded radio kolajı", image: "grafik/blonded-radio.jpg" },
+};
+export const PERSONAL_TAG = "Kişisel çalışma · Kolaj";
+type HallRow = [string, number, number, number, number, number?];
+const gorselPortrait: HallRow[] = [
+  ["kendrick", 36, 0, 12, 9.4],
+  ["novak", 40, 6.5, -1.6, 7.4],
+  ["blonded", 40, -6.5, -2.4, 7.8],
+  ["Motosan", 58, 14, 17, 7],
+  ["Lay", 60, -15, 18, 7],
+  ["Next Telekom", 64, 0, 34, 7],
+  ["RES360", 74, 20, 2, 8],
+  ["PayPal", 76, -21, 3, 8],
+  ["Uber Motion", 80, 9, 43, 8],
+  ["Fidan Properties", 82, -10, 45, 8.5],
 ];
-// three near works carry the frame (clear of each other); the rest recede behind them in two dimmer layers
-const gorselWide: [string, number, number, number, number, number?][] = [
-  ["Motosan", 31, 0, 1.2, 8.6],
-  ["Lay", 35, 13.6, 2.6, 7.6, -0.26],
-  ["Next Telekom", 35, -13.2, 2.6, 7.6, 0.26],
-  ["RES360", 50, 24.5, -14.5, 7.5, -0.34],
-  ["PayPal", 52, 9.5, -14.5, 7],
-  ["Uber Motion", 56, -34, 6, 7.5, 0.36],
-  ["Fidan Properties", 70, -40, -6, 8.5, 0.3],
-  ["Motivasyon vs Disiplin", 72, 4, 22, 8.5],
-  ["Allesta", 74, -19, -8, 8.5, 0.2],
-  ["Siux", 78, 30, 21, 9, -0.2],
+// one work leads in the middle, two stand beside it; the client works recede behind them in two dimmer layers
+const gorselWide: HallRow[] = [
+  ["kendrick", 30, 0.4, 0.8, 10.6],
+  ["novak", 36, 15.6, 2.6, 9.2, -0.26],
+  ["blonded", 36, -15.8, 3.4, 10.4, 0.26],
+  ["Motosan", 52, 27, -14, 7.5, -0.34],
+  ["Lay", 54, 9.5, -15.5, 7],
+  ["Next Telekom", 58, -35, 6, 7.5, 0.36],
+  ["RES360", 70, -40, -7, 8.5, 0.3],
+  ["PayPal", 72, 4, 22, 8.5],
+  ["Uber Motion", 74, -19, -9, 8.5, 0.2],
+  ["Fidan Properties", 78, 30, 21, 9, -0.2],
 ];
+/** Chosen from the shape of the screen now (asked again when the phone is turned: the scene rebuilds the hall). */
+export const isPortrait = () => typeof window !== "undefined" && window.innerWidth / Math.max(1, window.innerHeight) < 0.8;
 const gorselList = PORTRAIT ? gorselPortrait : gorselWide;
 const kurguList: [string, number][] = [
   ["The Lock", 0.2],
@@ -375,6 +457,8 @@ const app = aiWorks.find((w) => w.id === "uygulama")!;
 
 export const works: Work[] = [
   ...gorselList.map(([t, d, x, y, width, turn]) => {
+    const own = PERSONAL[t];
+    if (own) return { id: `g-${t}`, area: "gorsel-hafiza" as AreaId, title: own.title, text: "Kişisel çalışma: kolaj. Bir müşteri işi değil.", image: url(own.image), tag: PERSONAL_TAG, at: hallSeen(d, x, y), width, turn };
     const p = byTitle(t);
     return { id: `g-${p.poster}`, area: "gorsel-hafiza" as AreaId, title: p.title, text: p.description, image: poster(p), tag: p.categories.join(" · "), at: hallSeen(d, x, y), width, turn };
   }),

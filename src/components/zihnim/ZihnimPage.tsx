@@ -4,7 +4,7 @@ import { prefersReducedMotion } from "../../utils/motion";
 import { hasWebGL } from "../../utils/webgl";
 import { useCalmView } from "../../utils/viewMode";
 import ViewMenu from "../ViewMenu";
-import { areaById, readyAreas, stations, workById, worksOf, type StationId, type Work } from "./zihnimWorld";
+import { areaById, isPortrait, readyAreas, stations, workById, worksOf, type StationId, type Work } from "./zihnimWorld";
 import type { SceneApi } from "./ZihnimScene";
 import "./zihnim.css";
 
@@ -177,6 +177,28 @@ const ZihnimPage = () => {
   const openWork = useCallback((id: string, from: HTMLElement | null) => {
     opener.current = from ?? workBtns.current[id] ?? null;
     setWork(id);
+    if (new URLSearchParams(window.location.search).get("is") !== id) window.history.pushState({ zhWork: id }, "", `${window.location.pathname}?is=${encodeURIComponent(id)}`);
+  }, []);
+  // Back and Forward open and close the panel
+  useEffect(() => {
+    const onPop = () => setWork(workById(new URLSearchParams(window.location.search).get("is"))?.id ?? null);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  // a phone that is turned gets the hall laid out for its new shape (the page reloads at the same place of the journey)
+  useEffect(() => {
+    const was = isPortrait();
+    const on = () => {
+      if (isPortrait() === was) return;
+      try {
+        window.sessionStorage.setItem("zihnim-s", canvas.current?.dataset.s ?? "0");
+      } catch {
+        /* no storage: the journey starts again */
+      }
+      window.location.reload();
+    };
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
   }, []);
   const openBrief = useCallback((from: HTMLElement | null) => {
     briefOpener.current = from;
@@ -233,6 +255,13 @@ const ZihnimPage = () => {
         window.clearTimeout(timer);
         scene.current = api;
         setMode("world");
+        // opened with the address of a work: go to its chapter and show its panel
+        const linked = workById(new URLSearchParams(window.location.search).get("is"));
+        if (linked) {
+          closeGate();
+          api.goTo(linked.area);
+          setWork(linked.id);
+        }
       })
       .catch((err) => {
         if (!alive) return;
@@ -274,6 +303,7 @@ const ZihnimPage = () => {
   }, []);
   const closePanel = useCallback(() => {
     setWork(null);
+    if (new URLSearchParams(window.location.search).get("is")) window.history.replaceState(null, "", window.location.pathname);
     const o = opener.current;
     if (o && o.closest("nav") && window.matchMedia("(max-width: 760px)").matches) setMenu(true);
     window.requestAnimationFrame(() => window.requestAnimationFrame(() => opener.current?.focus()));
@@ -297,6 +327,7 @@ const ZihnimPage = () => {
             onClick={(e) => openWork(x.id, e.currentTarget)}
           >
             {x.title.replace(/^Konsept prototip: /, "Uygulama: ")}
+            {x.tag === "Kişisel çalışma · Kolaj" ? <span className="zh-vid-mark"> · kişisel çalışma</span> : null}
             {x.video ? <span className="zh-vid-mark"> · video</span> : null}
           </button>
         </li>
@@ -393,27 +424,50 @@ const ZihnimPage = () => {
 
 
         {mode === "world" && (
-          <section className={`zh-card${here ? " is-here" : " is-between"}${here?.id === "birlikte-uretelim" ? " is-final" : ""}`} aria-labelledby="zh-card-h">
+          <section
+            key={here?.id ?? "yol"}
+            className={`zh-card${here ? " is-here" : " is-between"}${here?.id === "birlikte-uretelim" ? " is-final" : ""}${here?.quote ? " is-quote" : ""}${calmView ? " is-calm" : ""}`}
+            aria-labelledby="zh-card-h"
+          >
             {here ? (
               <>
                 <p className="zh-ch">
-                  <b>{here.n}</b> {here.label}
+                  <b>{here.n}</b>
+                  <span>{here.label}</span>
+                  {here.meta && <span className="zh-meta">{here.meta}</span>}
                 </p>
-                <h2 id="zh-card-h">{here.title}</h2>
                 {here.quote ? (
-                  <blockquote className="zh-quote">
+                  <blockquote className="zh-quote" id="zh-card-h">
                     <p>“{here.quote.text}”</p>
-                    <footer>— {here.quote.by}</footer>
+                    <footer>
+                      — {here.quote.by} · {here.quote.note}
+                    </footer>
                   </blockquote>
                 ) : (
-                  <p className="zh-line" lang={here.id === "birlikte-uretelim" ? "en" : undefined}>
-                    {here.line}
-                  </p>
+                  <>
+                    <h2 id="zh-card-h">{here.title}</h2>
+                    <p className="zh-line" lang={here.id === "birlikte-uretelim" ? "en" : undefined}>
+                      {here.line}
+                    </p>
+                  </>
+                )}
+                {here.facts && (
+                  <ul className="zh-facts">
+                    {here.facts.map((f) => (
+                      <li key={f}>{f}</li>
+                    ))}
+                  </ul>
                 )}
                 {here.id === "birlikte-uretelim" && (
                   <>
+                    <p className="zh-sign">Dünyayı görebilmek için tırmanıyorum.</p>
                     <p className="zh-line zh-yours">Sıradaki hikâye senin.</p>
-                    {briefButton()}
+                    <div className="zh-acts">
+                      {briefButton()}
+                      <a className="zh-back" href="/">
+                        Siteye dön
+                      </a>
+                    </div>
                   </>
                 )}
                 {hereWorks.length > 0 && (
@@ -425,7 +479,12 @@ const ZihnimPage = () => {
                     {showWorks && <div id="zh-card-works">{worksList(here.id)}</div>}
                   </>
                 )}
-                {here.hint && hint && <p className="zh-tip">{here.id === "genel" && narrow ? "Kaydırarak ilerle" : here.hint}</p>}
+                {here.link && (
+                  <a className="zh-link" href={here.link.href}>
+                    {here.link.label} <MdOpenInNew aria-hidden="true" />
+                  </a>
+                )}
+                {here.hint && (here.id !== "genel" || hint) && <p className="zh-tip">{here.id === "genel" && narrow ? "Kaydırarak ilerle" : here.hint}</p>}
               </>
             ) : (
               <p className="zh-ch zh-ch-next" id="zh-card-h">
@@ -458,12 +517,21 @@ const ZihnimPage = () => {
                   {st.quote ? (
                     <blockquote className="zh-quote">
                       <p>“{st.quote.text}”</p>
-                      <footer>— {st.quote.by}</footer>
+                      <footer>
+                        — {st.quote.by} · {st.quote.note}
+                      </footer>
                     </blockquote>
                   ) : (
                     <p className="zh-line" lang={st.id === "birlikte-uretelim" ? "en" : undefined}>
                       {st.line}
                     </p>
+                  )}
+                  {st.facts && (
+                    <ul className="zh-facts">
+                      {st.facts.map((f) => (
+                        <li key={f}>{f}</li>
+                      ))}
+                    </ul>
                   )}
                   {worksOf(st.id).length > 0 && worksList(st.id)}
                   {st.id === "birlikte-uretelim" && briefButton()}

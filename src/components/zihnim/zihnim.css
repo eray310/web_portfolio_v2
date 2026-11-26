@@ -1101,3 +1101,176 @@
     font-size: 15px;
   }
 }
+
+/* ── the chapter card: a printed slip, not a glass card. Thin rules, a small grid, square corners, no glow ── */
+.zh .zh-card {
+  width: min(440px, calc(100% - 32px));
+  padding: 14px 0 0;
+  background: none;
+  border: 0;
+  border-top: 1px solid rgba(238, 233, 228, 0.55);
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.zh .zh-card {
+  padding: 14px 16px 12px;
+  background: rgba(12, 10, 11, 0.8);
+  overflow: visible;
+  max-height: none;
+}
+.zh .zh-card.is-quote {
+  background: none;
+}
+.zh .zh-card.is-here {
+  animation: zhCardIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.zh .zh-card.is-calm,
+.zh .zh-card.is-between {
+  animation: none;
+}
+@keyframes zhCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.zh .zh-card.is-between {
+  width: auto;
+  padding-top: 10px;
+  border-top-color: rgba(238, 233, 228, 0.25);
+}
+.zh-ch .zh-meta {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--zh-dim);
+}
+.zh-facts {
+  display: grid;
+  gap: 0;
+  margin: 4px 0 10px;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(238, 233, 228, 0.18);
+}
+.zh-facts li {
+  margin: 0;
+  padding: 7px 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--zh-dim);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(238, 233, 228, 0.18);
+}
+.zh .zh-card .zh-more,
+.zh .zh-card .zh-cta {
+  border-radius: 4px;
+}
+.zh .zh-card .zh-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-size: 15px;
+  color: var(--zh-accent);
+}
+/* 05: the quote is the chapter. Centre of the screen, large and calm; no other title */
+.zh .zh-card.is-quote {
+  left: 50%;
+  bottom: auto;
+  top: 50%;
+  width: min(820px, calc(100% - 48px));
+  padding-top: 18px;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  animation: zhQuoteIn 0.8s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.zh .zh-card.is-quote.is-calm {
+  animation: none;
+}
+@keyframes zhQuoteIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.zh .zh-card.is-quote .zh-ch {
+  justify-content: center;
+}
+.zh .zh-card.is-quote .zh-quote p {
+  font-size: clamp(26px, 4.2vw, 54px);
+  font-weight: 600;
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.zh .zh-card.is-quote .zh-quote footer {
+  margin-top: 14px;
+  font-size: 15px;
+}
+/* 06: the last card is a little larger */
+.zh .zh-card.is-final {
+  width: min(560px, calc(100% - 32px));
+  text-align: left;
+}
+.zh .zh-card.is-final h2 {
+  font-size: clamp(30px, 4vw, 52px);
+}
+.zh-sign {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--zh-dim);
+}
+.zh-acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  margin-top: 6px;
+}
+.zh-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 15px;
+  color: var(--zh-ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+@media only screen and (max-width: 760px) {
+  .zh .zh-card,
+  .zh .zh-card.is-final {
+    width: auto;
+  }
+  .zh .zh-card.is-quote {
+    left: 16px;
+    right: 16px;
+    width: auto;
+    transform: translateY(-50%);
+  }
+  .zh-facts li {
+    font-size: 13px;
+    padding: 5px 0;
+  }
+  .zh-ch .zh-meta {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zh .zh-card,
+  .zh .zh-card.is-quote {
+    animation: none;
+  }
+}
+/* the quote has no controls: the wheel and a drag pass through it to the world */
+.zh .zh-card.is-quote {
+  pointer-events: none;
+}

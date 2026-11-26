@@ -37,8 +37,8 @@ import {
   Vector4,
   WebGLRenderer,
 } from "three";
-import { calmStops, coverAt, galAt, galX, galleryStart, guideSpots, light as LY, readyAreas, route, stations, worldConfig as W, works, type StationId, type V3 } from "./zihnimWorld";
-import { BEACON, FRAME_BASE, LINE_BASE, buildGallery, buildGuide, buildHall, buildTunnel, buildWorld, galleryFrames, hallFrames, sampleImage, type Samples, type World } from "./worldGeometry";
+import { calmStops, coverAt, galAt, galX, galleryStart, guideSpots, roomX, summitLook, summitPos, light as LY, readyAreas, route, stations, worldConfig as W, works, type StationId, type V3 } from "./zihnimWorld";
+import { BEACON, FRAME_BASE, LINE_BASE, buildGallery, buildGuide, buildHall, buildRoom, buildSummit, buildTunnel, buildWorld, galleryFrames, hallFrames, roomFrames, sampleImage, type Samples, type World } from "./worldGeometry";
 
 export type SceneOptions = {
   canvas: HTMLCanvasElement;
@@ -238,7 +238,7 @@ const VERT = /* glsl */ `
         int li = int(ln + 0.5);
         float L = uLine[li];
         float Wr = uFrameO[li].w;
-        if (t > 1.5) a *= Wr * 0.8;
+        if (t > 1.5) a *= Wr * 0.8 * (1.0 - uShutA * (0.5 + 0.5 * sin(uShutP + float(li) * 1.7)));
         else {
           // the line comes down: its tip is the brightest part; once the work is written the line rests fainter
           a *= 1.0 - smoothstep(L * 1.06 - 0.06, L * 1.06, t);
@@ -501,8 +501,11 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   let tunnel: Chunk | null = null;
   let hall: Chunk | null = null;
   let gallery: Chunk | null = null;
+  let room: Chunk | null = null;
+  let summit: Chunk | null = null;
   const hallF = hallFrames(samples);
   const galF = galleryFrames(samples);
+  const roomF = roomFrames(samples);
 
   // ── the guide: a second small Points object, same renderer
   const ggeo = new BufferGeometry();
@@ -543,7 +546,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const areaOf = Object.fromEntries(works.map((w) => [w.id, w.area]));
   const workImage = Object.fromEntries(works.map((w) => [w.id, w.image]));
   const orderIn: Record<string, number> = {};
-  const planes = [...hallF, ...galF, ...world.frames].map((f) => {
+  const planes = [...hallF, ...galF, ...roomF, ...world.frames].map((f) => {
     const area = areaOf[f.id];
     orderIn[area] = (orderIn[area] ?? -1) + 1;
     const m = new MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, depthTest: false, side: DoubleSide, toneMapped: false });
@@ -676,6 +679,32 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     prepTimer = window.setTimeout(prepNext, moving ? 400 : 160);
   };
 
+  // the one empty screen of 06: a calm rectangle of light that faces the visitor (a cheap additive plane)
+  const screenMat = new ShaderMaterial({
+    blending: CustomBlending,
+    blendSrc: OneFactor,
+    blendDst: OneFactor,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    uniforms: { uK: { value: 0 } },
+    vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: "precision mediump float; varying vec2 vUv; uniform float uK; void main() { vec2 p = abs(vUv - 0.5) * 2.0; vec2 e = smoothstep(vec2(1.0), vec2(0.86), p); float inside = e.x * e.y; float edge = inside * (1.0 - smoothstep(0.0, 0.1, min(1.0 - p.x, (1.0 - p.y) * 0.56))); vec3 c = mix(vec3(0.93, 0.91, 0.88), vec3(0.6, 0.82, 1.0), vUv.y * 0.5); gl_FragColor = vec4(c * (inside * (0.1 + 0.16 * vUv.y) + edge * 0.7) * uK, 0.0); }",
+  });
+  const screen = new Mesh(new PlaneGeometry(LY.screen.w * 1.16, LY.screen.h * 1.16), screenMat);
+  {
+    const c = v3(summitLook(LY.screen.dist));
+    const n = v3(summitPos).sub(c).normalize();
+    const rgt = new Vector3().crossVectors(new Vector3(0, 1, 0), n).normalize();
+    const upv = new Vector3().crossVectors(n, rgt).normalize();
+    screen.matrixAutoUpdate = false;
+    screen.matrix.makeBasis(rgt, upv, n).setPosition(c);
+    screen.matrixWorldNeedsUpdate = true;
+  }
+  screen.renderOrder = 2;
+  screen.visible = false;
+  scene.add(screen);
+
   // ── the route
   // Işık Yolu: the way in (a curve), the tunnel (the axis, eased), the hall (a slow arrival and a slower push), then a
   // cut through darkness to the places that are still inside the brain (knots 5..10 of `route`).
@@ -692,6 +721,36 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   };
   const gp = new Vector3();
   const gq = new Vector3();
+  const RO = LY.room;
+  const roomCam = (th: number, pos: Vector3, look: Vector3) => {
+    pos.set(...galAt(roomX() + Math.sin(th) * RO.dist, 1.2, Math.cos(th) * RO.dist));
+    look.set(...galAt(roomX(), 0.8, 0));
+  };
+  const sumP = v3(summitPos);
+  const sumL = v3(summitLook(400));
+  const screenC = v3(summitLook(LY.screen.dist));
+  const screenStop = v3(summitLook(LY.screen.dist - LY.screen.stop));
+  /** After Voop: the truck goes on to Allesta (a small arc in its room), a crane up to the summit, a push in to the screen. */
+  const tail = (x: number, pos: Vector3, look: Vector3) => {
+    if (x <= LT.room) {
+      const u = ease((x - LT.gal1) / (LT.room - LT.gal1));
+      galCam(galX(5) - 3.5, pos, look);
+      roomCam(RO.arc[0], gp, gq);
+      pos.lerp(gp, u);
+      look.lerp(gq, u);
+    } else if (x <= LT.crane0) {
+      roomCam(RO.arc[0] + (RO.arc[1] - RO.arc[0]) * sstep(LT.room, LT.crane0, x), pos, look);
+    } else if (x <= LT.summit) {
+      const u = ease((x - LT.crane0) / (LT.summit - LT.crane0));
+      roomCam(RO.arc[1], pos, look);
+      pos.lerp(sumP, u);
+      look.lerp(sumL, Math.min(1, u * 1.25));
+    } else {
+      const u = ease(sstep(LT.push0, 1, x));
+      pos.copy(sumP).lerp(screenStop, u);
+      look.copy(sumL).lerp(screenC, Math.min(1, u * 1.5));
+    }
+  };
   const axP = v3(LY.axis.p);
   const axD = v3(LY.axis.d);
   const axU = v3(LY.axis.up);
@@ -729,14 +788,15 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       if (afterHall) {
         // 02 -> 03: no cut. The camera comes DOWN from the hall to the row (the look tips down first), then trucks
         // SIDEWAYS along it; the row runs past a calm camera and ends at the large screen (Voop).
-        if (x <= LT.gal0) {
+        if (x > LT.gal1) tail(x, pos, look);
+        else if (x <= LT.gal0) {
           const u = (x - LT.hallEnd) / (LT.gal0 - LT.hallEnd);
           galCam(GA.startX, gp, gq);
           pos.lerp(gp, ease(u));
           look.lerp(gq, ease(Math.min(1, u * 1.35)));
         } else {
           const v = (x - LT.gal0) / (LT.gal1 - LT.gal0);
-          const e = v < 1 ? 1 - Math.pow(1 - v, 1.7) : 1 + (v - 1) * 0.12;
+          const e = 1 - Math.pow(1 - Math.min(1, v), 1.7);
           galCam(GA.startX + (galX(5) - 3.5 - GA.startX) * e, pos, look);
         }
       }
@@ -826,7 +886,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     // fewer points: each remaining point carries a little more light, so the forms keep their weight
     mat.uniforms.uExposure.value = PW.exposure * Math.pow(1 / q.points, 0.35);
     geo.setDrawRange(0, Math.round(world.n * q.points));
-    for (const c of [tunnel, hall, gallery]) if (c) c.g.setDrawRange(0, Math.round(c.n * q.points));
+    for (const c of [tunnel, hall, gallery, room, summit]) if (c) c.g.setDrawRange(0, Math.round(c.n * q.points));
   };
   const resize = () => {
     width = Math.max(1, canvas.clientWidth);
@@ -1074,7 +1134,6 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const gorsel = planes.filter((p) => p.area === "gorsel-hafiza");
   const kurgu = planes.filter((p) => p.area === "kurgu-masasi");
   const deney = planes.filter((p) => p.area === "deney-alani");
-  const deneyC: V3 = [2, -22, -82];
   const tmpM = new Matrix4();
   const sc1 = new Vector3();
   const updateMoments = () => {
@@ -1090,8 +1149,8 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     // rest as the large screen.
     for (const p of kurgu) {
       const i = p.order;
-      const a = GA.gather[0] + 0.009 * i;
-      const k = ease(sstep(a, GA.gather[1] - 0.009 * (5 - i), s));
+      const a = GA.gather[0] + GA.each * i;
+      const k = ease(sstep(a, GA.gather[1] - GA.each * (5 - i), s));
       p.off.set(...galleryStart(i)).sub(p.center).multiplyScalar(1 - k);
       if (!reduced) {
         const rest = i === 5 ? 1 - sstep(LT.gal1 - 0.035, LT.gal1 - 0.004, s) : 1;
@@ -1099,15 +1158,18 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
         p.off.addScaledVector(axU, step);
       }
     }
+    // 04: behind the prism the one frame opens into the frames of its making, one after the other; at rest they
+    // breathe a very little (not in the calm view)
     for (const p of deney) {
       const i = p.order;
-      const a = tD - gm.deney.from + gm.deney.each * i;
-      const k = sstep(a, tD - gm.deney.end, s);
-      // first sunk in the membranes, then for a moment in another screen's place, then its own
-      const o1 = v3(deneyC).sub(p.center).multiplyScalar(0.6).add(new Vector3(0, -6, 0));
-      const other = deney[(i + 2) % deney.length];
-      const o2 = other.center.clone().sub(p.center).multiplyScalar(0.8);
-      p.off.copy(o1.multiplyScalar((1 - k) * (1 - k))).addScaledVector(o2, 2 * (1 - k) * k);
+      if (i === 0) {
+        p.off.set(0, 0, 0);
+        continue;
+      }
+      const a = RO.open[0] + 0.008 * i;
+      const k = ease(sstep(a, RO.open[1] - 0.008 * (4 - i), s));
+      p.off.copy(deney[0].center).sub(p.center).multiplyScalar(1 - k);
+      if (!reduced) p.off.addScaledVector(axU, 0.14 * Math.sin(time * 0.6 + i * 1.9) * k);
     }
   };
 
@@ -1164,7 +1226,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     gu.uLift.value = 0;
     gu.uGather.value = 1;
     gu.uStripK.value = 0;
-    gu.uMemK.value = 0.78 * sstep(tD - 0.08, tD - 0.035, s) * (1 - sstep(tD + 0.02, tD + 0.07, s));
+    gu.uMemK.value = 0;
     gu.uTintK.value = sstep(tG - 0.01, tG + 0.035, s);
     gu.uIceK.value = sstep(tK, tK + 0.04, s);
     gu.uLavK.value = sstep(tD + 0.02, tD + 0.06, s);
@@ -1323,7 +1385,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     mat.uniforms.uCamAx.value = camera.position.clone().sub(axP).dot(axD);
     mat.uniforms.uReach.value = 8 + (LY.axis.len + 400) * sstep(LT.fissure * 0.6, LT.tunnel0, s);
     const wantTunnel = frames > 3 && s < LT.hall + 0.06;
-    const wantGallery = s > LT.tunnel1 && s < cutMid + 0.03;
+    const wantGallery = s > LT.tunnel1 && s < LT.crane0 + 0.03;
     if (wantGallery && !gallery) {
       gallery = makeChunk(buildGallery(light ? GA.count.light : GA.count.desktop, samples, galF));
       applyQuality();
@@ -1333,7 +1395,25 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     mat.uniforms.uShutP.value = s * GA.shutter.rate;
     // where the journey changes place without a flight, a soft veil of light covers the change (never a black cut)
     canvas.parentElement?.style.setProperty("--zh-veil", (0.22 * (1 - cutK)).toFixed(3));
-    const wantHall = s > 0.015 && s < cutMid + 0.03;
+    const wantHall = s > 0.015 && s < LT.room;
+    const wantRoom = s > LT.gal0 && s < LT.summit + 0.02;
+    const wantSummit = s > LT.room + 0.01;
+    if (wantRoom && !room) {
+      room = makeChunk(buildRoom(light ? RO.count.light : RO.count.desktop, samples, roomF));
+      applyQuality();
+    } else if (!wantRoom && room) room = freeChunk(room);
+    if (wantSummit && !summit) {
+      summit = makeChunk(buildSummit(light ? LY.summit.count.light : LY.summit.count.desktop, [
+        { frames: hallF, color: P.offWhite },
+        { frames: galF, color: [1, 0.8, 0.55] },
+        { frames: roomF, color: P.lavender },
+      ]));
+      applyQuality();
+    } else if (!wantSummit && summit) summit = freeChunk(summit);
+    if (summit) summit.pts.visible = s > LT.crane0 + 0.006;
+    // 06: one empty screen; its light comes up as the camera turns to it
+    screen.visible = s > LT.summit - 0.01;
+    screenMat.uniforms.uK.value = LY.screen.light * sstep(LT.summit, 0.99, s);
     if (wantTunnel && !tunnel) {
       tunnel = makeChunk(buildTunnel(light ? LY.tunnel.count.light : LY.tunnel.count.desktop, coverS));
       applyQuality();
@@ -1378,9 +1458,11 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       const isHall = p.area === "gorsel-hafiza";
       const isGal = p.area === "kurgu-masasi";
       // at the summit (05) the screens of 04 are gone: only the land below and the quote
-      const summit = 1 - sstep(LY.after[1] + 0.02, LY.after[2] - 0.012, s);
-      const shown = isHall ? (inLight ? sstep(0.85, 1, p.write) : 0) : isGal ? (inLight && s > LT.tunnel1 ? cutK : 0) : brainK * cutK * summit;
-      const target = p.state === "ready" ? (isHall || isGal ? sstep(LY.sharp.far, LY.sharp.near, d) : sstep(W.picture.far, W.picture.near, d)) * shown : 0;
+      const summitK = 1 - sstep(LY.after[1] + 0.02, LY.after[2] - 0.012, s);
+      const isRoom = p.area === "deney-alani";
+      const leave = 1 - sstep(LT.crane0 + 0.006, LT.crane0 + 0.03, s); // from the summit only the silhouettes are left
+      const shown = isHall ? (inLight ? sstep(0.85, 1, p.write) * leave : 0) : isGal ? (s > LT.tunnel1 ? leave : 0) : isRoom ? (s > LT.gal1 - 0.02 ? leave : 0) : brainK * cutK * summitK;
+      const target = p.state === "ready" ? (isHall || isGal || isRoom ? sstep(LY.sharp.far, LY.sharp.near, d) : sstep(W.picture.far, W.picture.near, d)) * shown : 0;
       p.fade += (target - p.fade) * (1 - Math.exp(-dt * 6));
       if (Math.abs(target - p.fade) > 0.004) fadeBusy = true;
       p.mat.opacity = p.fade;
@@ -1431,8 +1513,8 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     canvas.dataset.guide = gpos.toArray().map((x) => x.toFixed(1)).join(",");
     canvas.dataset.morph = gmat.uniforms.uMorph.value.toFixed(2);
     canvas.dataset.time = time.toFixed(2);
-    canvas.dataset.sets = `brain${tunnel ? "+tunnel" : ""}${hall ? "+hall" : ""}${gallery ? "+gallery" : ""}`;
-    canvas.dataset.points = String(world.n + (tunnel?.n ?? 0) + (hall?.n ?? 0) + (gallery?.n ?? 0));
+    canvas.dataset.sets = `brain${tunnel ? "+tunnel" : ""}${hall ? "+hall" : ""}${gallery ? "+gallery" : ""}${room ? "+room" : ""}${summit ? "+summit" : ""}`;
+    canvas.dataset.points = String(world.n + (tunnel?.n ?? 0) + (hall?.n ?? 0) + (gallery?.n ?? 0) + (room?.n ?? 0) + (summit?.n ?? 0));
 
     const busy =
       trip ||
@@ -1498,6 +1580,10 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       freeChunk(tunnel);
       freeChunk(hall);
       freeChunk(gallery);
+      freeChunk(room);
+      freeChunk(summit);
+      screen.geometry.dispose();
+      screenMat.dispose();
       for (const c of [coverMain, ...coverOthers]) {
         c.mesh.geometry.dispose();
         c.m.map?.dispose();

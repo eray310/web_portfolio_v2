@@ -11,7 +11,6 @@
  * public/zihnim/ = captures of the concept app demo of /ai-isler).
  */
 import { fileUrl, projects, type Project } from "../../data/projects";
-import { aiWorks } from "../../data/aiWorks";
 
 export type V3 = [number, number, number];
 export type AreaId = "gorsel-hafiza" | "kurgu-masasi" | "deney-alani" | "hareket-atolyesi" | "birlikte-uretelim";
@@ -86,7 +85,7 @@ const along = (d: number, x = 0, y = 0): V3 => [AX0[0] + AXD[0] * d + x, AX0[1] 
 export const light = {
   axis: { p: AX0, d: AXD, up: AXU, len: TUNNEL_LEN },
   /** Route times: the opening frame, the fissure, the tunnel (from, to), the hall's viewing spot, the end of the look-around, the cut (from, to). */
-  t: { swing: 0.06, fissure: 0.11, inside: 0.155, tunnel0: 0.19, tunnel1: 0.4, hall: 0.52, hallEnd: 0.6, gal0: 0.675, gal1: 0.74, cut0: 0.775, cut1: 0.805 },
+  t: { swing: 0.06, fissure: 0.11, inside: 0.155, tunnel0: 0.19, tunnel1: 0.4, hall: 0.52, hallEnd: 0.6, gal0: 0.675, gal1: 0.74, room: 0.84, crane0: 0.885, summit: 0.935, push0: 0.945, cut0: 2, cut1: 2.1 },
   /** Camera on the way in: positions and look targets at t = 0, swing, fissure, inside, tunnel0. */
   entry: [
     { pos: [-62, 70, 132] as V3, target: [8, -8, 2] as V3 },
@@ -119,10 +118,27 @@ export const light = {
     dist: 30,
     startX: -16,
     voop: 13,
-    gather: [0.585, 0.675] as [number, number],
+    gather: [0.548, 0.675] as [number, number],
+    each: 0.014,
     step: { rate: 520, amp: 0.55 },
-    shutter: { from: 0.575, to: 0.61, amp: 0.4, rate: 380 },
+    shutter: { from: 0.545, to: 0.585, amp: 0.62, rate: 380 },
+    /** The warm beam of a projector: from above and beside the row down onto Voop (points, like the beam of the tunnel). */
+    beam: { from: [-46, 44, 34] as V3, share: 0.12 },
   },
+  /**
+   * 04 Yapay zekâ: the room of split light, at the end of the row. The truck goes on to the Allesta frame; a thin
+   * prism (a sheet of points) stands before it and the frame opens into real frames of its making (`open`), in a
+   * calm fan; the camera draws a small, slow arc (`arc`, radians). Its own point set.
+   */
+  room: { count: { desktop: 15000, light: 6000 }, gap: 40, dist: 27, arc: [-0.34, 0.24] as [number, number], open: [0.782, 0.845] as [number, number] },
+  /**
+   * 05 Zirve: the camera climbs high above the end of the road and looks back along it. Below lie light silhouettes of
+   * every place (a few thousand points each, made only here): the brain far away, the tunnel, the hall, the gallery,
+   * the room. 06: one empty screen in the sky in front of the camera; the light turns to the visitor, the camera
+   * pushes in and stops `stop` in front of it.
+   */
+  summit: { count: { desktop: 11000, light: 5000 }, up: 300, beyond: 300, side: 70, lookAt: 1040 },
+  screen: { dist: 150, w: 34, h: 19, stop: 40, light: 0.5 },
   /** The tunnel: point count (desktop / phone), half size of the beam's section, radius of the faint outer streaks. */
   tunnel: { count: { desktop: 20000, light: 8000 }, beam: [6, 6] as [number, number], outer: 26, streaks: 30, wrap: 240, farDim: [60, 210, 0.1] as V3 },
   /**
@@ -177,6 +193,16 @@ export const galAt = (x: number, y = 0, back = 0): V3 => along(light.view + ligh
 /** x of the k-th frame of the row (0..5); the last one is Voop, a little apart. */
 export const galX = (k: number) => (k < 5 ? k * light.gallery.gap : 5 * light.gallery.gap + 8);
 /** Where the k-th frame of the gallery waits in the hall, high up behind the works. */
+/** x of the Allesta frame, the heart of the room of 04. */
+export const roomX = () => galX(5) + light.room.gap;
+/** The summit: where the camera stands, and a point `d` along its look (with `y` up from that line). */
+export const summitPos: V3 = along(light.view + light.summit.beyond, light.summit.side, light.summit.up);
+const summitTo: V3 = along(light.summit.lookAt, 0, -30);
+export const summitLook = (d: number, y = 0): V3 => {
+  const v: V3 = [summitTo[0] - summitPos[0], summitTo[1] - summitPos[1], summitTo[2] - summitPos[2]];
+  const l = Math.hypot(v[0], v[1], v[2]);
+  return [summitPos[0] + (v[0] / l) * d, summitPos[1] + (v[1] / l) * d + y, summitPos[2] + (v[2] / l) * d];
+};
 export const galleryStart = (k: number): V3 => hallSeen(66 + 5 * k, (k - 2.5) * 11, 24 + (k % 2) * 7);
 
 /**
@@ -422,7 +448,6 @@ export const seen = (k: number, d: number, x: number, y: number): V3 => {
   const [ux, uy, uz] = [-rz * fy, rz * fx - rx * fz, rx * fy]; // up = right × forward
   return [C[0] + fx * d + rx * x + ux * y, C[1] + fy * d + uy * y, C[2] + fz * d + rz * x + uz * y];
 };
-const D = 8; // route knot of Deney Alanı
 /** Görsel Hafıza: [title, distance, right, up, width, extra turn]: layers from near to far, kept clear of the card. */
 /** A portrait screen (a phone) is narrow: there the three near works are stepped in height and depth so none is cut. */
 const PORTRAIT = typeof window !== "undefined" && window.innerWidth / Math.max(1, window.innerHeight) < 0.8;
@@ -475,8 +500,6 @@ const kurguList: [string, number][] = [
 export const filmStrip: V3[] = [seen(6, 60, -52, 4), seen(6, 43, -28, 1.5), seen(6, 34, -5, 0.5), seen(6, 41, 15, 1.5), seen(6, 62, 25, 4)];
 export const kurguU: Record<string, number> = {};
 
-const web = aiWorks.find((w) => w.id === "web-sitesi")!;
-const app = aiWorks.find((w) => w.id === "uygulama")!;
 
 export const works: Work[] = [
   ...gorselList.map(([t, d, x, y, width, turn]) => {
@@ -491,58 +514,19 @@ export const works: Work[] = [
     kurguU[id] = u;
     return { id, area: "kurgu-masasi" as AreaId, title: p.title, text: p.description, image: poster(p), tag: p.categories.join(" · "), video: fileUrl(p.video), at: [0, 0, 0] as V3, width: t === "Voop" ? 10.5 : 7.5 };
   }),
-  {
-    id: "d-web-ana",
-    area: "deney-alani",
-    title: "Portfolyo sitesi: ana sayfa",
-    text: "Bu sitenin ana sayfası, masaüstü görünümü. " + web.summary,
-    image: url("ai-works/web-sitesi/portfolyo-masaustu.jpg"),
-    tag: "Web Sitesi",
-    link: { href: "/ai-isler#web-sitesi", label: "Web Sitesi örneğini AI İşler’de gör" },
-    at: seen(D, 44, 6, 5.5),
-    width: 27,
-  },
-  {
-    id: "d-web-hakkimda",
-    area: "deney-alani",
-    title: "Portfolyo sitesi: Hakkımda",
-    text: "Aynı sitenin Hakkımda sayfası, masaüstü görünümü.",
-    image: url("ai-works/web-sitesi/portfolyo-masaustu-2.jpg"),
-    tag: "Web Sitesi",
-    link: { href: "/hakkimda", label: "Hakkımda sayfasını aç" },
-    at: seen(D, 64, -30, 15),
-    width: 21,
-    turn: 0.32,
-  },
-  {
-    id: "d-web-mobil",
-    area: "deney-alani",
-    title: "Portfolyo sitesi: telefon",
-    text: "Aynı sitenin ana sayfası, telefon görünümü.",
-    image: url("ai-works/web-sitesi/portfolyo-mobil.jpg"),
-    tag: "Web Sitesi",
-    link: { href: "/ai-isler#web-sitesi", label: "Web Sitesi örneğini AI İşler’de gör" },
-    at: seen(D, 39, -10.5, 2.5),
-    width: 7,
-  },
-  ...(
-    [
-      ["app-hizmet", "Konu seçimi", seen(D, 43, -1, -11.5)],
-      ["app-saat", "Gün ve saat", seen(D, 43, 7, -11.5)],
-      ["app-ozet", "Özet", seen(D, 43, 15, -11.5)],
-      ["app-onay", "Onay", seen(D, 43, 23, -11.5)],
-    ] as [string, string, V3][]
-  ).map(([f, t, at]) => ({
-    id: `d-${f}`,
-    area: "deney-alani" as AreaId,
-    title: `Konsept prototip: ${t}`,
-    text: "Görüşme randevusu için bir konsept uygulama akışından bir ekran (örnek gün ve saatler; gerçek bir randevu yapılmaz). " + app.summary,
-    image: url(`zihnim/${f}.jpg`),
-    tag: "Konsept prototip",
-    link: { href: "/ai-isler#uygulama", label: "Uygulama prototipini AI İşler’de gör" },
-    at,
-    width: 5.6,
-  })),
+  ...(() => {
+    const p = byTitle("Allesta");
+    const base = { area: "deney-alani" as AreaId, tag: "Yapay zekâ destekli reklam", at: [0, 0, 0] as V3, link: { href: "/ai-isler", label: "AI İşler’i gör" } };
+    return [
+      { ...base, id: "d-allesta", title: p.title, text: p.description, image: poster(p), video: fileUrl(p.video), width: 11 },
+      ...[
+        ["kurgu-kesit-1", "Allesta: süreçten kare 1"],
+        ["kurgu-kesit-2", "Allesta: süreçten kare 2"],
+        ["kurgu-kesit-3", "Allesta: süreçten kare 3"],
+        ["kurgu-final-kare", "Allesta: son kare"],
+      ].map(([f, t]) => ({ ...base, id: `d-${f}`, title: t, text: "Allesta reklamının yapım sürecinden gerçek bir kare. " + p.description, image: url(`process/allesta/${f}.jpg`), width: 7 })),
+    ];
+  })(),
 ];
 export const worksOf = (id: string) => works.filter((w) => w.area === id);
 export const workById = (id: string | null) => (id ? works.find((w) => w.id === id) ?? null : null);
@@ -552,13 +536,13 @@ export const workById = (id: string | null) => (id ? works.find((w) => w.id === 
  * the card (lower left) and the route indicator (right). At the overview it is still part of the idea core.
  */
 export const guideSpots: Record<StationId, V3> = {
-  zirve: [16, 16, -104],
   genel: [0, 15, 108],
   giris: along(46, 0, 1),
   "gorsel-hafiza": PORTRAIT ? hallSeen(26, 0, 2.4) : hallSeen(24, -3.6, -3.2),
   "kurgu-masasi": galAt(galX(5) - 10, 5, 10),
-  "deney-alani": seen(8, 32, -8, 2),
-  "birlikte-uretelim": seen(10, 34, 0, 5),
+  "deney-alani": galAt(galX(5) + light.room.gap - 10, 6, 8),
+  zirve: summitLook(90, -14),
+  "birlikte-uretelim": summitLook(light.screen.dist - 12, -6),
   "hareket-atolyesi": [0, 8, 0],
 };
 

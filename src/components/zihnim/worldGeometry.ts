@@ -9,7 +9,7 @@
  * Points of a real picture keep the picture's colour and an image index (aImg): the scene fades them out when the
  * sharp picture (a textured plane) fades in.
  */
-import { coverColor, galAt, galX, guideSpots, hallView, light, route, worldConfig as W, works, filmStrip, type V3, type Work } from "./zihnimWorld";
+import { coverColor, galAt, galX, guideSpots, hallView, light, roomX, route, worldConfig as W, works, filmStrip, type V3, type Work } from "./zihnimWorld";
 
 export type Samples = { w: number; h: number; lum: Float32Array; rgb: Float32Array };
 export type Frame = { id: string; c: V3; right: V3; up: V3; normal: V3; w: number; h: number; img: number };
@@ -312,7 +312,7 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
     c = mix(c, P.lavender, 0.3 * smooth(0.5, 1, v));
     put(p, scale(c, 0.55 + 0.45 * band), 4, (u + 1) / 2);
   }
-  const dList = works.filter((w) => w.area === "deney-alani");
+  const dList: Work[] = []; // 04 is its own place now (buildRoom); the brain keeps only the membranes
   const dStation = route[8].pos;
   const perD = Math.floor((nD * 0.32) / dList.length);
   for (const w of dList) {
@@ -740,6 +740,16 @@ export function buildGallery(total: number, imgs: Record<string, Samples | null>
       got++;
     }
   });
+  // the warm beam of a projector: from above and beside the row down onto the large screen (Voop)
+  const voop = frames[frames.length - 1];
+  const src = galAt(voop.c[0] + light.gallery.beam.from[0], light.gallery.beam.from[1], light.gallery.beam.from[2]);
+  for (let q = 0; q < Math.floor(total * light.gallery.beam.share); q++) {
+    const t = Math.pow(r(), 0.7);
+    const lx = (r() - 0.5) * voop.w * 1.1;
+    const ly = (r() - 0.5) * voop.h * 1.1;
+    const end: V3 = [voop.c[0] + lx, voop.c[1] + voop.up[1] * ly, voop.c[2] + voop.up[2] * ly];
+    put(mix(src, end, t), scale(warm, 0.22 + 0.3 * t), 10, 0, -1, -1, 1.1);
+  }
   const x0 = light.gallery.startX - 30;
   const x1 = galX(5) + 40;
   for (let q = 0; q < Math.floor(total * 0.14); q++) {
@@ -749,4 +759,98 @@ export function buildGallery(total: number, imgs: Record<string, Samples | null>
   }
   while (!B.full()) put(galAt(x0 + r() * (x1 - x0), gauss(r) * 9, 4 + r() * 26), scale(warm, 0.22 + 0.2 * r()), 10, 0);
   return B.done(frames);
+}
+
+/** Picture indices of the room of 04 (after the hall and the gallery). */
+export const ROOM_FRAMES = 16;
+/** 04: the Allesta frame in the middle and real frames of its making around it, a calm fan. Sets each work's place. */
+export function roomFrames(imgs: Record<string, Samples | null>): Frame[] {
+  const list = works.filter((w) => w.area === "deney-alani");
+  const A = light.axis;
+  const fan: [number, number, number][] = [[0, 0.4, 0], [-13.5, 6.6, -7], [13.5, 6.6, -7], [-15.5, -5.8, -5], [15.5, -5.8, -5]];
+  return list.map((w, k) => {
+    const s = imgs[w.id];
+    const h = s ? (w.width * s.h) / s.w : w.width * 0.6;
+    const c = galAt(roomX() + fan[k][0], fan[k][1], fan[k][2]);
+    w.at = c;
+    return { id: w.id, c, right: [1, 0, 0] as V3, up: A.up, normal: scale(A.d, -1), w: w.width, h, img: ROOM_FRAMES + k };
+  });
+}
+const framePoints = (B: ReturnType<typeof bag>, f: Frame, s: Samples | null, count: number, fallback: V3) => {
+  const { r, put } = B;
+  for (let got = 0, g = 0; got < count && g < count * 30; g++) {
+    const u = r();
+    const v = r();
+    if (s) {
+      const cell = Math.floor(v * s.h) * s.w + Math.floor(u * s.w);
+      if (r() > 0.16 + 0.84 * Math.pow(s.lum[cell], 0.85)) continue;
+    }
+    const lx = (u - 0.5) * f.w;
+    const ly = (0.5 - v) * f.h;
+    put([f.c[0] + lx, f.c[1] + f.up[1] * ly, f.c[2] + f.up[2] * ly], colorAt(s, u, v, fallback), 2, 0, FRAME_BASE + f.img, f.img);
+    got++;
+  }
+};
+/** The room of split light: the frames as points, a thin prism (a sheet of points) before them, a few thin beams from it to each frame, lavender air. */
+export function buildRoom(total: number, imgs: Record<string, Samples | null>, frames: Frame[]): World {
+  const B = bag(total, 4711);
+  const { r, put } = B;
+  const P = W.palette;
+  frames.forEach((f, k) => framePoints(B, f, imgs[f.id], Math.floor((total * 0.6) / frames.length) * (k === 0 ? 2 : 0.75), scale(P.lavender, 0.6)));
+  const px = roomX() - 15;
+  for (let q = 0; q < Math.floor(total * 0.1); q++) {
+    const y = (r() - 0.5) * 22;
+    put(galAt(px + y * 0.18 + gauss(r) * 0.05, y, (r() - 0.5) * 5), scale(mix(P.ice, P.lavender, r()), 0.45 + 0.4 * r()), 10, 0, -1, -1, 1.2);
+  }
+  const tints: V3[] = [P.lavender, P.ice, P.teal, P.lavender, P.ice];
+  frames.forEach((f, k) => {
+    for (let q = 0; q < Math.floor(total * 0.03); q++) {
+      const t = r();
+      const a = galAt(px, (k - 2) * 1.2, 0);
+      put(mix(a, f.c, t), scale(tints[k], 0.3 + 0.3 * t), 10, 0, -1, -1, 1);
+    }
+  });
+  while (!B.full()) put(galAt(roomX() + gauss(r) * 22, gauss(r) * 10, r() * 24 - 6), scale(P.lavender, 0.2 + 0.2 * r()), 10, 0);
+  return B.done(frames);
+}
+
+/**
+ * 05: light silhouettes of every place of the journey, seen from the summit: the brain far away (two lobes), the
+ * tunnel (a thin line of the cover's colours), and the squares of the hall, the gallery and the room, each in its own
+ * colour. A few thousand large points in all; made only around 05.
+ */
+export function buildSummit(total: number, sets: { frames: Frame[]; color: V3 }[]): World {
+  const B = bag(total, 2718);
+  const { r, put } = B;
+  const P = W.palette;
+  const big = 9;
+  for (let q = 0; q < Math.floor(total * 0.3); q++) {
+    const side = r() < 0.5 ? -1 : 1;
+    const a = r() * TAU;
+    const b = Math.acos(2 * r() - 1);
+    put([side * W.brain.hemiX + Math.sin(b) * Math.cos(a) * W.brain.r[0], Math.sin(b) * Math.sin(a) * W.brain.r[1] - 4, Math.cos(b) * W.brain.r[2]], scale(mix(P.offWhite, P.teal, 0.45), 0.5 + 0.4 * r()), 10, 0, -1, -1, big);
+  }
+  const A = light.axis;
+  for (let q = 0; q < Math.floor(total * 0.16); q++) {
+    const d = 40 + r() * (light.mouth - 40);
+    put([A.p[0] + A.d[0] * d + gauss(r) * 3, A.p[1] + A.d[1] * d + gauss(r) * 3, A.p[2] + A.d[2] * d], scale(mix(P.ice, P.teal, r()), 0.4 + 0.3 * r()), 10, 0, -1, -1, big);
+  }
+  const per = Math.floor((total * 0.5) / Math.max(1, sets.reduce((n, s) => n + s.frames.length, 0)));
+  for (const s of sets)
+    for (const f of s.frames)
+      for (let q = 0; q < per; q++) {
+        const edge = r() < 0.5;
+        let lx = (r() - 0.5) * f.w * 2.2;
+        let ly = (r() - 0.5) * f.h * 2.2;
+        if (edge) {
+          if (r() < 0.5) lx = (r() < 0.5 ? -1 : 1) * f.w * 1.1;
+          else ly = (r() < 0.5 ? -1 : 1) * f.h * 1.1;
+        }
+        put([f.c[0] + f.right[0] * lx, f.c[1] + ly, f.c[2] + f.right[2] * lx], scale(s.color, edge ? 0.75 : 0.4), 10, 0, -1, -1, big);
+      }
+  while (!B.full()) {
+    const d = r() * (light.view + 80);
+    put([A.p[0] + A.d[0] * d + gauss(r) * 70, A.p[1] + A.d[1] * d - 40 + gauss(r) * 10, A.p[2] + A.d[2] * d + gauss(r) * 40], scale(P.ice, 0.2 + 0.2 * r()), 10, 0, -1, -1, 3);
+  }
+  return B.done();
 }

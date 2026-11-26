@@ -13,7 +13,7 @@ export default defineConfig({
   plugins: [react(), pageRoutes()],
   build: {
     rollupOptions: {
-      input: { main: "index.html", hakkimda: "hakkimda/index.html", aiIsler: "ai-isler/index.html", cerez: "cerez-tercihleri/index.html" },
+      input: { main: "index.html", hakkimda: "hakkimda/index.html", aiIsler: "ai-isler/index.html", cerez: "cerez-tercihleri/index.html", zihnim: "zihnim/index.html" },
     },
   },
 });

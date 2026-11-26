@@ -15,3 +15,8 @@
   from = "/cerez-tercihleri"
   to = "/cerez-tercihleri/index.html"
   status = 200
+
+[[redirects]]
+  from = "/zihnim"
+  to = "/zihnim/index.html"
+  status = 200

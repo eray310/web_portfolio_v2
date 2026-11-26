@@ -4,6 +4,8 @@
     { "source": "/hakkimda/", "destination": "/hakkimda/index.html" },
     { "source": "/ai-isler", "destination": "/ai-isler/index.html" },
     { "source": "/ai-isler/", "destination": "/ai-isler/index.html" },
+    { "source": "/zihnim", "destination": "/zihnim/index.html" },
+    { "source": "/zihnim/", "destination": "/zihnim/index.html" },
     { "source": "/cerez-tercihleri", "destination": "/cerez-tercihleri/index.html" },
     { "source": "/cerez-tercihleri/", "destination": "/cerez-tercihleri/index.html" }
   ]

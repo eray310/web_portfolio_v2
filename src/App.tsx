@@ -7,6 +7,8 @@ const OrbitPage = lazy(() => import("./components/OrbitPage"));
 const AiWorksPage = lazy(() => import("./components/AiWorksPage"));
 const HakkimdaParticles = lazy(() => import("./components/particles/HakkimdaParticles"));
 const LegalPage = lazy(() => import("./components/LegalPage"));
+// "Eray'ın Zihni": a separate design preview at /zihnim (its own chunk, loaded only there)
+const ZihnimPage = lazy(() => import("./components/zihnim/ZihnimPage"));
 import { LoadingProvider } from "./context/LoadingProvider";
 import NoWebGLBoot from "./components/NoWebGLBoot";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -19,6 +21,8 @@ const isAboutPage = () => /^\/hakkimda\/?$/i.test(window.location.pathname);
 const isParticlePrototype = () => new URLSearchParams(window.location.search).get("prototip") === "parcacik";
 const isAiWorksPage = () => /^\/ai-isler\/?$/i.test(window.location.pathname);
 
+const isZihnimPage = () => /^\/zihnim\/?$/i.test(window.location.pathname);
+
 const isCookiePage = () => /^\/cerez-tercihleri\/?$/i.test(window.location.pathname);
 
 const App = () => {
@@ -26,6 +30,13 @@ const App = () => {
     return (
       <Suspense>
         <LegalPage />
+      </Suspense>
+    );
+  }
+  if (isZihnimPage()) {
+    return (
+      <Suspense>
+        <ZihnimPage />
       </Suspense>
     );
   }

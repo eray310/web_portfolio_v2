@@ -1,0 +1,562 @@
+/* ══ /zihnim: "Eray'ın Zihni" ══ */
+.zh {
+  --zh-ground: #0c0a0b;
+  --zh-ink: #eee9e4;
+  --zh-dim: rgba(238, 233, 228, 0.82);
+  --zh-accent: #5eead4;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  font-family: "Geist", "Inter", system-ui, sans-serif;
+  color: var(--zh-ink);
+  background: var(--zh-ground);
+}
+.zh *,
+.zh *::before,
+.zh *::after {
+  box-sizing: border-box;
+}
+.zh button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.zh h1,
+.zh h2,
+.zh h3,
+.zh p {
+  margin: 0;
+}
+
+.zh-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none; /* one finger turns the view; there is nothing to scroll here */
+  cursor: grab;
+}
+.zh-canvas:active {
+  cursor: grabbing;
+}
+.zh-canvas.is-blocked {
+  pointer-events: none;
+}
+.zh[data-mode="static"] .zh-canvas {
+  display: none;
+}
+
+.zh-ui {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.zh-ui > * {
+  pointer-events: auto;
+}
+
+/* top: calm ground behind the text so it reads over any part of the world */
+.zh-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: start;
+  gap: 8px 18px;
+  padding: 16px clamp(16px, 3vw, 36px) 40px;
+  background: linear-gradient(180deg, rgba(12, 10, 11, 0.92) 0%, rgba(12, 10, 11, 0.78) 55%, rgba(12, 10, 11, 0) 100%);
+  pointer-events: none;
+}
+.zh-top > * {
+  pointer-events: auto;
+}
+.zh-brand {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  min-width: 0;
+}
+.zh-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin: -8px 0 2px -6px;
+  padding: 0 10px 0 6px;
+  font-size: 14px;
+  color: var(--zh-accent);
+  text-decoration: none;
+  border-radius: 999px;
+}
+.zh-home svg {
+  width: 20px;
+  height: 20px;
+}
+.zh h1 {
+  font-size: clamp(26px, 3.2vw, 40px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.zh-how {
+  max-width: 42em;
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--zh-dim);
+}
+
+.zh-top nav {
+  grid-column: 2;
+  grid-row: 1;
+}
+.zh-top nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.zh-top nav li {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+.zh-area-btn,
+.zh-motion,
+.zh-menu-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 15px;
+  color: var(--zh-ink);
+  background: rgba(238, 233, 228, 0.07);
+  border: 1px solid rgba(238, 233, 228, 0.35);
+  border-radius: 999px;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+.zh-area-btn.is-on {
+  color: #0a0e17;
+  background: var(--zh-accent);
+  border-color: var(--zh-accent);
+}
+.zh-area-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.zh-area-btn:active,
+.zh-motion:active,
+.zh-menu-btn:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) and (pointer: fine) {
+  .zh-area-btn:not(.is-on):not(:disabled):hover,
+  .zh-motion:hover {
+    background: rgba(238, 233, 228, 0.16);
+  }
+}
+.zh-motion {
+  grid-column: 3;
+  grid-row: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.zh-motion svg {
+  width: 20px;
+  height: 20px;
+  color: var(--zh-accent);
+}
+.zh-menu-btn {
+  display: none;
+}
+.zh button:focus-visible,
+.zh a:focus-visible {
+  outline: 2px solid var(--zh-accent);
+  outline-offset: 3px;
+}
+
+/* the places' labels: positioned by the scene; the buttons at the top are the real controls */
+.zh-labels {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.zh .zh-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 14px;
+  color: #0c0a0b;
+  background: rgba(238, 233, 228, 0.92);
+  border: 0;
+  border-radius: 999px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, background-color 0.25s ease;
+  will-change: transform;
+}
+.zh .zh-label.is-on {
+  background: var(--zh-accent);
+}
+.zh .zh-label.is-core {
+  color: var(--zh-ink);
+  background: rgba(12, 10, 11, 0.55);
+  border: 1px solid rgba(238, 233, 228, 0.35);
+  display: inline-flex;
+  align-items: center;
+  pointer-events: none !important;
+}
+
+.zh-foot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 40px clamp(16px, 3vw, 36px) 16px;
+  font-size: 15px;
+  line-height: 1.5;
+  background: linear-gradient(0deg, rgba(12, 10, 11, 0.88) 0%, rgba(12, 10, 11, 0.6) 55%, rgba(12, 10, 11, 0) 100%);
+  pointer-events: none;
+}
+.zh-foot span {
+  display: block;
+  max-width: 46em;
+  color: var(--zh-dim);
+}
+
+.zh-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  pointer-events: none;
+}
+.zh-loading p {
+  font-size: 17px;
+  color: var(--zh-dim);
+}
+.zh-loading button {
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 15px;
+  background: transparent;
+  border: 1px solid rgba(238, 233, 228, 0.35);
+  border-radius: 999px;
+  pointer-events: auto;
+}
+
+/* panels */
+.zh-panel-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: clamp(12px, 3vw, 36px);
+  pointer-events: none;
+}
+.zh-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(520px, 100%);
+  max-height: min(86vh, 100%);
+  overflow: hidden;
+  background: rgba(14, 12, 13, 0.94);
+  border: 1px solid rgba(238, 233, 228, 0.22);
+  border-radius: 22px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  pointer-events: auto;
+  animation: zhPanel 0.28s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+@keyframes zhPanel {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+.zh-panel header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 18px 12px 22px;
+}
+.zh-panel h2 {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.zh-panel header p {
+  margin-top: 4px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--zh-dim);
+}
+.zh-close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px 0 12px;
+  font-size: 15px;
+  color: #0a0e17;
+  background: var(--zh-accent);
+  border: 0;
+  border-radius: 999px;
+}
+.zh-close svg {
+  width: 22px;
+  height: 22px;
+}
+.zh-panel-body {
+  overflow-y: auto;
+  padding: 4px 22px 22px;
+  overscroll-behavior: contain;
+}
+.zh-intro,
+.zh-panel-body p {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--zh-dim);
+}
+.zh-panel-body h3 {
+  margin: 14px 0 4px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.zh-note {
+  margin-top: 8px;
+  font-size: 13.5px;
+  color: rgba(238, 233, 228, 0.72);
+}
+.zh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 12px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.zh-grid li {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+.zh-grid img {
+  width: 100%;
+  aspect-ratio: 9 / 14;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #1a1618;
+}
+.zh-grid strong {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.zh-grid small {
+  font-size: 12.5px;
+  color: rgba(238, 233, 228, 0.75);
+}
+.zh-video {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(100%, 260px);
+  margin: 14px auto 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #1a1618;
+}
+.zh-video img,
+.zh-video video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+}
+.zh-play {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 20px 0 14px;
+  font-size: 16px;
+  color: #0a0e17;
+  background: var(--zh-accent);
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.zh-play svg {
+  width: 26px;
+  height: 26px;
+}
+.zh-links {
+  display: grid;
+  gap: 14px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.zh-links li {
+  margin: 0;
+  padding: 14px 16px;
+  background: rgba(238, 233, 228, 0.05);
+  border: 1px solid rgba(238, 233, 228, 0.18);
+  border-radius: 14px;
+}
+.zh-links h3 {
+  margin-top: 0;
+}
+.zh-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: 6px;
+  font-size: 15px;
+  color: var(--zh-accent);
+}
+.zh-links a svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* static map and list (no WebGL, or the world failed) */
+.zh-static {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: 150px clamp(16px, 4vw, 48px) 60px;
+}
+.zh-map {
+  display: block;
+  width: min(520px, 100%);
+  margin: 0 auto 22px;
+}
+.zh-static-list {
+  display: grid;
+  gap: 14px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+.zh-static-list li {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  margin: 0;
+  padding: 16px;
+  background: rgba(238, 233, 228, 0.05);
+  border: 1px solid rgba(238, 233, 228, 0.18);
+  border-radius: 14px;
+}
+.zh-static-list h2 {
+  font-size: 20px;
+}
+.zh-static .zh-note {
+  max-width: 640px;
+  margin: 18px auto 0;
+}
+
+.zh-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* phones: the places live in one menu; panels fill the bottom of the screen */
+@media only screen and (max-width: 760px) {
+  .zh-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding-bottom: 34px;
+  }
+  .zh-how {
+    font-size: 14px;
+  }
+  .zh-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .zh-top nav {
+    display: none;
+    grid-column: 1 / span 2;
+    grid-row: 3;
+  }
+  .zh-top nav.is-open {
+    display: block;
+  }
+  .zh-top nav ul {
+    flex-direction: column;
+    padding: 10px;
+    background: rgba(14, 12, 13, 0.96);
+    border: 1px solid rgba(238, 233, 228, 0.22);
+    border-radius: 18px;
+  }
+  .zh-top nav .zh-area-btn {
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .zh-motion {
+    grid-column: 1 / span 2;
+    grid-row: 4;
+    justify-self: start;
+  }
+  .zh-panel-wrap {
+    padding: 0;
+  }
+  .zh-panel {
+    width: 100%;
+    max-height: 82vh;
+    border-radius: 22px 22px 0 0;
+  }
+  .zh-foot {
+    display: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .zh .zh-label:not(.is-core) {
+    min-height: 44px;
+    padding: 0 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zh-panel {
+    animation: none;
+  }
+  .zh button,
+  .zh-label {
+    transition: none;
+  }
+}

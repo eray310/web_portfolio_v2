@@ -329,3 +329,22 @@ h2.career-title > span,
     font-size: clamp(44px, 4.4vw, 72px);
   }
 }
+
+/* the still grid spans the full width (the strip had its own track width) */
+.brands-grid {
+  width: min(1320px, var(--cWidth));
+  margin: 0 auto;
+}
+.brands-grid .brands-set {
+  width: 100%;
+  animation: none;
+  transform: none;
+}
+/* phones: the tool groups follow the balls instead of lying over them */
+@media only screen and (max-width: 767px) {
+  .techstack .tools-groups {
+    position: static;
+    transform: none;
+    margin-top: 12px;
+  }
+}

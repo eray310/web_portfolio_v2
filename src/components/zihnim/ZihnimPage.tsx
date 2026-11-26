@@ -1,18 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { MdArrowBack, MdClose, MdOpenInNew, MdPause, MdPlayArrow } from "react-icons/md";
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
+import { MdArrowBack, MdArrowForward, MdClose, MdExpandLess, MdExpandMore, MdOpenInNew, MdPause, MdPlayArrow } from "react-icons/md";
 import { prefersReducedMotion } from "../../utils/motion";
 import { hasWebGL } from "../../utils/webgl";
-import { areaById, readyAreas, stations, workById, worksOf, type StationId, type Work } from "./zihnimWorld";
+import { areaById, readyAreas, stations, story, workById, worksOf, type StationId, type Work } from "./zihnimWorld";
 import type { SceneApi } from "./ZihnimScene";
 import "./zihnim.css";
+
+// The same three-step brief form as the rest of the site (loaded on first use; nothing is preselected here).
+const BriefFlow = lazy(() => import("../BriefFlow"));
 
 /**
  * /zihnim: "Eray'ın Zihni" (a design preview; no link to it from the site).
  *
- * HTML around one canvas (ZihnimScene.ts): the title and short instructions, the place buttons, a route indicator,
- * a card for the place the camera has reached (with its works as buttons) and a panel for one work. Everything the
- * canvas offers is also reachable without it: buttons work with the keyboard, and without WebGL (or if the world
- * fails to load) a static map and the same works and panels are shown.
+ * "Bir fikrin yolculuğu": one canvas (ZihnimScene.ts) and around it only what the journey needs: the place's name, one
+ * short line of the story and where the route goes next; the works of a place open on request ("Çalışmaları gör");
+ * the final opens the site's brief form. Everything the canvas offers is also reachable without it: buttons work with
+ * the keyboard, and without WebGL (or if the world fails to load) a static map tells the same story with the same
+ * works, panels and brief.
  */
 const HINT_KEY = "zihnim-hint-seen";
 const readHint = () => {
@@ -22,14 +26,15 @@ const readHint = () => {
     return false;
   }
 };
-const MAP_SPOTS: Record<string, [number, number]> = { "gorsel-hafiza": [96, 104], "kurgu-masasi": [304, 118], "deney-alani": [200, 196] };
+const MAP_SPOTS: Record<string, [number, number]> = { "gorsel-hafiza": [96, 104], "kurgu-masasi": [304, 118], "deney-alani": [200, 196], "birlikte-uretelim": [200, 40] };
+const placeStations = stations.filter((s) => s.id !== "genel");
 
 const StaticMap = () => (
-  <svg className="zh-map" viewBox="0 0 400 260" role="img" aria-label="Eray'ın Zihni haritası: iki lob, ortada Fikir Çekirdeği, üç alan">
+  <svg className="zh-map" viewBox="0 0 400 260" role="img" aria-label="Eray'ın Zihni haritası: iki lob, ortada Fikir Çekirdeği, üç alan ve Birlikte Üretelim">
     <g fill="none" stroke="#dbe8ff" strokeLinecap="round" strokeOpacity="0.7" strokeWidth="2.4" strokeDasharray="0.1 6">
-      <ellipse cx="128" cy="120" rx="104" ry="88" />
-      <ellipse cx="272" cy="120" rx="104" ry="88" />
-      <ellipse cx="200" cy="114" rx="20" ry="18" strokeOpacity="0.95" />
+      <ellipse cx="128" cy="130" rx="104" ry="84" />
+      <ellipse cx="272" cy="130" rx="104" ry="84" />
+      <ellipse cx="200" cy="124" rx="20" ry="18" strokeOpacity="0.95" />
     </g>
     {readyAreas.map((a) => {
       const [x, y] = MAP_SPOTS[a.id];
@@ -111,6 +116,9 @@ const WorkPanel = ({ work, onClose }: { work: Work; onClose: () => void }) => {
   );
 };
 
+/** The next station ahead of a route position. */
+const nextOnRoute = (s: number) => stations.find((x) => x.t > s + 1e-6) ?? stations[stations.length - 1];
+
 const ZihnimPage = () => {
   const canvas = useRef<HTMLCanvasElement>(null);
   const scene = useRef<SceneApi | null>(null);
@@ -118,11 +126,14 @@ const ZihnimPage = () => {
   const labelEls = useRef<Record<string, HTMLElement | null>>({});
   const workBtns = useRef<Record<string, HTMLElement | null>>({});
   const opener = useRef<HTMLElement | null>(null);
+  const briefOpener = useRef<HTMLElement | null>(null);
   const reduced = useRef(prefersReducedMotion()).current;
   const [mode, setMode] = useState<"loading" | "world" | "static">(() => (hasWebGL() ? "loading" : "static"));
   const [station, setStation] = useState<StationId | null>("genel");
   const [progress, setProgress] = useState(0);
   const [work, setWork] = useState<string | null>(null);
+  const [showWorks, setShowWorks] = useState(false);
+  const [brief, setBrief] = useState(false);
   const [paused, setPaused] = useState(false);
   const [menu, setMenu] = useState(false);
   const [hint, setHint] = useState(() => !readHint());
@@ -143,6 +154,17 @@ const ZihnimPage = () => {
   const openWork = useCallback((id: string, from: HTMLElement | null) => {
     opener.current = from ?? workBtns.current[id] ?? null;
     setWork(id);
+  }, []);
+  const openBrief = useCallback((from: HTMLElement | null) => {
+    briefOpener.current = from;
+    setBrief(true);
+  }, []);
+  // while the brief is open the world holds still (nothing moves or draws); it continues from the same place
+  const holdWorld = useCallback(() => scene.current?.setHold(true), []);
+  const releaseWorld = useCallback(() => scene.current?.setHold(false), []);
+  const closeBrief = useCallback(() => {
+    setBrief(false);
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => briefOpener.current?.focus()));
   }, []);
 
   useEffect(() => {
@@ -172,8 +194,9 @@ const ZihnimPage = () => {
           onProgress: (s) => setProgress(s),
           onStation: (id) => {
             setStation(id);
+            setShowWorks(false);
             const st = stations.find((x) => x.id === id);
-            if (st) setSay(`${st.title}.`);
+            if (st) setSay(`${st.title}. ${story[st.id]}`);
           },
           onPickWork: (id) => openWork(id, null),
           onFirstInput: hideHint,
@@ -213,11 +236,11 @@ const ZihnimPage = () => {
     };
   }, []);
 
-  // a panel calms the world; the rest of the page cannot be reached while it is open
+  // a panel calms the world; the rest of the page cannot be reached while a panel or the brief is open
   useEffect(() => {
     scene.current?.setCalm(work ? 1 : 0);
-    ui.current?.toggleAttribute("inert", !!work);
-  }, [work, mode]);
+    ui.current?.toggleAttribute("inert", !!work || brief);
+  }, [work, brief, mode]);
   useEffect(() => {
     scene.current?.setPaused(paused);
   }, [paused, mode]);
@@ -234,8 +257,10 @@ const ZihnimPage = () => {
   }, []);
 
   const w = workById(work);
-  const here = areaById(station);
   const stIndex = stations.findIndex((x) => x.id === station);
+  const here = station ? stations[stIndex] : null;
+  const ahead = nextOnRoute(progress);
+  const hereWorks = here ? worksOf(here.id) : [];
 
   const worksList = (areaId: string) => (
     <ul className="zh-works">
@@ -255,10 +280,15 @@ const ZihnimPage = () => {
       ))}
     </ul>
   );
+  const briefButton = () => (
+    <button type="button" className="zh-cta" onClick={(e) => openBrief(e.currentTarget)}>
+      Projeni anlat <MdArrowForward aria-hidden="true" />
+    </button>
+  );
 
   return (
     <div className="zh" data-mode={mode}>
-      <canvas ref={canvas} className={`zh-canvas${work ? " is-blocked" : ""}`} aria-hidden="true" tabIndex={-1} />
+      <canvas ref={canvas} className={`zh-canvas${work || brief ? " is-blocked" : ""}`} aria-hidden="true" tabIndex={-1} />
       <div ref={ui} className="zh-ui">
         <header className="zh-top">
           <div className="zh-brand">
@@ -267,7 +297,6 @@ const ZihnimPage = () => {
               <span>Ana site</span>
             </a>
             <h1>Eray’ın Zihni</h1>
-            <p className="zh-how">{narrow ? "Yukarı kaydırarak ilerle ya da Alanlar menüsünden bir alan seç." : "Tekerlekle zihnin içinde ilerle ya da bir alan seç. Sürükleyerek çevreye bakabilirsin."}</p>
           </div>
           {mode === "world" && (
             <>
@@ -315,7 +344,7 @@ const ZihnimPage = () => {
               </button>
             ))}
             <span
-              className="zh-label is-core"
+              className={`zh-label is-core${station === "giris" ? " is-on" : ""}`}
               ref={(e) => {
                 labelEls.current.core = e;
               }}
@@ -345,28 +374,40 @@ const ZihnimPage = () => {
 
         {mode === "world" && hint && (
           <p className="zh-hint" role="note">
-            {narrow ? "Yukarı kaydırarak ilerle · Alanlar menüsünden seç" : "Tekerlekle keşfet · Bir alan seç"}
+            {narrow ? "Yukarı kaydırarak ilerle · Alanlar’dan seç" : "Tekerlekle keşfet · Bir alan seç"}
           </p>
         )}
 
-        {mode === "world" && station && (
-          <section className="zh-card" aria-labelledby="zh-card-h">
+        {mode === "world" && (
+          <section className={`zh-card${here ? " is-here" : " is-between"}${here?.id === "birlikte-uretelim" ? " is-final" : ""}`} aria-labelledby="zh-card-h">
             {here ? (
               <>
                 <h2 id="zh-card-h">{here.title}</h2>
-                <p>{here.tagline}</p>
-                <p className="zh-card-hint">{here.hint}</p>
-                {worksList(here.id)}
-              </>
-            ) : station === "giris" ? (
-              <>
-                <h2 id="zh-card-h">Giriş</h2>
-                <p>İki lobun arasından içeri giriyorsun. Ortada Fikir Çekirdeği; sol lobda Görsel Hafıza.</p>
+                <p className="zh-line">{story[here.id]}</p>
+                {here.id === "birlikte-uretelim" && briefButton()}
+                {hereWorks.length > 0 && (
+                  <>
+                    <button type="button" className="zh-more" aria-expanded={showWorks} aria-controls="zh-card-works" onClick={() => setShowWorks((v) => !v)}>
+                      {showWorks ? "Çalışmaları gizle" : `Çalışmaları gör (${hereWorks.length})`}
+                      {showWorks ? <MdExpandLess aria-hidden="true" /> : <MdExpandMore aria-hidden="true" />}
+                    </button>
+                    {showWorks && <div id="zh-card-works">{worksList(here.id)}</div>}
+                  </>
+                )}
+                {stIndex < stations.length - 1 && (
+                  <p className="zh-next">
+                    <MdArrowForward aria-hidden="true" /> Sıradaki: {stations[stIndex + 1].title}
+                  </p>
+                )}
               </>
             ) : (
               <>
-                <h2 id="zh-card-h">Genel görünüm</h2>
-                <p>İki lob, aralarında bir yarık ve ortada Fikir Çekirdeği. Üç alan: Görsel Hafıza, Kurgu Masası, Deney Alanı.</p>
+                <p className="zh-next zh-next-top">
+                  <MdArrowForward aria-hidden="true" /> {ahead.title}
+                </p>
+                <h2 id="zh-card-h" className="zh-line">
+                  {story[ahead.id]}
+                </h2>
               </>
             )}
           </section>
@@ -384,16 +425,22 @@ const ZihnimPage = () => {
         {mode === "static" && (
           <main className="zh-static">
             <StaticMap />
-            <ul className="zh-static-list">
-              {readyAreas.map((a) => (
-                <li key={a.id}>
-                  <h2>{a.title}</h2>
-                  <p>{a.tagline}</p>
-                  {worksList(a.id)}
-                </li>
-              ))}
-            </ul>
-            <p className="zh-note">Üç boyutlu dünya bu cihazda açılamadı; aynı alanlar ve çalışmalar burada.</p>
+            <p className="zh-static-lead">Bir fikrin yolculuğu. {story.giris}</p>
+            <ol className="zh-static-list">
+              {placeStations.map((st) => {
+                const a = areaById(st.id);
+                return (
+                  <li key={st.id}>
+                    <h2>{st.title}</h2>
+                    <p className="zh-line">{story[st.id]}</p>
+                    {a && st.id !== "birlikte-uretelim" && <p>{a.tagline}</p>}
+                    {worksOf(st.id).length > 0 && worksList(st.id)}
+                    {st.id === "birlikte-uretelim" && briefButton()}
+                  </li>
+                );
+              })}
+            </ol>
+            <p className="zh-note">Üç boyutlu dünya bu cihazda açılamadı; aynı yolculuk, çalışmalar ve brief burada.</p>
           </main>
         )}
       </div>
@@ -402,6 +449,11 @@ const ZihnimPage = () => {
         {say}
       </p>
       {w && <WorkPanel work={w} onClose={closePanel} />}
+      {brief && (
+        <Suspense fallback={null}>
+          <BriefFlow onClose={closeBrief} lock={holdWorld} unlock={releaseWorld} />
+        </Suspense>
+      )}
     </div>
   );
 };

@@ -14,6 +14,14 @@ export type Frame = { id: string; c: V3; right: V3; up: V3; normal: V3; w: numbe
 export type World = { pos: Float32Array; col: Float32Array; data: Float32Array; path: Float32Array; img: Float32Array; n: number; frames: Frame[] };
 
 const TAU = Math.PI * 2;
+/** Offsets of the core's three small lobes from the core centre (the guide's points start among them). */
+const CORE_LOBES: V3[] = [
+  [-2.5, 1, 1.4],
+  [2.3, 1.6, -1.2],
+  [0.3, -2.4, 1.6],
+];
+/** aPath of a picture's points (fill and outline) is FRAME_BASE + the picture's index: the scene moves frames as one. */
+export const FRAME_BASE = 100;
 const rng = (seed: number) => {
   let s = seed >>> 0;
   return () => {
@@ -88,7 +96,11 @@ function catmull(P: V3[], u: number): V3 {
   return [c(p0[0], p1[0], p2[0], p3[0]), c(p0[1], p1[1], p2[1], p3[1]), c(p0[2], p1[2], p2[2], p3[2])];
 }
 
-const SIZE: Record<number, [number, number]> = { 0: [0.34, 0.66], 1: [0.22, 0.46], 2: [0.1, 0.2], 3: [0.1, 0.22], 4: [0.12, 0.3], 5: [0.16, 0.32], 6: [0.3, 0.7], 7: [0.16, 0.34] };
+/**
+ * Point size range (scene units) per kind; within a range most points are small and a few are larger (pow 3), so a
+ * surface reads as fine grain with a few highlights instead of equal hard dots.
+ */
+const SIZE: Record<number, [number, number]> = { 0: [0.2, 0.7], 1: [0.12, 0.42], 2: [0.1, 0.2], 3: [0.1, 0.22], 4: [0.1, 0.36], 5: [0.1, 0.24], 6: [0.22, 0.95], 7: [0.12, 0.4] };
 
 export function buildWorld(total: number, imgs: Record<string, Samples | null>): World {
   const r = rng(90817);
@@ -105,7 +117,7 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
     col.set(c, i * 3);
     const [a, b] = SIZE[kind];
     data[i * 4] = r();
-    data[i * 4 + 1] = (a + Math.pow(r(), 2.2) * (b - a)) * sizeK;
+    data[i * 4 + 1] = (a + Math.pow(r(), 3) * (b - a)) * sizeK;
     data[i * 4 + 2] = kind;
     data[i * 4 + 3] = t;
     path[i] = pathId;
@@ -156,25 +168,26 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
     made++;
   }
 
-  // ── the idea core: a dense, lobed heart with three tilted orbits around it
+  // ── the idea core: three small lobed shells (their surfaces, not a solid blob, so the inside stays readable), a
+  // sparse heart, and three faint tilted orbits. Few points and low light: no white blow-out where they overlap.
   const cc = W.core.c;
-  const lobes: V3[] = [
-    [-2.5, 1, 1.4],
-    [2.3, 1.6, -1.2],
-    [0.3, -2.4, 1.6],
-  ];
-  for (let k = 0; k < N(0.03); k++) {
-    if (k % 3 === 0) {
-      const ring = k % 9 === 0 ? 0 : k % 9 === 3 ? 1 : 2;
+  for (let k = 0; k < N(0.012); k++) {
+    const m = k % 10;
+    if (m < 2) {
+      const ring = k % 3;
       const R = [12, 16.5, 21][ring];
       const th = r() * TAU;
       const tilt = [0.5, -0.35, 1.1][ring];
-      put([cc[0] + Math.cos(th) * R, cc[1] + Math.sin(th) * R * Math.sin(tilt) + gauss(r) * 0.15, cc[2] + Math.sin(th) * R * Math.cos(tilt)], mix(P.offWhite, P.teal, 0.35 + 0.2 * ring), 1, th / TAU);
+      put([cc[0] + Math.cos(th) * R, cc[1] + Math.sin(th) * R * Math.sin(tilt) + gauss(r) * 0.1, cc[2] + Math.sin(th) * R * Math.cos(tilt)], mix(P.offWhite, P.teal, 0.3 + 0.15 * ring), 1, th / TAU);
+    } else if (m < 9) {
+      const lob = CORE_LOBES[k % 3];
+      const a = r() * TAU;
+      const b = Math.acos(2 * r() - 1);
+      const R = 3.2 + 0.5 * Math.sin(a * 3 + b * 2) + gauss(r) * 0.12;
+      const p: V3 = [cc[0] + lob[0] + Math.sin(b) * Math.cos(a) * R, cc[1] + lob[1] + Math.cos(b) * R, cc[2] + lob[2] + Math.sin(b) * Math.sin(a) * R];
+      put(p, mix(P.offWhite, P.teal, 0.25 + 0.4 * r()), 1, r());
     } else {
-      const lob = lobes[k % 3];
-      const p: V3 = [cc[0] + lob[0] + gauss(r) * 3.4, cc[1] + lob[1] + gauss(r) * 3.4, cc[2] + lob[2] + gauss(r) * 3.4];
-      const d = Math.hypot(p[0] - cc[0], p[1] - cc[1], p[2] - cc[2]);
-      put(p, mix(P.teal, P.offWhite, smooth(2, 8, d)), 1, r());
+      put([cc[0] + gauss(r) * 2.2, cc[1] + gauss(r) * 2.2, cc[2] + gauss(r) * 2.2], mix(P.ice, P.offWhite, 0.6), 1, r());
     }
   }
 
@@ -192,7 +205,7 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
       put([x + Math.cos(th) * rad + gauss(r) * 0.06, y + Math.sin(th) * rad + gauss(r) * 0.06, z + gauss(r) * 0.06], mix(c0, c1, t), 5, t, id);
     }
   };
-  const nPath = N(0.012);
+  const nPath = N(0.0045);
   fibre([-5, 12, 104], [-4, 22, 60], [-2, 12, 10], nPath, -1, P.ice, P.teal, 2.2);
   fibre([5, 12, 104], [4, 6, 60], [2, 6, 10], nPath, -1, P.ice, P.teal, 2.2);
   const anchors: V3[] = [
@@ -241,14 +254,14 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
       else if ((t -= width) < height) [lx, ly] = [width / 2, t - height / 2];
       else if ((t -= height) < width) [lx, ly] = [width / 2 - t, height / 2];
       else [lx, ly] = [-width / 2, height / 2 - (t - width)];
-      put(at(lx * 1.02, ly * 1.02), scale(P.offWhite, 0.95), kind, 0.5, -1, -1, 0.9);
+      put(at(lx * 1.02, ly * 1.02), scale(P.offWhite, 0.7), kind, 0.5, FRAME_BASE + imgId, -1, 0.9);
     }
     let got = 0;
     let g2 = 0;
     while (got < count - edge && g2 < count * 30) {
       g2++;
       if (!s) {
-        put(at((r() - 0.5) * width, (Math.round(r() * 20) / 20 - 0.5) * height), scale(P.grey, 0.8), kind, 0.5, -1, imgId);
+        put(at((r() - 0.5) * width, (Math.round(r() * 20) / 20 - 0.5) * height), scale(P.grey, 0.8), kind, 0.5, FRAME_BASE + imgId, imgId);
         got++;
         continue;
       }
@@ -256,7 +269,7 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
       const py = Math.floor(r() * s.h);
       const cell = py * s.w + px;
       if (r() > 0.18 + 0.82 * Math.pow(s.lum[cell], 0.85)) continue;
-      put(at((px / s.w - 0.5) * width + gauss(r) * 0.02, (0.5 - py / s.h) * height + gauss(r) * 0.02, gauss(r) * 0.03), [s.rgb[cell * 3], s.rgb[cell * 3 + 1], s.rgb[cell * 3 + 2]], kind, 0.5, -1, imgId);
+      put(at((px / s.w - 0.5) * width + gauss(r) * 0.02, (0.5 - py / s.h) * height + gauss(r) * 0.02, gauss(r) * 0.03), [s.rgb[cell * 3], s.rgb[cell * 3 + 1], s.rgb[cell * 3 + 2]], kind, 0.5, FRAME_BASE + imgId, imgId);
       got++;
     }
     return height;
@@ -278,10 +291,10 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
     const height = picture(w, w.at, f.right, f.up, f.normal, imgId++, perG, 2);
     for (const sx of [-0.4, 0.4]) {
       const top: V3 = [w.at[0] + f.right[0] * sx * w.width, w.at[1] + height / 2, w.at[2] + f.right[2] * sx * w.width];
-      for (let k = 0; k < Math.floor(nG * 0.004); k++) put([top[0], top[1] + r() * (46 - top[1]), top[2]], scale(P.grey, 0.7), 2, 0.5);
+      for (let k = 0; k < Math.floor(nG * 0.0016); k++) put([top[0], top[1] + r() * (46 - top[1]), top[2]], scale(P.grey, 0.45), 2, 0.5);
     }
   }
-  for (let k = 0; k < Math.floor(nG * 0.1); k++) {
+  for (let k = 0; k < Math.floor(nG * 0.06); k++) {
     const onX = r() < 0.5;
     const lane = Math.round((r() - 0.5) * 14) * 6;
     const along = (r() - 0.5) * 90;
@@ -432,4 +445,115 @@ export function sampleImage(src: string, max = 96): Promise<Samples | null> {
     };
     im.src = src;
   });
+}
+
+export type Guide = {
+  n: number;
+  /** World position inside the idea core (where each point starts, at the overview). */
+  home: Float32Array;
+  /** Local position in the seed of light (around the guide's position). */
+  seed: Float32Array;
+  /** Local position in the bird (x right, y up, z forward). */
+  bird: Float32Array;
+  /** World position on the film strip of Kurgu Masası (the guide joins its flow there). */
+  strip: Float32Array;
+  /** World position on a membrane of Deney Alanı (the guide dissolves into it there). */
+  mem: Float32Array;
+  /** Colour picked up in Görsel Hafıza (from the real covers) for some points; base colour for the others. */
+  tint: Float32Array;
+  /** x: seed 0..1 (stagger), y: size, z: signed span position on a wing (0 = body), w: 1 if it carries a tint. */
+  data: Float32Array;
+};
+
+/**
+ * The guide: a small group of points that starts in the idea core. The same points (same index in every array) form
+ * the seed, the bird, a stretch of the film strip and a patch of a membrane, so every change of form is continuous.
+ */
+export function buildGuide(count: number, imgs: Record<string, Samples | null>): Guide {
+  const r = rng(4242);
+  const G = W.guide;
+  const n = count;
+  const home = new Float32Array(n * 3);
+  const seed = new Float32Array(n * 3);
+  const bird = new Float32Array(n * 3);
+  const strip = new Float32Array(n * 3);
+  const mem = new Float32Array(n * 3);
+  const tint = new Float32Array(n * 3);
+  const data = new Float32Array(n * 4);
+  const cc = W.core.c;
+  const half = G.span / 2;
+  const gImgs = works.filter((w) => w.area === "gorsel-hafiza").map((w) => imgs[w.id]).filter((s): s is Samples => !!s);
+  const dc: V3 = [2, -22, -82];
+  for (let k = 0; k < n; k++) {
+    // home: on the core's lobes
+    const lob = CORE_LOBES[k % 3];
+    const a0 = r() * TAU;
+    const b0 = Math.acos(2 * r() - 1);
+    const R0 = 3.2 * Math.cbrt(r());
+    home.set([cc[0] + lob[0] + Math.sin(b0) * Math.cos(a0) * R0, cc[1] + lob[1] + Math.cos(b0) * R0, cc[2] + lob[2] + Math.sin(b0) * Math.sin(a0) * R0], k * 3);
+    // seed: dense in the middle, a thin halo
+    const halo = r() < 0.12;
+    const Rs = G.seedR * (halo ? 1.4 + r() * 1.2 : Math.pow(r(), 1.7));
+    const a1 = r() * TAU;
+    const b1 = Math.acos(2 * r() - 1);
+    seed.set([Math.sin(b1) * Math.cos(a1) * Rs, Math.cos(b1) * Rs, Math.sin(b1) * Math.sin(a1) * Rs], k * 3);
+    // bird: body (a slim spindle), two swept wings (denser on the leading edge), a small fanned tail
+    const part = r();
+    let bx = 0;
+    let by = 0;
+    let bz = 0;
+    let span = 0;
+    if (part < 0.24) {
+      const t = r();
+      const z = -2.0 + t * 4.3;
+      const rad = 0.42 * Math.sin(Math.PI * Math.min(1, t * 1.05)) * (t > 0.85 ? 0.7 : 1);
+      const th = r() * TAU;
+      bx = Math.cos(th) * rad;
+      by = Math.sin(th) * rad * 0.8;
+      bz = z;
+    } else if (part < 0.9) {
+      const side = r() < 0.5 ? -1 : 1;
+      const u = Math.pow(r(), 0.8); // along the span
+      const v = Math.pow(r(), 1.9); // from the leading edge back
+      const lead: V3 = [0.3 + u * (half - 0.3), 0.55 * u * u, 0.7 - u * 2.4];
+      const trail: V3 = [0.3 + u * (half - 0.5), 0.45 * u * u, -1.0 - u * 1.1];
+      bx = side * (lead[0] + (trail[0] - lead[0]) * v);
+      by = lead[1] + (trail[1] - lead[1]) * v;
+      bz = lead[2] + (trail[2] - lead[2]) * v;
+      span = side * u;
+    } else {
+      const u = r();
+      const w = (r() - 0.5) * 2 * (0.25 + u * 0.8);
+      bx = w;
+      by = 0.05 * u;
+      bz = -2.0 - u * 1.7;
+    }
+    bird.set([bx, by, bz], k * 3);
+    // strip: along the middle of the film strip, on its rails and cell edges
+    const u = 0.28 + r() * 0.3;
+    const c = catmull(filmStrip, u);
+    const side = r() < 0.5 ? -1 : 1;
+    strip.set([c[0], c[1] + side * (10.6 - r() * 1.5), c[2]], k * 3);
+    // membrane: a patch of the curved wall behind the screens
+    const mu = (r() - 0.5) * 1.2;
+    const mv = (r() - 0.5) * 1.2;
+    mem.set([dc[0] + 6 + mu * 50, dc[1] + 2 + mv * 20 + 4 * Math.sin(mu * 4), dc[2] - 26 + 10 * Math.cos(mu * 2.5) + 4 * Math.sin(mv * 3)], k * 3);
+    // colour: off-white; about one point in six takes a colour of a real Görsel Hafıza cover
+    let tc: V3 = W.palette.offWhite;
+    let tinted = 0;
+    if (r() < 0.17 && gImgs.length) {
+      const s = gImgs[k % gImgs.length];
+      for (let tries = 0; tries < 12; tries++) {
+        const cell = Math.floor(r() * s.w * s.h);
+        if (s.lum[cell] > 0.35) {
+          tc = [s.rgb[cell * 3], s.rgb[cell * 3 + 1], s.rgb[cell * 3 + 2]];
+          tinted = 1;
+          break;
+        }
+      }
+    }
+    tint.set(tc, k * 3);
+    data.set([r(), G.size * (0.6 + Math.pow(r(), 2.5) * 1.2), span, tinted], k * 4);
+  }
+  return { n, home, seed, bird, strip, mem, tint, data };
 }

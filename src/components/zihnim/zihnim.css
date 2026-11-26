@@ -206,8 +206,10 @@
   transition: opacity 0.25s ease, background-color 0.25s ease;
   will-change: transform;
 }
+/* the place the camera is at is named by the card; its label would only repeat it */
 .zh .zh-label.is-on {
-  background: var(--zh-accent);
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 .zh .zh-label.is-core {
   color: var(--zh-ink);
@@ -363,6 +365,106 @@
 }
 .zh-card .zh-card-hint {
   color: var(--zh-accent);
+}
+/* the story: one line, larger, calm */
+.zh-card .zh-line {
+  margin-top: 6px;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--zh-ink);
+}
+.zh-card.is-between {
+  width: min(360px, calc(100% - 32px));
+  padding: 12px 16px;
+  background: rgba(14, 12, 13, 0.7);
+}
+.zh-card.is-between .zh-line {
+  margin-top: 2px;
+  font-size: 18px;
+}
+.zh-card .zh-next {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 13.5px;
+  color: var(--zh-accent);
+}
+.zh-card .zh-next-top {
+  margin-top: 0;
+}
+.zh-next svg {
+  width: 16px;
+  height: 16px;
+}
+.zh-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  margin-top: 10px;
+  padding: 0 12px 0 14px;
+  font-size: 14px;
+  background: rgba(238, 233, 228, 0.07);
+  border: 1px solid rgba(238, 233, 228, 0.3);
+  border-radius: 999px;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+.zh-more svg {
+  width: 20px;
+  height: 20px;
+}
+.zh-more:active,
+.zh-cta:active {
+  transform: scale(0.97);
+}
+.zh-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  margin-top: 14px;
+  padding: 0 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0a0e17 !important;
+  background: var(--zh-accent);
+  border: 0;
+  border-radius: 999px;
+  transition: transform 0.15s ease;
+}
+.zh-cta svg {
+  width: 20px;
+  height: 20px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .zh-more:hover {
+    background: rgba(238, 233, 228, 0.16);
+  }
+}
+.zh-card.is-final {
+  left: 50%;
+  bottom: clamp(24px, 6vh, 64px);
+  width: min(440px, calc(100% - 32px));
+  text-align: center;
+  transform: translateX(-50%);
+}
+.zh-card.is-final .zh-line {
+  font-size: 22px;
+}
+.zh-card.is-final .zh-next {
+  display: none;
+}
+.zh-static-lead {
+  max-width: 640px;
+  margin: 0 auto 16px;
+  font-size: 17px;
+  color: var(--zh-ink);
+}
+.zh-static-list .zh-line {
+  font-size: 16px;
+  color: var(--zh-ink);
 }
 .zh-works {
   display: flex;
@@ -746,9 +848,20 @@
   .zh-works button {
     white-space: nowrap;
   }
-  /* on a phone the line under the title already says this */
+  .zh-card .zh-line {
+    font-size: 16px;
+  }
+  .zh-card.is-final {
+    left: 12px;
+    right: 12px;
+    bottom: 56px;
+    width: auto;
+    transform: none;
+  }
   .zh-hint {
-    display: none;
+    bottom: auto;
+    top: 172px;
+    font-size: 14px;
   }
 }
 

@@ -53,26 +53,108 @@ const byTitle = (start: string) => projects.find((p) => p.title.startsWith(start
 export const route: { pos: V3; target: V3 }[] = [
   { pos: [0, 84, 176], target: [0, -6, -8] }, //  0 overview: the whole brain
   { pos: [0, 64, 122], target: [0, 10, 24] }, //   1 coming down to the front of the fissure
-  { pos: [0, 26, 96], target: [-8, 13, 34] }, //   2 the entrance corridor, between the lobes
+  { pos: [0, 26, 96], target: [-8, 13, 34] }, //   2 Fikir Çekirdeği: the entrance corridor, the core ahead
   { pos: [-14, 19, 70], target: [-42, 12, 24] }, // 3 turning into the left lobe
   { pos: [-27, 15, 54], target: [-54, 11, 8] }, //  4 Görsel Hafıza
   { pos: [-6, 28, 26], target: [32, 7, -8] }, //    5 over the idea core, across to the right lobe
   { pos: [27, 9, 12], target: [52, 4, -20] }, //    6 Kurgu Masası
   { pos: [27, -6, -30], target: [4, -21, -72] }, // 7 down and back
   { pos: [8, -12, -42], target: [2, -22, -82] }, // 8 Deney Alanı
+  { pos: [42, 20, -116], target: [0, 4, -70] }, // 9 out through the back of the brain, looking back at it
+  { pos: [0, 50, -206], target: [0, 6, -24] }, //  10 Birlikte Üretelim: the whole brain again, from behind
 ];
 const knotT = (i: number) => i / (route.length - 1);
 
-export const stations: { id: StationId; title: string; t: number }[] = [
-  { id: "genel", title: "Genel görünüm", t: knotT(0) },
-  { id: "giris", title: "Giriş", t: knotT(2) },
-  { id: "gorsel-hafiza", title: "Görsel Hafıza", t: knotT(4) },
-  { id: "kurgu-masasi", title: "Kurgu Masası", t: knotT(6) },
-  { id: "deney-alani", title: "Deney Alanı", t: knotT(8) },
+export const stations: { id: StationId; title: string; t: number; knot: number }[] = [
+  { id: "genel", title: "Genel görünüm", t: knotT(0), knot: 0 },
+  { id: "giris", title: "Fikir Çekirdeği", t: knotT(2), knot: 2 },
+  { id: "gorsel-hafiza", title: "Görsel Hafıza", t: knotT(4), knot: 4 },
+  { id: "kurgu-masasi", title: "Kurgu Masası", t: knotT(6), knot: 6 },
+  { id: "deney-alani", title: "Deney Alanı", t: knotT(8), knot: 8 },
+  { id: "birlikte-uretelim", title: "Birlikte Üretelim", t: knotT(10), knot: 10 },
 ];
+export const stationT = (id: StationId) => stations.find((s) => s.id === id)!.t;
+
+/**
+ * The story: one short line per station ("Bir fikrin yolculuğu"). The card shows the station's name and this line;
+ * between stations it shows where the route goes next. The same lines are in the static (no WebGL) version.
+ */
+const PALETTE = {
+  offWhite: [0.94, 0.92, 0.89] as V3,
+  grey: [0.58, 0.6, 0.63] as V3,
+  teal: [0.2, 0.88, 0.78] as V3,
+  ice: [0.6, 0.82, 1.0] as V3,
+  lavender: [0.7, 0.62, 0.95] as V3,
+};
+
+export const story: Record<StationId, string> = {
+  genel: "Bir fikrin yolculuğu. Rehberi izle; sırayla ilerle.",
+  giris: "Bir fikir nereden gelir?",
+  "gorsel-hafiza": "Önce görür, biriktiririm.",
+  "kurgu-masasi": "Sonra parçalar arasında bir ritim bulurum.",
+  "deney-alani": "Peki başka türlü olsaydı?",
+  "birlikte-uretelim": "Sıradaki fikir senin olabilir.",
+  "hareket-atolyesi": "",
+};
 
 export const worldConfig = {
   fov: 52,
+  /**
+   * Points. Size (css px) is clamped between minPx and maxPx; a point smaller than minPx is drawn at minPx with its
+   * light scaled down (so far points stay small and calm instead of turning into equal hard specks). `edge` is the soft
+   * rim of each dot in px; `exposure` scales all light. Alpha per kind: 0 shell, 1 core, 2-4 places, 5 paths, 6 dust,
+   * 7 tracts. `near` scales points closer than `near.dist` (fewer, a little larger, softer).
+   */
+  particles: {
+    minPx: 1.4,
+    maxPx: 4.4,
+    edge: 1.1,
+    exposure: 0.9,
+    alpha: [0.44, 0.3, 0.8, 0.8, 0.72, 0.3, 0.34, 0.3],
+    near: { dist: 28, alpha: 0.4 },
+  },
+  /**
+   * Local life: every point moves around its own place along a smooth field (neighbours move together), so a surface
+   * breathes slowly without drifting. Amplitude in scene units per kind; `speed` in radians per second; `scale` is the
+   * spatial frequency of the field. While the camera travels the amplitude drops to `whileMoving`.
+   */
+  motion: { amp: [0.5, 0.3, 0.12, 0.12, 0.4, 0.2, 0.7, 0.45], speed: 0.32, scale: 0.055, whileMoving: 0.35 },
+  /**
+   * Light waves: `slots` waves run at the same time with their own period (s). Each starts at a point of the world,
+   * spreads along the surface (radius grows to `reach`), leaves a short coloured trail and fades back to the base colour.
+   * `colors` are weighted (lavender is rare). `strength` caps the brightening. Arriving at a place starts a stronger
+   * wave there (`arrival`).
+   */
+  waves: {
+    periods: [14, 19, 25],
+    reach: 64,
+    width: 7,
+    trail: 16,
+    strength: 0.5,
+    colors: [
+      ["teal", 4],
+      ["ice", 4],
+      ["lavender", 1],
+    ] as [keyof typeof PALETTE, number][],
+    arrival: 1.5,
+  },
+  /**
+   * The guide: a small group of the core's points that gathers into a seed of light, opens into an abstract bird while
+   * the route moves on, and waits at the next place. `count` points; `seedR` the seed's radius; `span` the bird's wing
+   * span; `lead` how far (0..1 of a segment) it runs ahead of the camera; `wait` where in the segment it has arrived.
+   */
+  guide: { count: 1100, seedR: 1.1, span: 8, lead: 0.62, size: 0.3, ahead: 26, pull: 0.75 },
+  /**
+   * Discovery moments, as route time BEFORE each station (they are complete at the station, forwards and backwards):
+   * Görsel Hafıza frames open layer by layer; Kurgu Masası frames align one after another; Deney Alanı screens pass
+   * through another arrangement before they settle; the final gathers the colours.
+   */
+  moments: {
+    gorsel: { from: 0.09, each: 0.006, len: 0.03 },
+    kurgu: { from: 0.1, each: 0.011, len: 0.03 },
+    deney: { from: 0.11, each: 0.007, end: 0.012 },
+    final: { from: 0.07 },
+  },
   /** The first knot of the route on a portrait screen (phones). */
   overviewPortrait: { pos: [0, 196, 96] as V3, target: [0, -8, -14] as V3 },
   /** The brain: two hemispheres (centre x = ±hemiX), radii, the gap of the fissure. */
@@ -81,7 +163,8 @@ export const worldConfig = {
   /** Point counts (desktop / phone). The quality steps draw a share of them. */
   count: { desktop: 260000, light: 90000 },
   /** Wheel: pixels of wheel for the whole route; the follow rate (1/s) once the wheel stops; largest step of one event. */
-  wheel: { routePx: 5200, follow: 9, maxStep: 240, snapAfter: 260, snapReach: 0.035 },
+  /** snapReach 0: the camera stays exactly where the visitor stops (no pull onto a station). */
+  wheel: { routePx: 6400, follow: 9, maxStep: 240, snapAfter: 260, snapReach: 0 },
   /** Phone: a vertical drag of this many screen heights runs the whole route. */
   touch: { routeScreens: 3.4 },
   /** A trip started by a button: seconds per whole route, and the limits. */
@@ -97,13 +180,7 @@ export const worldConfig = {
   ambient: { speed: 1 },
   pointer: { radius: 0.08, push: 0.045, tint: 0.3 },
   ground: "#0c0a0b",
-  palette: {
-    offWhite: [0.94, 0.92, 0.89] as V3,
-    grey: [0.58, 0.6, 0.63] as V3,
-    teal: [0.2, 0.88, 0.78] as V3,
-    ice: [0.6, 0.82, 1.0] as V3,
-    lavender: [0.7, 0.62, 0.95] as V3,
-  },
+  palette: PALETTE,
 };
 
 export const areas: Area[] = [
@@ -135,7 +212,15 @@ export const areas: Area[] = [
     anchor: [0, 0, -78],
   },
   { id: "hareket-atolyesi", status: "planned", slot: -1, title: "Hareket Atölyesi", tagline: "Sonraki aşama.", hint: "", anchor: [0, 0, 0] },
-  { id: "birlikte-uretelim", status: "planned", slot: -1, title: "Birlikte Üretelim", tagline: "Sonraki aşama.", hint: "", anchor: [0, 0, 0] },
+  {
+    id: "birlikte-uretelim",
+    status: "ready",
+    slot: 3,
+    title: "Birlikte Üretelim",
+    tagline: "Yolculukta biriken renkler ve biçimler burada buluşuyor.",
+    hint: "Projeni anlat: üç kısa adımda bir brief.",
+    anchor: [0, 30, -118],
+  },
 ];
 export const readyAreas = areas.filter((a) => a.status === "ready");
 export const areaById = (id: string | null) => (id ? areas.find((a) => a.id === id) ?? null : null);
@@ -259,3 +344,17 @@ export const works: Work[] = [
 ];
 export const worksOf = (id: string) => works.filter((w) => w.area === id);
 export const workById = (id: string | null) => (id ? works.find((w) => w.id === id) ?? null : null);
+
+/**
+ * Where the guide waits at each station: in view of that station's camera, beside the place's main work and clear of
+ * the card (lower left) and the route indicator (right). At the overview it is still part of the idea core.
+ */
+export const guideSpots: Record<StationId, V3> = {
+  genel: [0, 8, 0],
+  giris: [-2, 12, 24],
+  "gorsel-hafiza": seen(4, 27, 6.5, -1.5),
+  "kurgu-masasi": seen(6, 19, -3.5, 1.5),
+  "deney-alani": seen(8, 32, -8, 2),
+  "birlikte-uretelim": seen(10, 34, 0, 5),
+  "hareket-atolyesi": [0, 8, 0],
+};

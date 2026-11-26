@@ -1,24 +1,29 @@
 /**
  * The 3D world of /zihnim: ONE WebGL renderer and canvas.
  *
- * - All points (worldGeometry.ts) are drawn on the GPU in one call. Each point has its own colour; the vertex shader
- *   adds the slow life of each place (hanging frames sway, the film strip's light runs along it, the membranes of
- *   the Deney Alanı roll), opens the shell around the camera, and hands real pictures over from particles to
- *   sharp textured planes as the camera comes close (the planes load only when the camera is near).
- * - The camera lives on ONE route (zihnimWorld.ts `route`): the wheel (and trackpad), a vertical drag on a phone and
- *   the place buttons all move the same route position `s` (0..1). A button starts a trip along the route; any wheel
- *   or drag input takes over at once from where the camera is. Dragging with a mouse turns the view a little.
- * - It draws only while something changes, never while the tab is hidden; `dispose()` removes everything.
+ * - All points of the world (worldGeometry.ts) are drawn in one call. The vertex shader adds each point's local life
+ *   (a slow, bounded breathing around its own place, neighbours moving together), the light waves that travel over the
+ *   surfaces, the discovery moments of the places (frames opening, aligning, settling), opens the shell around the
+ *   camera and hands real pictures over from particles to sharp textured planes up close.
+ * - The guide is a second, small Points object in the same scene and renderer: the same points form a seed of light,
+ *   an abstract bird, a stretch of the film strip and a patch of a membrane.
+ * - ONE value drives everything: the route position `s` (0..1). The wheel, a vertical drag on a phone and the place
+ *   buttons move it; the camera, the guide and the moments are pure functions of it, so forwards and backwards follow
+ *   the same story and the visitor can stop anywhere.
+ * - It draws only while something changes, never while the tab is hidden or the brief is open; `dispose()` removes
+ *   everything.
  */
 import {
-  AdditiveBlending,
   BufferAttribute,
   BufferGeometry,
   CatmullRomCurve3,
+  CustomBlending,
   DoubleSide,
+  Matrix3,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
+  OneFactor,
   PerspectiveCamera,
   PlaneGeometry,
   Points,
@@ -27,14 +32,13 @@ import {
   Scene,
   ShaderMaterial,
   Texture,
-  TextureLoader,
   Vector2,
   Vector3,
   Vector4,
   WebGLRenderer,
 } from "three";
-import { readyAreas, route, stations, worldConfig as W, works, type StationId, type V3 } from "./zihnimWorld";
-import { buildWorld, sampleImage, type Samples } from "./worldGeometry";
+import { guideSpots, readyAreas, route, stations, worldConfig as W, works, type StationId, type V3 } from "./zihnimWorld";
+import { FRAME_BASE, buildGuide, buildWorld, sampleImage, type Samples } from "./worldGeometry";
 
 export type SceneOptions = {
   canvas: HTMLCanvasElement;
@@ -58,10 +62,12 @@ export type SceneApi = {
   setPaused: (paused: boolean) => void;
   /** 0..1: a panel or a video is open; the decorative motion calms down. */
   setCalm: (calm: number) => void;
+  /** true: the brief is open; nothing moves or draws until it closes (the route position is kept). */
+  setHold: (hold: boolean) => void;
   dispose: () => void;
 };
 
-const MAX_IMG = 32;
+const MAX_FRAMES = 24;
 const clamp = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
 const ease = (t: number) => t * t * t * (t * (t * 6 - 15) + 10); // smootherstep
 const sstep = (a: number, b: number, x: number) => {
@@ -69,97 +75,226 @@ const sstep = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 const v3 = (a: V3) => new Vector3(a[0], a[1], a[2]);
+const hash = (n: number) => {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
 
+// ── shaders of the world's points
 const VERT = /* glsl */ `
   attribute vec3 aC;
   attribute vec4 aD;
   attribute float aPath;
   attribute float aImg;
-  uniform float uTime, uScale, uPR, uMaxPx, uLife, uWaveT, uWaveOn, uWaveSlot;
-  uniform float uOpenNear, uOpenFar, uOutside;
+  uniform float uTime, uScale, uPR, uMinPx, uMaxPx, uEdge, uExposure, uLife, uMove, uFinal;
+  uniform float uAlpha[8];
+  uniform float uAmp[8];
+  uniform float uMScale, uMSpeed;
+  uniform float uOpenNear, uOpenFar, uOutside, uNearDist, uNearAlpha;
   uniform vec4 uHemi;
-  uniform float uImgFade[${MAX_IMG}];
+  uniform vec4 uFrameC[${MAX_FRAMES}];
+  uniform vec4 uFrameO[${MAX_FRAMES}];
+  uniform vec4 uWave[3];
+  uniform vec4 uWaveC[3];
+  uniform float uWaveW, uWaveTrail;
+  uniform float uPathWave, uPathT, uPathSlot;
   uniform vec2 uPointer;
   uniform float uPointerOn, uAspect, uPRad, uPPush, uPTint;
-  uniform vec2 uAnch[4];
-  uniform vec3 cTeal, cIce;
+  uniform vec2 uAnch[5];
+  uniform vec3 cTeal, cIce, cLav;
   varying vec4 vCol;
+  varying float vSoft;
   void main() {
     float seed = aD.x;
     float sz = aD.y;
     float kind = aD.z;
     float t = aD.w;
+    int ki = int(kind + 0.5);
     vec3 p = position;
     vec3 col = aC;
-    // the slow life of each place (only where it belongs)
-    if (kind > 1.5 && kind < 2.5) p.x += sin(uTime * 0.45 + p.y * 0.04 + p.z * 0.03) * 0.18 * uLife;
-    if (kind > 3.5 && kind < 4.5 && aImg < -0.5) p.y += sin(uTime * 0.7 + p.x * 0.11 + p.z * 0.07) * 1.1 * uLife;
-    if (kind > 0.5 && kind < 1.5) p += normalize(p - vec3(0.0, 8.0, 0.0) + 0.001) * sin(uTime * 1.2 + seed * 6.28) * 0.12 * uLife;
+
+    // a frame of a real work: it opens (Görsel), aligns (Kurgu) or settles (Deney) as one piece
+    float fr = aPath - ${FRAME_BASE.toFixed(1)};
+    float fade = 0.0;
+    if (fr > -0.5) {
+      vec4 FC = uFrameC[int(fr + 0.5)];
+      vec4 FO = uFrameO[int(fr + 0.5)];
+      p.y = FC.y + (p.y - FC.y) * mix(0.025, 1.0, FO.w);
+      p += FO.xyz;
+      fade = FC.w;
+      // particles in front of a sharp picture thin out and step aside
+      if (aImg > -0.5) p += normalize(p - FC.xyz - FO.xyz + vec3(0.001)) * fade * 0.9;
+    }
+
+    // local life: a smooth field, so neighbours move together; bounded around the point's own place
+    float amp = uAmp[ki] * uLife * uMove * (fr > -0.5 ? 0.25 : 1.0);
+    if (amp > 0.001) {
+      vec3 q = position * uMScale;
+      float tt = uTime * uMSpeed;
+      float ph = seed * 0.8;
+      p += amp * vec3(
+        sin(q.y * 1.3 + q.z * 0.7 + tt + ph),
+        sin(q.z * 1.1 + q.x * 0.9 + tt * 0.83 + 1.7 + ph),
+        sin(q.x * 1.2 + q.y * 0.6 + tt * 1.13 + 3.1 + ph));
+    }
+    // the membranes of the Deney Alanı roll slowly
+    if (ki == 4 && aImg < -0.5 && fr < -0.5) p.y += sin(uTime * 0.5 + p.x * 0.11 + p.z * 0.07) * 0.9 * uLife;
+
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
     vec4 clip = projectionMatrix * mv;
     float dist = -mv.z;
     vec2 uv = clip.xy / max(clip.w, 0.0001) * 0.5 + 0.5;
 
-    // pointer: a small local opening, never around the places' labels
+    // pointer: a small local opening; never around the labels, never on works or their frames
     vec2 d = (uv - uPointer) * vec2(uAspect, 1.0);
-    float infl = (1.0 - smoothstep(0.0, uPRad, length(d))) * uPointerOn;
-    for (int i = 0; i < 4; i++) infl *= smoothstep(0.035, 0.11, length((uv - uAnch[i]) * vec2(uAspect, 1.0)));
+    float infl = (1.0 - smoothstep(0.0, uPRad, length(d))) * uPointerOn * (fr > -0.5 ? 0.0 : 1.0);
+    for (int i = 0; i < 5; i++) infl *= smoothstep(0.035, 0.11, length((uv - uAnch[i]) * vec2(uAspect, 1.0)));
     clip.xy += normalize(d + vec2(0.0001)) * infl * uPPush * clip.w;
     gl_Position = clip;
 
-    float baseA = kind < 0.5 ? 0.62 : kind < 1.5 ? 0.9 : kind < 4.5 ? 0.9 : kind < 5.5 ? 0.75 : kind < 6.5 ? 0.45 : 0.4;
-    float alpha = baseA * smoothstep(2.5, 8.0, dist);
-    // the shell, the tracts and the inner dust open around the camera (a corridor of view)
-    if (kind < 0.5 || kind > 5.5) alpha *= smoothstep(uOpenNear, uOpenFar, dist);
-    // seen from outside, the far side of each lobe stays dim: the near surface (and its folds) reads as a volume
-    if (kind < 0.5 && uOutside > 0.001) {
-      float sx = p.x < 0.0 ? -1.0 : 1.0;
-      vec3 q = p - vec3(sx * uHemi.x, -4.0, 0.0);
-      vec3 n = normalize(q / (uHemi.yzw * uHemi.yzw));
-      float facing = dot(n, normalize(cameraPosition - p));
-      alpha *= mix(1.0, mix(0.16, 1.0, smoothstep(-0.25, 0.35, facing)), uOutside);
+    // light waves: they start somewhere, run along the surface (stronger on the crests of the folds), leave a short
+    // trail and fade back; pictures keep their own colours
+    float bright = 1.0;
+    if (aImg < -0.5) {
+      vec3 wc = vec3(0.0);
+      float wsum = 0.0;
+      float fold = ki == 0 ? mix(0.35, 1.0, t) : 0.8;
+      for (int i = 0; i < 3; i++) {
+        if (uWaveC[i].a < 0.001) continue;
+        float x = distance(position, uWave[i].xyz) - uWave[i].w;
+        float band = exp(-(x * x) / (uWaveW * uWaveW));
+        float tail = x < 0.0 ? exp(x / uWaveTrail) * 0.4 : 0.0;
+        float k = max(band, tail) * uWaveC[i].a * fold;
+        wc += uWaveC[i].rgb * k;
+        wsum += k;
+      }
+      // the hue changes clearly, the light only a little
+      if (wsum > 0.001) col = mix(col, wc / wsum, clamp(wsum * 1.7, 0.0, 0.85));
+      bright += 0.3 * clamp(wsum, 0.0, 1.0);
+      // the final: each place keeps a calm glow of the colour it gave the journey
+      if (ki >= 2 && ki <= 4 && fr < -0.5) {
+        vec3 ac = ki == 2 ? cTeal : ki == 3 ? cIce : cLav;
+        col = mix(col, ac, 0.35 * uFinal);
+        bright += 0.25 * uFinal;
+      }
     }
-    // a real picture hands over from particles to the sharp plane
-    if (aImg > -0.5) {
-      float f = 0.0;
-      for (int i = 0; i < ${MAX_IMG}; i++) if (abs(aImg - float(i)) < 0.5) f = uImgFade[i];
-      alpha *= 1.0 - 0.92 * f;
-    }
-    // the film strip: light runs slowly along it
-    if (kind > 2.5 && kind < 3.5 && aImg < -0.5) col *= 1.0 + 0.6 * exp(-pow((fract(t * 3.0 - uTime * 0.04) - 0.5) * 8.0, 2.0)) * uLife;
     // a trip: a wave runs from the core along the path to the place
-    if (kind > 4.5 && kind < 5.5) {
-      float on = (1.0 - step(0.5, abs(aPath - uWaveSlot))) * uWaveOn;
-      float dl = t - uWaveT;
+    if (ki == 5) {
+      float on = (1.0 - step(0.5, abs(aPath - uPathSlot))) * uPathWave;
+      float dl = t - uPathT;
       float w = max(exp(-(dl * dl) / 0.01), dl < 0.0 ? 0.5 * exp(dl / 0.12) : 0.0) * on;
-      col = mix(col, mix(cTeal, cIce, 0.3) * 1.2, clamp(w, 0.0, 1.0));
-      alpha *= 1.0 + 0.8 * w;
+      col = mix(col, mix(cTeal, cIce, 0.3), clamp(w, 0.0, 1.0));
+      bright += 1.2 * w;
     }
     col = mix(col, cTeal, clamp(infl * uPTint, 0.0, 0.6));
-    vCol = vec4(col, alpha);
-    gl_PointSize = clamp(sz * uScale * uPR / max(dist, 0.001), 1.1 * uPR, uMaxPx * uPR);
+
+    float a = uAlpha[ki] * uExposure * bright * smoothstep(2.5, 8.0, dist);
+    // the shell, the tracts and the inner dust open around the camera (a corridor of view)
+    if (ki == 0 || ki >= 6) a *= smoothstep(uOpenNear, uOpenFar, dist);
+    // seen from outside, the far side of each lobe stays dim: the near surface (and its folds) reads as a volume
+    if (ki == 0 && uOutside > 0.001) {
+      float sx = p.x < 0.0 ? -1.0 : 1.0;
+      vec3 hq = p - vec3(sx * uHemi.x, -4.0, 0.0);
+      vec3 n = normalize(hq / (uHemi.yzw * uHemi.yzw));
+      float facing = dot(n, normalize(cameraPosition - p));
+      a *= mix(1.0, mix(0.14, 1.0, smoothstep(-0.25, 0.35, facing)), uOutside);
+    }
+    // a real picture hands over completely to the sharp plane; its outline stays, dimmer
+    if (aImg > -0.5) a *= 1.0 - fade;
+    else if (fr > -0.5) a *= 1.0 - 0.55 * fade;
+    // a closed frame is only a faint line; it brightens as it opens
+    if (fr > -0.5) a *= mix(0.035, 1.0, pow(uFrameO[int(fr + 0.5)].w, 1.5));
+    // up close: fewer, softer points
+    a *= mix(uNearAlpha, 1.0, smoothstep(uNearDist * 0.45, uNearDist, dist));
+
+    // size: clamped in css px; a point smaller than the minimum keeps the minimum size with less light
+    float px = sz * uScale / max(dist, 0.001);
+    float pxc = clamp(px, uMinPx, uMaxPx);
+    a *= pow(min(1.0, px / uMinPx), 1.35);
+    vSoft = clamp(uEdge / pxc, 0.1, 0.75);
+    vCol = vec4(col, a);
+    gl_PointSize = pxc * uPR;
   }
 `;
+// a round dot with an anti-aliased rim and a faint body (a little volume, never a blur); premultiplied for ONE, ONE
 const FRAG = /* glsl */ `
   precision mediump float;
   varying vec4 vCol;
+  varying float vSoft;
   void main() {
     float d = length(gl_PointCoord - 0.5) * 2.0;
-    float a = (1.0 - smoothstep(0.62, 1.0, d)) * vCol.a;
-    gl_FragColor = vec4(vCol.rgb * a, a);
+    float a = (1.0 - smoothstep(1.0 - vSoft, 1.0, d)) * vCol.a;
+    if (a < 0.002) discard;
+    float body = mix(0.7, 1.0, 1.0 - d * d);
+    gl_FragColor = vec4(vCol.rgb * body * a, a);
+  }
+`;
+
+// ── shaders of the guide
+const GVERT = /* glsl */ `
+  attribute vec3 aHome;
+  attribute vec3 aSeed;
+  attribute vec3 aBird;
+  attribute vec3 aStrip;
+  attribute vec3 aMem;
+  attribute vec3 aTint;
+  attribute vec4 aG;
+  uniform vec3 uGPos;
+  uniform mat3 uGRot;
+  uniform float uGather, uMorph, uLift, uStripK, uMemK, uTintK, uIceK, uLavK, uRest;
+  uniform float uTime, uLife, uScale, uPR, uMinPx, uMaxPx, uEdge, uExposure;
+  uniform vec3 cOff, cIce, cLav, cTeal;
+  varying vec4 vCol;
+  varying float vSoft;
+  void main() {
+    float st = aG.x;
+    float m = smoothstep(st * 0.45, st * 0.45 + 0.55, uMorph);
+    // at the final the seed opens into a wider, calm light
+    vec3 restShape = mix(aSeed * 2.2, normalize(aSeed + vec3(0.0001)) * (2.6 + 1.4 * fract(st * 7.0)), 0.7);
+    vec3 local = mix(mix(aSeed, restShape, uRest), aBird, m);
+    // the wings bend with the journey (tied to the route, not to a clock): no flapping mascot
+    local.y += uLift * pow(abs(aG.z), 1.5) * m;
+    // the seed breathes very little while it waits
+    local += (1.0 - m) * 0.07 * uLife * vec3(sin(uTime * 0.8 + st * 21.0), sin(uTime * 0.67 + st * 33.0), sin(uTime * 0.74 + st * 13.0));
+    vec3 w = uGPos + uGRot * local;
+    w = mix(aHome, w, smoothstep(st * 0.4, st * 0.4 + 0.6, uGather));
+    w = mix(w, aStrip, smoothstep(st * 0.5, st * 0.5 + 0.5, uStripK));
+    w = mix(w, aMem, smoothstep(st * 0.5, st * 0.5 + 0.5, uMemK));
+    vec4 mv = modelViewMatrix * vec4(w, 1.0);
+    gl_Position = projectionMatrix * mv;
+    float dist = -mv.z;
+
+    // colours gathered on the way: covers of Görsel Hafıza, then ice (Kurgu), then lavender (Deney)
+    vec3 col = cOff;
+    col = mix(col, aTint, uTintK * aG.w);
+    if (aG.w < 0.5 && st < 0.12) col = mix(col, cIce, uIceK * 0.8);
+    if (aG.w < 0.5 && st > 0.12 && st < 0.19) col = mix(col, cLav, uLavK * 0.8);
+    if (aG.w < 0.5 && st > 0.19 && st < 0.24) col = mix(col, cTeal, uIceK * 0.6);
+    // a seed is many points in a small space: each is faint so the seed is a calm light, not a white blot
+    float a = mix(mix(0.05, 0.2, uRest), 0.3, m) * mix(1.0, 0.75, uStripK) * uExposure;
+    float px = aG.y * uScale / max(dist, 0.001);
+    float pxc = clamp(px, uMinPx, uMaxPx);
+    a *= pow(min(1.0, px / uMinPx), 1.2) * smoothstep(1.5, 5.0, dist);
+    vSoft = clamp(uEdge / pxc, 0.1, 0.75);
+    vCol = vec4(col, a);
+    gl_PointSize = pxc * uPR;
   }
 `;
 
 type Trip = { from: number; to: number; t: number; dur: number };
+type Wave = { period: number; offset: number; cycle: number; o: Vector3; c: Vector3 };
 
 export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const { canvas, light, reduced } = o;
+  const P = W.palette;
+  const PW = W.particles;
 
   // the pictures become particles; each picture is read once into a small grid
   const samples: Record<string, Samples | null> = {};
   await Promise.all(works.map(async (w) => (samples[w.id] = await sampleImage(w.image))));
   if (!o.alive()) throw new Error("cancelled");
   const world = buildWorld(light ? W.count.light : W.count.desktop, samples);
+  const guide = buildGuide(light ? Math.round(W.guide.count * 0.75) : W.guide.count, samples);
 
   const attrs: WebGLContextAttributes = { alpha: false, antialias: false, depth: false, stencil: false, powerPreference: light ? "low-power" : "default" };
   const gl = (canvas.getContext("webgl2", attrs) || canvas.getContext("webgl", attrs)) as WebGLRenderingContext | null;
@@ -169,36 +304,59 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const scene = new Scene();
   const camera = new PerspectiveCamera(W.fov, 1, 0.5, 1400);
 
+  // ── the world's points
   const geo = new BufferGeometry();
   geo.setAttribute("position", new BufferAttribute(world.pos, 3));
   geo.setAttribute("aC", new BufferAttribute(world.col, 3));
   geo.setAttribute("aD", new BufferAttribute(world.data, 4));
   geo.setAttribute("aPath", new BufferAttribute(world.path, 1));
   geo.setAttribute("aImg", new BufferAttribute(world.img, 1));
-  const anch = [0, 1, 2, 3].map(() => new Vector2(-9, -9));
-  const fades = new Array(MAX_IMG).fill(0);
-  const P = W.palette;
+  const anch = [0, 1, 2, 3, 4].map(() => new Vector2(-9, -9));
+  const frameC = Array.from({ length: MAX_FRAMES }, () => new Vector4());
+  const frameO = Array.from({ length: MAX_FRAMES }, () => new Vector4(0, 0, 0, 1));
+  const waveU = [0, 1, 2].map(() => new Vector4(0, -999, 0, 0));
+  const waveC = [0, 1, 2].map(() => new Vector4(1, 1, 1, 0));
+  const blend = { blending: CustomBlending, blendSrc: OneFactor, blendDst: OneFactor, transparent: true, depthTest: false, depthWrite: false } as const;
+  const common = {
+    uTime: { value: 0 },
+    uScale: { value: 600 },
+    uPR: { value: 1 },
+    uMinPx: { value: PW.minPx },
+    uMaxPx: { value: PW.maxPx },
+    uEdge: { value: PW.edge },
+    uExposure: { value: PW.exposure },
+    uLife: { value: 1 },
+    cTeal: { value: v3(P.teal) },
+    cIce: { value: v3(P.ice) },
+    cLav: { value: v3(P.lavender) },
+  };
   const mat = new ShaderMaterial({
     vertexShader: VERT,
     fragmentShader: FRAG,
-    transparent: true,
-    depthTest: false,
-    depthWrite: false,
-    blending: AdditiveBlending,
+    ...blend,
     uniforms: {
-      uTime: { value: 0 },
-      uScale: { value: 600 },
-      uPR: { value: 1 },
-      uMaxPx: { value: 6.5 },
-      uOutside: { value: 1 },
-      uHemi: { value: new Vector4(W.brain.hemiX, W.brain.r[0], W.brain.r[1], W.brain.r[2]) },
-      uLife: { value: 1 },
-      uWaveT: { value: 0 },
-      uWaveOn: { value: 0 },
-      uWaveSlot: { value: -1 },
+      ...common,
+      uMove: { value: 1 },
+      uFinal: { value: 0 },
+      uAlpha: { value: PW.alpha },
+      uAmp: { value: W.motion.amp },
+      uMScale: { value: W.motion.scale },
+      uMSpeed: { value: W.motion.speed },
       uOpenNear: { value: W.shellOpen.near },
       uOpenFar: { value: W.shellOpen.far },
-      uImgFade: { value: fades },
+      uOutside: { value: 1 },
+      uNearDist: { value: PW.near.dist },
+      uNearAlpha: { value: PW.near.alpha },
+      uHemi: { value: new Vector4(W.brain.hemiX, W.brain.r[0], W.brain.r[1], W.brain.r[2]) },
+      uFrameC: { value: frameC },
+      uFrameO: { value: frameO },
+      uWave: { value: waveU },
+      uWaveC: { value: waveC },
+      uWaveW: { value: W.waves.width },
+      uWaveTrail: { value: W.waves.trail },
+      uPathWave: { value: 0 },
+      uPathT: { value: 0 },
+      uPathSlot: { value: -1 },
       uPointer: { value: new Vector2(-9, -9) },
       uPointerOn: { value: 0 },
       uAspect: { value: 1.6 },
@@ -206,33 +364,137 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       uPPush: { value: W.pointer.push },
       uPTint: { value: W.pointer.tint },
       uAnch: { value: anch },
-      cTeal: { value: v3(P.teal) },
-      cIce: { value: v3(P.ice) },
     },
   });
   const points = new Points(geo, mat);
   points.frustumCulled = false;
   scene.add(points);
 
-  // sharp pictures: planes that load their texture only when the camera comes near
-  const loader = new TextureLoader();
+  // ── the guide: a second small Points object, same renderer
+  const ggeo = new BufferGeometry();
+  ggeo.setAttribute("position", new BufferAttribute(guide.home, 3)); // bounds only; the shader places every point
+  ggeo.setAttribute("aHome", new BufferAttribute(guide.home, 3));
+  ggeo.setAttribute("aSeed", new BufferAttribute(guide.seed, 3));
+  ggeo.setAttribute("aBird", new BufferAttribute(guide.bird, 3));
+  ggeo.setAttribute("aStrip", new BufferAttribute(guide.strip, 3));
+  ggeo.setAttribute("aMem", new BufferAttribute(guide.mem, 3));
+  ggeo.setAttribute("aTint", new BufferAttribute(guide.tint, 3));
+  ggeo.setAttribute("aG", new BufferAttribute(guide.data, 4));
+  const gmat = new ShaderMaterial({
+    vertexShader: GVERT,
+    fragmentShader: FRAG,
+    ...blend,
+    uniforms: {
+      ...common,
+      uGPos: { value: new Vector3() },
+      uGRot: { value: new Matrix3() },
+      uGather: { value: 0 },
+      uMorph: { value: 0 },
+      uLift: { value: 0 },
+      uStripK: { value: 0 },
+      uMemK: { value: 0 },
+      uTintK: { value: 0 },
+      uIceK: { value: 0 },
+      uLavK: { value: 0 },
+      uRest: { value: 0 },
+      cOff: { value: v3(P.offWhite) },
+    },
+  });
+  const guidePts = new Points(ggeo, gmat);
+  guidePts.frustumCulled = false;
+  guidePts.renderOrder = 4;
+  scene.add(guidePts);
+
+  // ── sharp pictures: planes; textures are prepared ahead of need (decoded and uploaded while the visitor rests)
+  const areaOf = Object.fromEntries(works.map((w) => [w.id, w.area]));
+  const workImage = Object.fromEntries(works.map((w) => [w.id, w.image]));
+  const orderIn: Record<string, number> = {};
   const planes = world.frames.map((f) => {
+    const area = areaOf[f.id];
+    orderIn[area] = (orderIn[area] ?? -1) + 1;
     const m = new MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, depthTest: false, side: DoubleSide, toneMapped: false });
     const mesh = new Mesh(new PlaneGeometry(f.w, f.h), m);
     mesh.matrixAutoUpdate = false;
-    mesh.matrix.copy(new Matrix4().makeBasis(v3(f.right), v3(f.up), v3(f.normal)).setPosition(v3(f.c)));
-    mesh.matrixWorldNeedsUpdate = true;
     mesh.renderOrder = 3;
     mesh.visible = false;
     mesh.userData = { id: f.id };
     scene.add(mesh);
-    return { f, mesh, mat: m, tex: null as Texture | null, loading: false, center: v3(f.c), fade: 0 };
+    return {
+      f,
+      area,
+      order: orderIn[area],
+      mesh,
+      mat: m,
+      tex: null as Texture | null,
+      state: "none" as "none" | "loading" | "ready" | "failed",
+      center: v3(f.c),
+      basis: new Matrix4().makeBasis(v3(f.right), v3(f.up), v3(f.normal)),
+      off: new Vector3(),
+      open: 1,
+      fade: 0,
+    };
   });
-  const workImage = Object.fromEntries(works.map((w) => [w.id, w.image]));
+  const maxSide = light ? 960 : 1280;
+  const prepare = (p: (typeof planes)[number]) => {
+    if (p.state !== "none") return;
+    p.state = "loading";
+    const img = new Image();
+    img.decoding = "async";
+    img.src = workImage[p.f.id];
+    (img.decode ? img.decode() : new Promise<void>((res, rej) => ((img.onload = () => res()), (img.onerror = rej))))
+      .then(() => {
+        if (disposed) return;
+        let source: HTMLImageElement | HTMLCanvasElement = img;
+        const k = maxSide / Math.max(img.naturalWidth, img.naturalHeight);
+        if (k < 1) {
+          const c = document.createElement("canvas");
+          c.width = Math.round(img.naturalWidth * k);
+          c.height = Math.round(img.naturalHeight * k);
+          c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height);
+          source = c;
+        }
+        const tex = new Texture(source);
+        tex.colorSpace = SRGBColorSpace;
+        tex.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+        tex.needsUpdate = true;
+        renderer.initTexture(tex); // upload now, not in the middle of a trip
+        p.tex = tex;
+        p.mat.map = tex;
+        p.mat.needsUpdate = true;
+        p.state = "ready";
+        kick();
+      })
+      .catch(() => {
+        p.state = "failed"; // the particles simply stay
+      });
+  };
+  // one picture at a time, while the camera rests; the nearest places along the route first
+  let prepTimer = 0;
+  const stationOfArea = (a: string) => stations.find((x) => x.id === a)?.t ?? 0.5;
+  const prepNext = () => {
+    prepTimer = 0;
+    if (disposed) return;
+    const moving = !!trip || Math.abs(sTarget - s) > 0.002 || hold;
+    if (!moving) {
+      const next = planes
+        .filter((p) => p.state === "none")
+        .sort((a, b) => Math.abs(stationOfArea(a.area) - s) - Math.abs(stationOfArea(b.area) - s) || a.order - b.order)[0];
+      if (next) prepare(next);
+      else return;
+    }
+    prepTimer = window.setTimeout(prepNext, moving ? 400 : 160);
+  };
 
   // ── the route
   const posCurve = new CatmullRomCurve3(route.map((k) => v3(k.pos)), false, "centripetal");
   const tarCurve = new CatmullRomCurve3(route.map((k) => v3(k.target)), false, "centripetal");
+  const T = stations.map((x) => x.t);
+  const tOf = (id: StationId) => stations.find((x) => x.id === id)!.t;
+  const tG = tOf("gorsel-hafiza");
+  const tK = tOf("kurgu-masasi");
+  const tD = tOf("deney-alani");
+  const tF = tOf("birlikte-uretelim");
+  const spots = stations.map((x) => v3(guideSpots[x.id]));
   let s = 0;
   let sTarget = 0;
   let trip: Trip | null = null;
@@ -241,12 +503,13 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   let yawT = 0;
   let pitchT = 0;
   let paused = false;
+  let hold = false;
   let calm = 0;
   let calmS = 0;
   let time = 0;
-  let waveOn = 0;
-  let waveT = 0;
-  let waveSlot = -1;
+  let pathWave = 0;
+  let pathT = 0;
+  let pathSlot = -1;
   let pointerOn = 0;
   let lastPointerMove = 0;
   let disposed = false;
@@ -255,27 +518,44 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   let width = 1;
   let height = 1;
   let level = 0;
-  let resScale = 1;
   let ema = 16;
+  let slowChecks = 0;
   let frames = 0;
   let station: StationId | null = "genel";
   let lastProgress = -1;
   let lastProgressAt = 0;
   let firstInput = false;
+  let moveK = 1;
+  const lastCam = new Vector3();
   const first = () => {
     if (firstInput) return;
     firstInput = true;
     o.onFirstInput();
   };
 
+  // quality: effects and points go first; the resolution only last, and never below a readable floor
+  const Q = [
+    { points: 1, waves: 3, res: 1 },
+    { points: 0.75, waves: 3, res: 1 },
+    { points: 0.55, waves: 2, res: 1 },
+    { points: 0.4, waves: 2, res: 1, motion: 0.5 },
+    { points: 0.4, waves: 1, res: 0.8, motion: 0 },
+  ] as { points: number; waves: number; res: number; motion?: number }[];
   const applyQuality = () => {
-    const dpr = Math.min(window.devicePixelRatio || 1, (light ? 1.3 : 1.75) * resScale);
+    const q = Q[level];
+    const base = Math.min(window.devicePixelRatio || 1, light ? 1.5 : 1.75);
+    const floor = Math.max(0.9, base * 0.7);
+    const dpr = Math.max(Math.min(floor, base), base * q.res);
     renderer.setPixelRatio(dpr);
     renderer.setSize(width, height, false);
-    mat.uniforms.uPR.value = dpr;
-    // fewer points on a phone: each one is drawn a little larger so the surfaces keep their density
-    mat.uniforms.uScale.value = (height / (2 * Math.tan((camera.fov * Math.PI) / 360))) * (light ? 1.55 : 1);
-    geo.setDrawRange(0, Math.round(world.n * [1, 0.72, 0.5, 0.36][level]));
+    const sc = height / (2 * Math.tan((camera.fov * Math.PI) / 360));
+    for (const m of [mat, gmat]) {
+      m.uniforms.uPR.value = dpr;
+      m.uniforms.uScale.value = sc * (light ? 1.4 : 1);
+    }
+    // fewer points: each remaining point carries a little more light, so the forms keep their weight
+    mat.uniforms.uExposure.value = PW.exposure * Math.pow(1 / q.points, 0.35);
+    geo.setDrawRange(0, Math.round(world.n * q.points));
   };
   const resize = () => {
     width = Math.max(1, canvas.clientWidth);
@@ -303,11 +583,12 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     s = sTarget = stations[next].t;
   };
   let reducedAcc = 0;
-  /** Last wheel or touch travel: when it stops close to a station, the camera settles exactly on it. */
+  /** Last wheel or touch travel (used only if snapping is switched on in the config). */
   let lastNav = 0;
   const onWheel = (e: WheelEvent) => {
     if (e.ctrlKey) return; // pinch-zoom of a trackpad: leave it to the browser
     e.preventDefault();
+    if (hold) return;
     first();
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? height : 1;
     const dy = clamp(e.deltaY * unit, -W.wheel.maxStep, W.wheel.maxStep);
@@ -329,6 +610,9 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     kick();
   };
   canvas.addEventListener("wheel", onWheel, { passive: false });
+  // the labels float over the world: a wheel over them travels too (the card, menus and panels keep their own scroll)
+  const labelLayer = canvas.parentElement?.querySelector<HTMLElement>(".zh-labels") ?? null;
+  labelLayer?.addEventListener("wheel", onWheel, { passive: false });
 
   let dragging = false;
   let activeId = -1;
@@ -341,7 +625,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   let isTouch = false;
   const soft = (x: number, lim: number) => lim * Math.tanh(x / lim);
   const onDown = (e: PointerEvent) => {
-    if (e.button > 0 || dragging) return;
+    if (e.button > 0 || dragging || hold) return;
     dragging = true;
     activeId = e.pointerId;
     isTouch = e.pointerType !== "mouse";
@@ -419,14 +703,14 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   canvas.addEventListener("pointerup", onUp);
   canvas.addEventListener("pointercancel", onUp);
 
-  // ── trips started by a button
+  // ── trips started by a button: along the same route
   const goTo = (id: StationId) => {
     const st = stations.find((x) => x.id === id);
     if (!st) return;
     first();
     const area = readyAreas.find((a) => a.id === id);
-    waveSlot = area ? area.slot : -1;
-    waveT = 0;
+    pathSlot = area && area.slot < 3 ? area.slot : -1;
+    pathT = 0;
     if (reduced) {
       trip = null;
       s = sTarget = st.t;
@@ -440,7 +724,129 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     kick();
   };
 
-  // ── labels follow the places, without overlapping
+  // ── light waves: each slot has its own period; a new cycle starts at another place of the world
+  const origins: Vector3[] = [];
+  for (let k = 0; k < world.n && origins.length < 64; k += 997) if (Math.round(world.data[k * 4 + 2]) === 0) origins.push(new Vector3(world.pos[k * 3], world.pos[k * 3 + 1], world.pos[k * 3 + 2]));
+  const colorPool: V3[] = [];
+  for (const [name, weight] of W.waves.colors) for (let k = 0; k < weight; k++) colorPool.push(P[name]);
+  const waves: Wave[] = W.waves.periods.map((period, i) => ({ period, offset: i / W.waves.periods.length + 0.13 * i, cycle: -1, o: new Vector3(), c: new Vector3() }));
+  /** A stronger wave at the place the visitor has just reached (slot 0), for a few seconds of world time. */
+  let arrival: { o: Vector3; c: Vector3; t0: number } | null = null;
+  const areaColor: Partial<Record<StationId, V3>> = { giris: P.ice, "gorsel-hafiza": P.teal, "kurgu-masasi": P.ice, "deney-alani": P.lavender, "birlikte-uretelim": P.teal };
+  const updateWaves = () => {
+    const nSlots = reduced ? 0 : Q[level].waves;
+    waves.forEach((w, i) => {
+      const x = time / w.period + w.offset;
+      const cyc = Math.floor(x);
+      const ph = x - cyc;
+      if (cyc !== w.cycle) {
+        w.cycle = cyc;
+        w.o.copy(origins[Math.floor(hash(cyc * 7.13 + i * 31.7) * origins.length) % origins.length] ?? new Vector3());
+        w.c.set(...colorPool[Math.floor(hash(cyc * 3.71 + i * 17.3) * colorPool.length) % colorPool.length]);
+      }
+      let o3 = w.o;
+      let c3 = w.c;
+      let r = W.waves.reach * ph;
+      let k = i < nSlots ? W.waves.strength * Math.pow(Math.sin(Math.PI * ph), 0.8) : 0;
+      if (i === 0 && arrival && nSlots > 0) {
+        const a = (time - arrival.t0) / 7;
+        if (a >= 1) arrival = null;
+        else {
+          o3 = arrival.o;
+          c3 = arrival.c;
+          r = W.waves.reach * 0.8 * a;
+          k = W.waves.strength * W.waves.arrival * Math.pow(Math.sin(Math.PI * a), 0.7);
+        }
+      }
+      waveU[i].set(o3.x, o3.y, o3.z, r);
+      waveC[i].set(c3.x, c3.y, c3.z, k);
+    });
+  };
+
+  // ── the story along the route: the moments of the places and the guide, all from `s`
+  const gm = W.moments;
+  const gorsel = planes.filter((p) => p.area === "gorsel-hafiza");
+  const kurgu = planes.filter((p) => p.area === "kurgu-masasi");
+  const deney = planes.filter((p) => p.area === "deney-alani");
+  const deneyC: V3 = [2, -22, -82];
+  const tmpM = new Matrix4();
+  const sc1 = new Vector3();
+  const updateMoments = () => {
+    for (const p of gorsel) {
+      const a = tG - gm.gorsel.from + gm.gorsel.each * p.order;
+      p.open = sstep(a, a + gm.gorsel.len, s);
+    }
+    for (const p of kurgu) {
+      const a = tK - gm.kurgu.from + gm.kurgu.each * p.order;
+      const k = 1 - sstep(a, a + gm.kurgu.len, s);
+      const i = p.order;
+      // out of line: off the strip, up or down, along it; they snap into the strip one after another
+      p.off
+        .copy(v3(p.f.normal))
+        .multiplyScalar(4 + 3 * (i % 3))
+        .addScaledVector(v3(p.f.up), (i % 2 ? 1 : -1) * (3 + i))
+        .addScaledVector(v3(p.f.right), ((i % 3) - 1) * 3)
+        .multiplyScalar(k);
+    }
+    for (const p of deney) {
+      const i = p.order;
+      const a = tD - gm.deney.from + gm.deney.each * i;
+      const k = sstep(a, tD - gm.deney.end, s);
+      // first sunk in the membranes, then for a moment in another screen's place, then its own
+      const o1 = v3(deneyC).sub(p.center).multiplyScalar(0.6).add(new Vector3(0, -6, 0));
+      const other = deney[(i + 2) % deney.length];
+      const o2 = other.center.clone().sub(p.center).multiplyScalar(0.8);
+      p.off.copy(o1.multiplyScalar((1 - k) * (1 - k))).addScaledVector(o2, 2 * (1 - k) * k);
+    }
+  };
+
+  const gpos = new Vector3();
+  const gahead = new Vector3();
+  const gctrl = new Vector3();
+  const gtan = new Vector3();
+  const gRotM = new Matrix4();
+  const updateGuide = () => {
+    let k = 0;
+    while (k < T.length - 2 && s >= T[k + 1]) k++;
+    const p = clamp((s - T[k]) / (T[k + 1] - T[k]), 0, 1);
+    // the guide runs ahead and waits at the next place: it has arrived when the visitor is `lead` of the way there
+    const g = ease(sstep(0, W.guide.lead, p));
+    const A = spots[k];
+    const B = spots[k + 1];
+    gctrl.copy(A).add(B).multiplyScalar(0.5).add(new Vector3(0, 9, 0));
+    const u = 1 - g;
+    gpos.copy(A).multiplyScalar(u * u).addScaledVector(gctrl, 2 * u * g).addScaledVector(B, g * g);
+    gtan.copy(gctrl).sub(A).multiplyScalar(2 * u).addScaledVector(B.clone().sub(gctrl), 2 * g);
+    // in mid-flight it keeps to the visitor's view: pulled toward a point ahead of the camera (never at the ends)
+    camera.getWorldDirection(gahead);
+    gahead.multiplyScalar(W.guide.ahead).add(camera.position).add(new Vector3(0, 2.5, 0));
+    const pull = W.guide.pull * Math.sin(Math.PI * g) * (k === 0 ? 0 : 1);
+    gpos.lerp(gahead, pull);
+    if (gtan.lengthSq() < 1e-6) gtan.set(0, 0, 1);
+    gtan.normalize();
+    const right = new Vector3().crossVectors(gtan, new Vector3(0, 1, 0));
+    if (right.lengthSq() < 1e-6) right.set(1, 0, 0);
+    right.normalize();
+    const up = new Vector3().crossVectors(right, gtan).normalize();
+    gRotM.makeBasis(right, up, gtan);
+    const gu = gmat.uniforms;
+    gu.uGRot.value.setFromMatrix4(gRotM);
+    gu.uGPos.value.copy(gpos);
+    // a bird while it travels, a seed of light while it waits (at both ends)
+    const morph = sstep(0.02, 0.22, g) * (1 - sstep(0.78, 0.98, g));
+    gu.uMorph.value = morph;
+    gu.uLift.value = 0.7 * Math.sin(g * Math.PI * 4) * morph;
+    gu.uGather.value = k === 0 ? sstep(0.05, 0.8, p) : 1;
+    gu.uStripK.value = sstep(tK - 0.075, tK - 0.045, s) * (1 - sstep(tK - 0.026, tK - 0.004, s));
+    gu.uMemK.value = 0.78 * sstep(tD - 0.08, tD - 0.035, s) * (1 - sstep(tD + 0.02, tD + 0.07, s));
+    gu.uTintK.value = sstep(tG - 0.01, tG + 0.035, s);
+    gu.uIceK.value = sstep(tK, tK + 0.04, s);
+    gu.uLavK.value = sstep(tD + 0.02, tD + 0.06, s);
+    gu.uRest.value = sstep(tF - 0.03, tF, s);
+    mat.uniforms.uFinal.value = sstep(tF - gm.final.from, tF, s);
+  };
+
+  // ── labels follow the places, without overlapping and never under the page's controls
   const tmp = new Vector3();
   let avoid: { l: number; r: number; t: number; b: number }[] | null = null;
   const anchors: [string, V3][] = [...readyAreas.map((a) => [a.id, a.anchor] as [string, V3]), ["core", W.core.c]];
@@ -451,14 +857,16 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       tmp.set(p[0], p[1], p[2]);
       const dist = tmp.distanceTo(camera.position);
       tmp.project(camera);
-      anch[i].set(tmp.x * 0.5 + 0.5, tmp.y * 0.5 + 0.5);
+      if (i < anch.length) anch[i].set(tmp.x * 0.5 + 0.5, tmp.y * 0.5 + 0.5);
       const el = els[id];
       if (!el) return;
-      const ok = tmp.z < 1 && Math.abs(tmp.x) < 1.02 && Math.abs(tmp.y) < 1.02 && dist > 26 && dist < 420;
+      // inside the brain only nearby places are named; at the final none (the composition speaks for itself)
+      const outside = mat.uniforms.uOutside.value > 0.5;
+      const ok =
+        tmp.z < 1 && Math.abs(tmp.x) < 1.02 && Math.abs(tmp.y) < 1.02 && dist > 26 && dist < (outside ? 420 : 150) && !el.classList.contains("is-on") && s < tF - 0.04 && (id !== "birlikte-uretelim" || s < 0.08);
       list.push({ el, x: clamp((tmp.x * 0.5 + 0.5) * width, 70, width - 70), y: clamp((1 - (tmp.y * 0.5 + 0.5)) * height, 70, height - 90), ok });
     });
     const box = (l: { el: HTMLElement }) => ({ w: l.el.offsetWidth || 130, h: l.el.offsetHeight || 36 });
-    // never under the page's own controls (route, card, top bar): such a label hides; the buttons stay
     if (frames % 20 === 1 || !avoid) {
       const host = canvas.parentElement;
       const cr = canvas.getBoundingClientRect();
@@ -497,46 +905,48 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
 
   // ── the loop
   const kick = () => {
-    if (disposed || raf || document.hidden) return;
+    if (disposed || raf || document.hidden || hold) return;
     last = 0;
     raf = requestAnimationFrame(frame);
   };
   const look = new Vector3();
   const frame = (now: number) => {
     raf = 0;
-    if (disposed) return;
+    if (disposed || hold) return;
     const raw = last ? Math.min(100, now - last) : 16;
     const dt = raw / 1000;
     last = now;
     frames++;
-    ema += (raw - ema) * 0.06;
-    // adaptive quality: a slow device steps down within a few seconds (resolution first, then fewer points);
-    // a very slow one drops both at once. After a step the average starts again from the limit.
+    // single hitches (a video starting, a texture upload) are clipped, so only a steadily slow device steps down
+    ema += (Math.min(raw, 45) - ema) * 0.06;
+    // adaptive quality: two slow checks in a row step down; after a step the average starts again
     const limit = light ? 30 : 24;
-    if (frames > 24 && frames % 16 === 0 && ema > limit && (resScale > 0.66 || level < 3)) {
-      if (ema > limit * 2) {
-        resScale = Math.max(0.65, resScale - 0.2);
-        level = Math.min(3, level + 1);
-      } else if (resScale > 0.7) resScale = Math.max(0.65, resScale - 0.12);
-      else level = Math.min(3, level + 1);
-      applyQuality();
-      ema = limit;
+    if (frames > 24 && frames % 16 === 0) {
+      slowChecks = ema > limit ? slowChecks + 1 : 0;
+      if (slowChecks >= 2 && level < Q.length - 1) {
+        level = Math.min(Q.length - 1, level + (ema > 40 ? 2 : 1));
+        applyQuality();
+        ema = limit;
+        slowChecks = 0;
+      }
     }
     calmS += (calm - calmS) * (1 - Math.exp(-dt * 3));
     const life = reduced || paused ? 0 : 1 - 0.8 * calmS;
-    time += dt * life * W.ambient.speed;
-    mat.uniforms.uTime.value = time;
-    mat.uniforms.uLife.value = life;
+    time += dt * life;
+    for (const m of [mat, gmat]) {
+      m.uniforms.uTime.value = time;
+      m.uniforms.uLife.value = life;
+    }
 
     // route position: a trip eases along the route; otherwise the position follows the wheel and settles quickly
     if (trip) {
       trip.t += dt / trip.dur;
       const k = clamp(trip.t, 0, 1);
       s = sTarget = trip.from + (trip.to - trip.from) * ease(k);
-      waveT = clamp(k * 1.15, 0, 1.2);
+      pathT = clamp(k * 1.15, 0, 1.2);
       if (k >= 1) trip = null;
     } else {
-      if (lastNav && !dragging && now - lastNav > W.wheel.snapAfter) {
+      if (W.wheel.snapReach > 0 && lastNav && !dragging && now - lastNav > W.wheel.snapAfter) {
         const near = stations.find((st) => Math.abs(st.t - sTarget) < W.wheel.snapReach);
         if (near) sTarget = near.t;
         lastNav = 0;
@@ -544,11 +954,11 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       s += (sTarget - s) * (1 - Math.exp(-dt * W.wheel.follow));
       if (Math.abs(sTarget - s) < 0.00002) s = sTarget;
     }
-    const waveGoal = trip ? 1 : 0;
-    waveOn += (waveGoal - waveOn) * (1 - Math.exp(-dt * (waveGoal ? 6 : 1.6)));
-    mat.uniforms.uWaveOn.value = waveOn;
-    mat.uniforms.uWaveT.value = waveT;
-    mat.uniforms.uWaveSlot.value = waveSlot;
+    const pathGoal = trip ? 1 : 0;
+    pathWave += (pathGoal - pathWave) * (1 - Math.exp(-dt * (pathGoal ? 6 : 1.6)));
+    mat.uniforms.uPathWave.value = pathWave;
+    mat.uniforms.uPathT.value = pathT;
+    mat.uniforms.uPathSlot.value = pathSlot;
 
     // camera on the route, plus the limited look-around
     const kd = 1 - Math.exp(-dt * (dragging ? 22 : W.look.damping));
@@ -562,46 +972,51 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     v.applyAxisAngle(right, pitch);
     camera.lookAt(camera.position.clone().add(v));
     camera.updateMatrixWorld();
+    // the local life calms while the camera travels, so the two motions do not add up
+    const speed = frames > 1 ? camera.position.distanceTo(lastCam) / Math.max(dt, 0.001) : 0;
+    lastCam.copy(camera.position);
+    moveK += (1 - (1 - W.motion.whileMoving) * sstep(2, 24, speed) - moveK) * (1 - Math.exp(-dt * 4));
+    mat.uniforms.uMove.value = moveK * (Q[level].motion ?? 1);
     {
       // 0 inside a lobe, 1 well outside: the far side of the shell dims only when seen from outside
       const c = camera.position;
-      const e = Math.min(
-        ...[-1, 1].map((sx) => ((c.x - sx * W.brain.hemiX) / W.brain.r[0]) ** 2 + ((c.y + 4) / W.brain.r[1]) ** 2 + (c.z / W.brain.r[2]) ** 2)
-      );
+      const e = Math.min(...[-1, 1].map((sx) => ((c.x - sx * W.brain.hemiX) / W.brain.r[0]) ** 2 + ((c.y + 4) / W.brain.r[1]) ** 2 + (c.z / W.brain.r[2]) ** 2));
       mat.uniforms.uOutside.value = sstep(1.0, 1.6, e);
     }
 
-    // pictures: load when near, fade from particles to the sharp picture when closer
+    updateMoments();
+    updateGuide();
+    updateWaves();
+
+    // pictures: prepared ahead; near enough, they hand over from particles to the sharp picture
     let fadeBusy = false;
+    // while moving, only a picture about to be shown is prepared (one per frame); the rest waits for a pause
+    const movingNow = !!trip || Math.abs(sTarget - s) > 0.002;
+    let preparedNow = false;
     for (const p of planes) {
-      const d = camera.position.distanceTo(p.center);
-      if (!p.tex && !p.loading && d < W.picture.load) {
-        p.loading = true;
-        loader.load(
-          workImage[p.f.id],
-          (tex) => {
-            tex.colorSpace = SRGBColorSpace;
-            tex.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
-            p.tex = tex;
-            p.mat.map = tex;
-            p.mat.needsUpdate = true;
-            kick();
-          },
-          undefined,
-          () => {
-            /* the particles simply stay */
-          }
-        );
+      const c = p.center.clone().add(p.off);
+      const d = camera.position.distanceTo(c);
+      if (p.state === "none" && !preparedNow && d < (movingNow ? W.picture.far : W.picture.load)) {
+        prepare(p);
+        preparedNow = true;
       }
-      const target = p.tex ? sstep(W.picture.far, W.picture.near, d) : 0;
+      const target = p.state === "ready" ? sstep(W.picture.far, W.picture.near, d) * p.open : 0;
       p.fade += (target - p.fade) * (1 - Math.exp(-dt * 6));
       if (Math.abs(target - p.fade) > 0.004) fadeBusy = true;
       p.mat.opacity = p.fade;
       p.mesh.visible = p.fade > 0.005;
-      if (p.f.img < MAX_IMG) fades[p.f.img] = p.fade;
+      if (p.mesh.visible) {
+        tmpM.copy(p.basis).scale(sc1.set(1, Math.max(0.001, p.open), 1)).setPosition(c);
+        p.mesh.matrix.copy(tmpM);
+        p.mesh.matrixWorldNeedsUpdate = true;
+      }
+      if (p.f.img < MAX_FRAMES) {
+        frameC[p.f.img].set(p.f.c[0], p.f.c[1], p.f.c[2], p.fade);
+        frameO[p.f.img].set(p.off.x, p.off.y, p.off.z, p.open);
+      }
     }
 
-    const wantPointer = !reduced && !dragging && calmS < 0.3 && performance.now() - lastPointerMove < 900 ? 1 : 0;
+    const wantPointer = !reduced && !dragging && calmS < 0.3 && level < 3 && performance.now() - lastPointerMove < 900 ? 1 : 0;
     pointerOn += (wantPointer - pointerOn) * (1 - Math.exp(-dt * (wantPointer ? 10 : 4)));
     mat.uniforms.uPointerOn.value = pointerOn;
 
@@ -614,6 +1029,10 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     const nowStation = settled && near ? near.id : null;
     if (nowStation !== station) {
       station = nowStation;
+      if (station && areaColor[station] && !reduced) {
+        const spot = guideSpots[station];
+        arrival = { o: v3(station === "giris" ? W.core.c : spot), c: v3(areaColor[station]!), t0: time };
+      }
       o.onStation(station);
     }
     if (Math.abs(s - lastProgress) > 0.002 && now - lastProgressAt > 80) {
@@ -627,13 +1046,16 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     canvas.dataset.q = String(level);
     canvas.dataset.station = station ?? "";
     canvas.dataset.sharp = String(planes.filter((p) => p.fade > 0.9).length);
+    canvas.dataset.guide = gpos.toArray().map((x) => x.toFixed(1)).join(",");
+    canvas.dataset.morph = gmat.uniforms.uMorph.value.toFixed(2);
+    canvas.dataset.time = time.toFixed(2);
 
     const busy =
       trip ||
       dragging ||
       life > 0 ||
       Math.abs(sTarget - s) > 0.00002 ||
-      waveOn > 0.01 ||
+      pathWave > 0.01 ||
       pointerOn > 0.01 ||
       Math.abs(yaw - yawT) > 0.0005 ||
       Math.abs(pitch - pitchT) > 0.0005 ||
@@ -644,6 +1066,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       last = 0;
       o.onProgress(s);
     }
+    if (!prepTimer && planes.some((p) => p.state === "none")) prepTimer = window.setTimeout(prepNext, 600);
   };
   const onVis = () => {
     if (document.hidden) {
@@ -667,12 +1090,22 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       calm = clamp(c, 0, 1);
       kick();
     },
+    setHold(h) {
+      hold = h;
+      if (h) {
+        if (raf) cancelAnimationFrame(raf);
+        raf = 0;
+        dragging = false;
+      } else kick();
+    },
     dispose() {
       disposed = true;
       if (raf) cancelAnimationFrame(raf);
+      if (prepTimer) window.clearTimeout(prepTimer);
       ro.disconnect();
       document.removeEventListener("visibilitychange", onVis);
       canvas.removeEventListener("wheel", onWheel);
+      labelLayer?.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerup", onUp);
@@ -684,6 +1117,8 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       }
       geo.dispose();
       mat.dispose();
+      ggeo.dispose();
+      gmat.dispose();
       renderer.dispose();
     },
   };

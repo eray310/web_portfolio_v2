@@ -2,12 +2,14 @@
  * The points of "Eray'ın Zihni", generated once on the CPU (seeded: the world is always the same).
  *
  * kind: 0 shell (the two lobes), 1 idea core, 2 Görsel Hafıza, 3 Kurgu Masası, 4 Deney Alanı, 5 fibre paths,
- * 6 dust, 7 inner tracts, 8 near motes along the route (large, soft, few). Every point carries its own colour (aC): the colour follows the form (the crowns of the
+ * 6 dust, 7 inner tracts, 8 near motes along the route (large, soft, few), 9 the dust of the tunnel, 10 the light of the hall.
+ * The brain (buildWorld), the tunnel (buildTunnel) and the hall (buildHall) are separate sets: the scene makes the
+ * tunnel and the hall only when the camera comes near them and frees them again when it is far away. Every point carries its own colour (aC): the colour follows the form (the crowns of the
  * folds are light, the grooves dim; the fissure and the lower parts turn icy; a little lavender at the back).
  * Points of a real picture keep the picture's colour and an image index (aImg): the scene fades them out when the
  * sharp picture (a textured plane) fades in.
  */
-import { route, stations, veil, worldConfig as W, works, filmStrip, kurguU, type V3, type Work } from "./zihnimWorld";
+import { hallView, light, route, worldConfig as W, works, filmStrip, kurguU, type V3, type Work } from "./zihnimWorld";
 
 export type Samples = { w: number; h: number; lum: Float32Array; rgb: Float32Array };
 export type Frame = { id: string; c: V3; right: V3; up: V3; normal: V3; w: number; h: number; img: number };
@@ -22,8 +24,11 @@ const CORE_LOBES: V3[] = [
 ];
 /** aPath of a picture's points (fill and outline) is FRAME_BASE + the picture's index: the scene moves frames as one. */
 export const FRAME_BASE = 100;
-/** aPath of the veil in front of Görsel Hafıza's archive. */
-export const VEIL_PATH = 50;
+/** aPath of a light line of the hall is LINE_BASE + the index of its picture; BEACON marks the far points of the first work. */
+export const LINE_BASE = 200;
+export const BEACON = 60;
+/** Picture indices: the works of the hall come first (0..), the frames of the brain start here. */
+export const BRAIN_FRAMES = 10;
 const rng = (seed: number) => {
   let s = seed >>> 0;
   return () => {
@@ -102,7 +107,7 @@ function catmull(P: V3[], u: number): V3 {
  * Point size range (scene units) per kind; within a range most points are small and a few are larger (pow 3), so a
  * surface reads as fine grain with a few highlights instead of equal hard dots.
  */
-const SIZE: Record<number, [number, number]> = { 0: [0.2, 0.7], 1: [0.12, 0.42], 2: [0.1, 0.2], 3: [0.1, 0.22], 4: [0.1, 0.36], 5: [0.1, 0.24], 6: [0.22, 0.95], 7: [0.12, 0.4], 8: [0.22, 0.6] };
+const SIZE: Record<number, [number, number]> = { 0: [0.2, 0.7], 1: [0.12, 0.42], 2: [0.1, 0.2], 3: [0.1, 0.22], 4: [0.1, 0.36], 5: [0.1, 0.24], 6: [0.22, 0.95], 7: [0.12, 0.4], 8: [0.22, 0.6], 9: [0.14, 0.5], 10: [0.12, 0.3] };
 
 export function buildWorld(total: number, imgs: Record<string, Samples | null>): World {
   const r = rng(90817);
@@ -126,7 +131,8 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
     img[i] = imgId;
     i++;
   };
-  const N = (share: number) => Math.round(total * share);
+  // shares are of the brain as it was with its own Görsel Hafıza (that place is now the hall, outside the brain)
+  const N = (share: number) => Math.round((total / 0.82) * share);
 
   // ── the two lobes: folded surfaces, dense on the crests, thin in the grooves; a fissure in between
   const B = W.brain;
@@ -242,8 +248,8 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
 
   // ── works: real pictures as particles (they hand over to sharp pictures up close) and their frames
   const frames: Frame[] = [];
-  const stationPos = (id: string) => route[Math.round(stations.find((s) => s.id === id)!.t * (route.length - 1))].pos;
   const picture = (w: Work, c: V3, right: V3, up: V3, normal: V3, imgId: number, count: number, kind: number) => {
+    if (imgId >= 24) return 0;
     const s = imgs[w.id];
     const width = w.width;
     const height = s ? (width * s.h) / s.w : width * 1.4;
@@ -284,33 +290,10 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
     const ang = Math.atan2(d[0], d[2]) + turn;
     return { normal: [Math.sin(ang), 0, Math.cos(ang)] as V3, right: [Math.cos(ang), 0, -Math.sin(ang)] as V3, up: [0, 1, 0] as V3 };
   };
-  let imgId = 0;
-
-  // Görsel Hafıza: an archive of frames hanging in layers around an open aisle; wires above, a dotted floor below
-  const gList = works.filter((w) => w.area === "gorsel-hafiza");
-  const gStation = stationPos("gorsel-hafiza");
-  const nG = N(0.15);
-  const perG = Math.floor((nG * 0.84) / gList.length);
-  for (const w of gList) {
-    const f = facing(w.at, gStation, w.turn ?? 0);
-    const height = picture(w, w.at, f.right, f.up, f.normal, imgId++, perG, 2);
-    for (const sx of [-0.4, 0.4]) {
-      const top: V3 = [w.at[0] + f.right[0] * sx * w.width, w.at[1] + height / 2, w.at[2] + f.right[2] * sx * w.width];
-      for (let k = 0; k < Math.floor(nG * 0.0016); k++) put([top[0], top[1] + r() * (46 - top[1]), top[2]], scale(P.grey, 0.45), 2, 0.5);
-    }
-  }
-  for (let k = 0; k < Math.floor(nG * 0.06); k++) {
-    const onX = r() < 0.5;
-    const lane = Math.round((r() - 0.5) * 14) * 6;
-    const along = (r() - 0.5) * 90;
-    const x = -50 + (onX ? along * 0.75 : lane);
-    const z = 8 + (onX ? lane : along);
-    if (r() > 1 - smooth(25, 45, Math.hypot(x + 50, z - 8) * 0.8)) continue;
-    put([x, -24 + gauss(r) * 0.05, z], scale(P.grey, 0.55), 2, 0.5);
-  }
+  let imgId = BRAIN_FRAMES;
 
   // Kurgu Masası: a film strip winding through the right lobe; frames are real video covers; the Voop frame is the stop
-  const kStation = stationPos("kurgu-masasi");
+  const kStation = route[6].pos;
   const nK = N(0.11);
   const HALF = 12;
   const tangentAt = (u: number): V3 => norm(sub(catmull(filmStrip, Math.min(1, u + 0.004)), catmull(filmStrip, Math.max(0, u - 0.004))));
@@ -370,25 +353,11 @@ export function buildWorld(total: number, imgs: Record<string, Samples | null>):
     put(p, scale(c, 0.55 + 0.45 * band), 4, (u + 1) / 2);
   }
   const dList = works.filter((w) => w.area === "deney-alani");
-  const dStation = stationPos("deney-alani");
+  const dStation = route[8].pos;
   const perD = Math.floor((nD * 0.32) / dList.length);
   for (const w of dList) {
     const f = facing(w.at, dStation, w.turn ?? 0);
     picture(w, w.at, f.right, f.up, f.normal, imgId++, w.width > 15 ? perD * 2 : perD, 4);
-  }
-
-  // ── the veil of Görsel Hafıza: a hanging, folded sheet in front of the archive; denser along its folds
-  const nVeil = N(0.022);
-  for (let k = 0, g = 0; k < nVeil && g < nVeil * 10; g++) {
-    const lx = (r() * 2 - 1) * veil.halfW;
-    const ly = (r() * 2 - 1) * veil.halfH;
-    const foldK = Math.abs(Math.sin(lx * 0.42 + 0.6 * Math.sin(ly * 0.12)));
-    if (r() > 0.12 + 0.88 * smooth(0.55, 0.98, foldK)) continue;
-    if (r() > smooth(veil.halfH, veil.halfH * 0.55, Math.abs(ly)) * smooth(veil.halfW, veil.halfW * 0.7, Math.abs(lx)) + 0.08) continue;
-    k++;
-    const lz = 2.4 * Math.sin(lx * 0.42) + gauss(r) * 0.15;
-    const p: V3 = [0, 1, 2].map((d) => veil.at[d] + veil.right[d] * lx + veil.up[d] * ly + veil.fwd[d] * lz) as V3;
-    put(p, scale(mix(P.offWhite, P.ice, 0.35 + 0.3 * r()), 0.3 + 0.4 * foldK), 2, lx / veil.halfW, VEIL_PATH);
   }
 
   // ── near motes: a few large, soft points around the camera's route (foreground parallax on every stretch)
@@ -542,30 +511,32 @@ export function buildGuide(count: number, imgs: Record<string, Samples | null>):
     let by = 0;
     let bz = 0;
     let span = 0;
-    if (part < 0.24) {
+    if (part < 0.2) {
       const t = r();
-      const z = -2.0 + t * 4.3;
-      const rad = 0.42 * Math.sin(Math.PI * Math.min(1, t * 1.05)) * (t > 0.85 ? 0.7 : 1);
+      const z = -2.2 + t * 5.0;
+      const rad = 0.3 * Math.sin(Math.PI * Math.min(1, t * 1.05)) * (t > 0.85 ? 0.6 : 1);
       const th = r() * TAU;
       bx = Math.cos(th) * rad;
       by = Math.sin(th) * rad * 0.8;
       bz = z;
     } else if (part < 0.9) {
       const side = r() < 0.5 ? -1 : 1;
-      const u = Math.pow(r(), 0.8); // along the span
-      const v = Math.pow(r(), 1.9); // from the leading edge back
-      const lead: V3 = [0.3 + u * (half - 0.3), 0.55 * u * u, 0.7 - u * 2.4];
-      const trail: V3 = [0.3 + u * (half - 0.5), 0.45 * u * u, -1.0 - u * 1.1];
+      const u = Math.pow(r(), 0.85); // along the span
+      const v = Math.pow(r(), 2.6); // from the leading edge back: most points draw the leading edge as a clear line
+      // long, tapering wings swept back: wide at the body, a point at the tip
+      const chord = 1.9 * (1 - u) * (1 - u) + 0.12;
+      const lead: V3 = [0.25 + u * (half - 0.25), 0.5 * u * u, 0.9 - u * u * 3.4];
+      const trail: V3 = [lead[0] - 0.15 * u, 0.4 * u * u, lead[2] - chord];
       bx = side * (lead[0] + (trail[0] - lead[0]) * v);
       by = lead[1] + (trail[1] - lead[1]) * v;
       bz = lead[2] + (trail[2] - lead[2]) * v;
       span = side * u;
     } else {
+      // a forked tail: two short lines
       const u = r();
-      const w = (r() - 0.5) * 2 * (0.25 + u * 0.8);
-      bx = w;
+      bx = (r() < 0.5 ? -1 : 1) * (0.08 + u * 0.75) + gauss(r) * 0.03;
       by = 0.05 * u;
-      bz = -2.0 - u * 1.7;
+      bz = -2.2 - u * 1.9;
     }
     bird.set([bx, by, bz], k * 3);
     // strip: along the middle of the film strip, on its rails and cell edges
@@ -595,4 +566,173 @@ export function buildGuide(count: number, imgs: Record<string, Samples | null>):
     data.set([r(), G.size * (0.6 + Math.pow(r(), 2.5) * 1.2), span, tinted], k * 4);
   }
   return { n, home, seed, bird, strip, mem, tint, data };
+}
+
+// ── the tunnel and the hall ("Işık Yolu"): separate point sets, made when the camera comes near
+
+/** Collects points like buildWorld does and returns them shuffled (a quality step draws an even share of every part). */
+function bag(total: number, seed: number) {
+  const r = rng(seed);
+  const pos = new Float32Array(total * 3);
+  const col = new Float32Array(total * 3);
+  const data = new Float32Array(total * 4);
+  const path = new Float32Array(total).fill(-1);
+  const img = new Float32Array(total).fill(-1);
+  let i = 0;
+  const put = (p: V3, c: V3, kind: number, t: number, pathId = -1, imgId = -1, sizeK = 1) => {
+    if (i >= total) return;
+    pos.set(p, i * 3);
+    col.set(c, i * 3);
+    const [a, b] = SIZE[kind];
+    data.set([r(), (a + Math.pow(r(), 3) * (b - a)) * sizeK, kind, t], i * 4);
+    path[i] = pathId;
+    img[i] = imgId;
+    i++;
+  };
+  const done = (frames: Frame[] = []): World => {
+    const n = i;
+    const order = new Uint32Array(n);
+    for (let a = 0; a < n; a++) order[a] = a;
+    for (let a = n - 1; a > 0; a--) {
+      const b = Math.floor(r() * (a + 1));
+      const t = order[a];
+      order[a] = order[b];
+      order[b] = t;
+    }
+    const P3 = new Float32Array(n * 3);
+    const C3 = new Float32Array(n * 3);
+    const D4 = new Float32Array(n * 4);
+    const PA = new Float32Array(n);
+    const IM = new Float32Array(n);
+    for (let a = 0; a < n; a++) {
+      const o = order[a];
+      P3.set(pos.subarray(o * 3, o * 3 + 3), a * 3);
+      C3.set(col.subarray(o * 3, o * 3 + 3), a * 3);
+      D4.set(data.subarray(o * 4, o * 4 + 4), a * 4);
+      PA[a] = path[o];
+      IM[a] = img[o];
+    }
+    return { pos: P3, col: C3, data: D4, path: PA, img: IM, n, frames };
+  };
+  return { r, put, done, full: () => i >= total };
+}
+const colorAt = (s: Samples | null, u: number, v: number, fallback: V3): V3 => {
+  if (!s) return fallback;
+  const cell = Math.min(s.h - 1, Math.max(0, Math.floor(v * s.h))) * s.w + Math.min(s.w - 1, Math.max(0, Math.floor(u * s.w)));
+  return [s.rgb[cell * 3], s.rgb[cell * 3 + 1], s.rgb[cell * 3 + 2]];
+};
+const hallWorks = () => works.filter((w) => w.area === "gorsel-hafiza");
+
+/** The frames of the works of the hall (cheap; the scene needs them before the points of the hall exist). */
+export function hallFrames(imgs: Record<string, Samples | null>): Frame[] {
+  return hallWorks().map((w, k) => {
+    const d = sub(hallView, w.at);
+    const ang = Math.atan2(d[0], d[2]) + (w.turn ?? 0);
+    const s = imgs[w.id];
+    return { id: w.id, c: w.at, right: [Math.cos(ang), 0, -Math.sin(ang)] as V3, up: [0, 1, 0] as V3, normal: [Math.sin(ang), 0, Math.cos(ang)] as V3, w: w.width, h: s ? (w.width * s.h) / s.w : w.width * 1.6, img: k };
+  });
+}
+
+/**
+ * The tunnel: dust in one beam along the axis. The beam comes from the first work of the hall, so its dust carries
+ * the colours of that picture across its section (as in the beam of a projector); outside the beam there are only a
+ * few faint, long streaks that run with the axis (they give the perspective and the speed). No rings, no walls.
+ * t = distance along the axis / length (the scene lets the beam reach out of the fissure first).
+ */
+export function buildTunnel(total: number, imgs: Record<string, Samples | null>): World {
+  const B = bag(total, 7717);
+  const { r, put } = B;
+  const P = W.palette;
+  const A = light.axis;
+  const first = imgs[hallWorks()[0].id];
+  const at = (d: number, x: number, y: number): V3 => [A.p[0] + A.d[0] * d + x, A.p[1] + A.d[1] * d + A.up[1] * y, A.p[2] + A.d[2] * d + A.up[2] * y];
+  // one stretch of the axis, twice `wrap` long: the shader repeats it around the camera
+  const from = 0;
+  const to = light.tunnel.wrap * 2;
+  const [bw, bh] = light.tunnel.beam;
+  const nBeam = Math.floor(total * 0.72);
+  for (let k = 0; k < nBeam; k++) {
+    const d = from + r() * (to - from);
+    // soft-edged section; a little denser along the middle
+    const x = (r() + r() - 1) * bw * 1.25;
+    const y = (r() + r() - 1) * bh * 1.25;
+    const c = colorAt(first, 0.5 + x / (bw * 2.5), 0.5 - y / (bh * 2.5), P.ice);
+    put(at(d, x, y), mix(P.offWhite, c, 0.72), 9, d / A.len, -1, -1, 0.7 + 0.6 * r());
+  }
+  // the faint outside: long streaks parallel to the axis, each a gentle curve
+  const streaks = Array.from({ length: light.tunnel.streaks }, () => ({ a: r() * TAU, rad: 9 + r() * light.tunnel.outer, d0: from + r() * (to - from), len: 90 + r() * 200, bend: (r() - 0.5) * 9, c: mix(scale(P.grey, 0.7), r() < 0.2 ? P.lavender : P.ice, 0.35) }));
+  while (!B.full()) {
+    const st = streaks[Math.floor(r() * streaks.length)];
+    const u = r();
+    const rad = st.rad + st.bend * Math.sin(u * Math.PI);
+    const d = st.d0 + u * st.len;
+    put(at(d, Math.cos(st.a) * rad + gauss(r) * 0.12, Math.sin(st.a) * rad + gauss(r) * 0.12), scale(st.c, 0.5 * Math.sin(u * Math.PI) + 0.12), 9, d / A.len, -1, -1, 0.8);
+  }
+  return B.done();
+}
+
+/**
+ * The hall (Görsel Hafıza): no walls. Its architecture is light: one thin line comes down from high above to each
+ * work, and where it lands the work is written out of points (top to bottom), with a faint pool of its colour on the
+ * floor. The first work is the light the beam of the tunnel came from: it is there from the start, and from far away
+ * a few large points of it (BEACON) show its colours.
+ * Line points: kind 10, aPath = LINE_BASE + picture, t 0 (top) .. 1 (at the work); the floor pool has t = 2.
+ * Picture points: kind 2, t = how far down the picture (0 top .. 1 bottom).
+ */
+export function buildHall(total: number, imgs: Record<string, Samples | null>, frames: Frame[]): World {
+  const B = bag(total, 31337);
+  const { r, put } = B;
+  const P = W.palette;
+  const list = hallWorks();
+  const H = light.hall;
+  const floorY = hallView[1] + H.floor;
+  const perPic = Math.floor((total * 0.7) / list.length);
+  frames.forEach((f, k) => {
+    const w = list[k];
+    const s = imgs[w.id];
+    const at = (lx: number, ly: number, lz = 0): V3 => [f.c[0] + f.right[0] * lx + f.up[0] * ly + f.normal[0] * lz, f.c[1] + f.right[1] * lx + f.up[1] * ly + f.normal[1] * lz, f.c[2] + f.right[2] * lx + f.up[2] * ly + f.normal[2] * lz];
+    const count = k < 3 ? Math.floor(perPic * 1.5) : Math.floor(perPic * 0.8);
+    // the work, as points; denser where the picture is lighter
+    for (let got = 0, g = 0; got < count && g < count * 30; g++) {
+      const u = r();
+      const v = r();
+      if (s) {
+        const cell = Math.floor(v * s.h) * s.w + Math.floor(u * s.w);
+        if (r() > 0.16 + 0.84 * Math.pow(s.lum[cell], 0.85)) continue;
+      }
+      put(at((u - 0.5) * f.w + gauss(r) * 0.02, (0.5 - v) * f.h + gauss(r) * 0.02, gauss(r) * 0.04), colorAt(s, u, v, scale(P.grey, 0.8)), 2, v, FRAME_BASE + f.img, f.img);
+      got++;
+    }
+    // its light line, from high above down to its top edge (two close strands)
+    const top: V3 = [f.c[0], f.c[1] + f.h / 2, f.c[2]];
+    const high = H.ceiling * (0.7 + 0.3 * r());
+    const nLine = Math.floor(total * 0.014);
+    for (let q = 0; q < nLine; q++) {
+      const t = Math.pow(r(), 0.8);
+      const strand = (q % 2 ? 1 : -1) * 0.07;
+      put([top[0] + f.right[0] * strand + gauss(r) * 0.03, top[1] + (1 - t) * high, top[2] + f.right[2] * strand + gauss(r) * 0.03], mix(P.offWhite, P.ice, 0.3 + 0.4 * t), 10, t, LINE_BASE + f.img, -1, 2.4);
+    }
+    // the pool of its light on the floor
+    const avg = s ? colorAt(s, 0.5, 0.45, P.ice) : P.ice;
+    const nPool = Math.floor(total * 0.006);
+    for (let q = 0; q < nPool; q++) {
+      const a = r() * TAU;
+      const rad = Math.pow(r(), 0.7) * f.w * 0.9;
+      put([f.c[0] + Math.cos(a) * rad, floorY + gauss(r) * 0.04, f.c[2] + Math.sin(a) * rad * 0.7], scale(mix(P.offWhite, avg, 0.6), 0.5 * (1 - rad / (f.w * 0.9)) + 0.1), 10, 2, LINE_BASE + f.img);
+    }
+  });
+  // far away the first work is only a few large points of its colours
+  const f0 = frames[0];
+  const s0 = imgs[list[0].id];
+  for (let q = 0; q < Math.floor(total * 0.02); q++) {
+    const u = r();
+    const v = r();
+    put([f0.c[0] + (u - 0.5) * f0.w, f0.c[1] + (0.5 - v) * f0.h, f0.c[2]], colorAt(s0, u, v, P.ice), 10, 0, BEACON, -1, 5);
+  }
+  // the air of the hall: very sparse dust, a little more in the height above the works
+  while (!B.full()) {
+    const p: V3 = [hallView[0] + gauss(r) * 46, hallView[1] + H.floor + Math.pow(r(), 1.6) * (H.ceiling + 20), hallView[2] - 40 + gauss(r) * 60];
+    put(p, scale(mix(P.grey, P.ice, 0.3), 0.3 + 0.25 * r()), 10, 0);
+  }
+  return B.done(frames);
 }

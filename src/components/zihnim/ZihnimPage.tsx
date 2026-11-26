@@ -298,6 +298,12 @@ const ZihnimPage = () => {
               <MdArrowBack aria-hidden="true" />
               <span>Ana site</span>
             </a>
+            <a className="zh-site" href="/ai-isler">
+              AI İşler
+            </a>
+            <a className="zh-site" href="/hakkimda">
+              Hakkımda
+            </a>
             <h1>Eray’ın Zihni</h1>
           </div>
           {mode === "world" && (
@@ -318,6 +324,10 @@ const ZihnimPage = () => {
                     <button type="button" className="zh-area-btn zh-overview" onClick={() => go("genel")} disabled={station === "genel"}>
                       Genel görünüm
                     </button>
+                  </li>
+                  <li className="zh-nav-site">
+                    <a href="/ai-isler">AI İşler</a>
+                    <a href="/hakkimda">Hakkımda</a>
                   </li>
                 </ul>
               </nav>
@@ -373,7 +383,7 @@ const ZihnimPage = () => {
 
         {mode === "world" && hint && (
           <p className="zh-hint" role="note">
-            {narrow ? "Yukarı kaydırarak ilerle · Alanlar’dan seç" : "Tekerlekle keşfet · Bir alan seç"}
+            {narrow ? "Sürükleyerek ışığı izle" : "Tekerlekle ışığı izle"}
           </p>
         )}
 

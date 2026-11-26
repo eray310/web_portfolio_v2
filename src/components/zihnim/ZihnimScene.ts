@@ -37,8 +37,8 @@ import {
   Vector4,
   WebGLRenderer,
 } from "three";
-import { guideSpots, readyAreas, route, stations, veil, worldConfig as W, works, type StationId, type V3 } from "./zihnimWorld";
-import { FRAME_BASE, VEIL_PATH, buildGuide, buildWorld, sampleImage, type Samples } from "./worldGeometry";
+import { calmStops, guideSpots, light as LY, readyAreas, route, stations, worldConfig as W, works, type StationId, type V3 } from "./zihnimWorld";
+import { BEACON, FRAME_BASE, LINE_BASE, buildGuide, buildHall, buildTunnel, buildWorld, hallFrames, sampleImage, type Samples, type World } from "./worldGeometry";
 
 export type SceneOptions = {
   canvas: HTMLCanvasElement;
@@ -87,10 +87,12 @@ const VERT = /* glsl */ `
   attribute float aPath;
   attribute float aImg;
   uniform float uTime, uScale, uPR, uMinPx, uMaxPx, uEdge, uExposure, uLife, uMove, uFinal;
-  uniform float uAlpha[9];
-  uniform float uAmp[9];
-  uniform float uKnee, uSlope, uInside, uBokehPx, uBokehLight, uVeil;
-  uniform vec3 uVeilA, uVeilR;
+  uniform float uAlpha[11];
+  uniform float uAmp[11];
+  uniform float uKnee, uSlope, uInside, uBokehPx, uBokehLight;
+  uniform float uBrain, uReach, uCut, uCamAx, uWrap, uMouth;
+  uniform vec3 uAxisP, uAxisD;
+  uniform float uLine[${MAX_FRAMES}];
   uniform float uMScale, uMSpeed;
   uniform float uOpenNear, uOpenFar, uOutside, uNearDist, uNearAlpha;
   uniform vec4 uHemi;
@@ -118,18 +120,12 @@ const VERT = /* glsl */ `
     // a frame of a real work: it opens (Görsel), aligns (Kurgu) or settles (Deney) as one piece
     float fr = aPath - ${FRAME_BASE.toFixed(1)};
     float fade = 0.0;
-    // the veil of Görsel Hafıza parts to both sides as the camera arrives
-    float veilK = 1.0;
-    if (abs(aPath - ${VEIL_PATH.toFixed(1)}) < 0.5) {
-      float sd = dot(p - uVeilA, uVeilR);
-      float open = smoothstep(0.0, 1.0, uVeil * 1.35 - 0.35 * abs(sd) / 30.0);
-      p += uVeilR * (sd < 0.0 ? -1.0 : 1.0) * open * (9.0 + abs(sd) * 0.55);
-      veilK = 1.0 - 0.8 * open;
-    }
+    // a light line of the hall (and the pool of light under its work) belongs to a picture too
+    float ln = aPath - ${LINE_BASE.toFixed(1)};
+    if (fr > 50.0) fr = -1.0;
     if (fr > -0.5) {
       vec4 FC = uFrameC[int(fr + 0.5)];
       vec4 FO = uFrameO[int(fr + 0.5)];
-      p.y = FC.y + (p.y - FC.y) * mix(0.025, 1.0, FO.w);
       p += FO.xyz;
       fade = FC.w;
       // particles in front of a sharp picture thin out and step aside
@@ -149,6 +145,23 @@ const VERT = /* glsl */ `
     }
     // the membranes of the Deney Alanı roll slowly
     if (ki == 4 && aImg < -0.5 && fr < -0.5) p.y += sin(uTime * 0.5 + p.x * 0.11 + p.z * 0.07) * 0.9 * uLife;
+
+    // the dust of the beam is one stretch of the axis that repeats around the camera: the same few points are always
+    // near (dense enough to read as a beam), and each still stands still in the world while the camera passes it
+    float ax = 0.0;
+    if (ki == 9) {
+      ax = dot(p - uAxisP, uAxisD);
+      float w = uCamAx + mod(ax - uCamAx + uWrap, 2.0 * uWrap) - uWrap;
+      p += uAxisD * (w - ax);
+      ax = w;
+    }
+
+    // entering the fissure: the brain comes apart point by point and drifts outward a little; the dark is left
+    float brainK = 1.0;
+    if (ki != 2 && ki < 9) {
+      brainK = smoothstep(seed * 0.6, seed * 0.6 + 0.4, uBrain);
+      p += normalize(p + vec3(0.001)) * (1.0 - uBrain) * (4.0 + 10.0 * seed);
+    }
 
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
     vec4 clip = projectionMatrix * mv;
@@ -198,11 +211,31 @@ const VERT = /* glsl */ `
     }
     col = mix(col, cTeal, clamp(infl * uPTint, 0.0, 0.6));
 
-    float a = uAlpha[ki] * uExposure * bright * smoothstep(2.5, 8.0, dist);
+    float a = uAlpha[ki] * uExposure * bright * smoothstep(2.5, 8.0, dist) * brainK * uCut;
+    if (ki == 9) {
+      // the beam: only as far along the axis as the journey has opened it; far dust is fainter (the depth stays dark)
+      a *= 1.0 - smoothstep(uReach - 60.0, uReach, ax);
+      a *= 1.0 - smoothstep(uMouth, uMouth + 140.0, ax);
+      a *= smoothstep(${(-LY.leak - 30).toFixed(1)}, ${(-LY.leak).toFixed(1)}, ax);
+      a *= smoothstep(-uWrap, -uWrap * 0.8, ax - uCamAx) * (1.0 - smoothstep(uWrap * 0.75, uWrap, ax - uCamAx));
+    }
+    if (ki == 10) {
+      if (ln > -0.5) {
+        int li = int(ln + 0.5);
+        float L = uLine[li];
+        float Wr = uFrameO[li].w;
+        if (t > 1.5) a *= Wr * 0.8;
+        else {
+          // the line comes down: its tip is the brightest part; once the work is written the line rests fainter
+          a *= 1.0 - smoothstep(L * 1.06 - 0.06, L * 1.06, t);
+          a *= 1.0 + 2.5 * exp(-pow((t - L) * 14.0, 2.0)) * (1.0 - step(0.995, L));
+          a *= mix(1.0, 0.4, Wr);
+        }
+      } else if (abs(aPath - ${BEACON.toFixed(1)}) < 0.5) a *= smoothstep(110.0, 260.0, dist);
+    }
     // the shell, the tracts and the inner dust open around the camera (a corridor of view)
     if (ki == 0 || ki == 6 || ki == 7) a *= smoothstep(uOpenNear, uOpenFar, dist);
     if (ki == 0) a *= mix(uInside, 1.0, uOutside);
-    a *= veilK;
     // seen from outside, the far side of each lobe stays dim: the near surface (and its folds) reads as a volume
     if (ki == 0 && uOutside > 0.001) {
       float sx = p.x < 0.0 ? -1.0 : 1.0;
@@ -215,9 +248,14 @@ const VERT = /* glsl */ `
     if (aImg > -0.5) a *= 1.0 - fade;
     else if (fr > -0.5) a *= 1.0 - 0.55 * fade;
     // a closed frame is only a faint line; it brightens as it opens
-    if (fr > -0.5) a *= mix(0.035, 1.0, pow(uFrameO[int(fr + 0.5)].w, 1.5));
+    if (fr > -0.5 && ki == 2) {
+      // a work of the hall is written from the top down, where its light line has landed; the writing edge is brighter
+      float wr = uFrameO[int(fr + 0.5)].w * 1.14;
+      a *= 1.0 - smoothstep(wr - 0.14, wr, t);
+      a *= 1.0 + 1.8 * exp(-pow((t - wr + 0.07) * 16.0, 2.0)) * (1.0 - step(1.13, wr));
+    }
     // up close: fewer, softer points
-    if (ki != 8) a *= mix(uNearAlpha, 1.0, smoothstep(uNearDist * 0.45, uNearDist, dist));
+    if (ki < 8) a *= mix(uNearAlpha, 1.0, smoothstep(uNearDist * 0.45, uNearDist, dist));
 
     // size: clamped in css px; a point smaller than the minimum keeps the minimum size with less light. Above the knee
     // a point grows slower than the perspective, so a near surface stays fine grain instead of a field of equal discs.
@@ -293,7 +331,7 @@ const GVERT = /* glsl */ `
     if (aG.w < 0.5 && st > 0.12 && st < 0.19) col = mix(col, cLav, uLavK * 0.8);
     if (aG.w < 0.5 && st > 0.19 && st < 0.24) col = mix(col, cTeal, uIceK * 0.6);
     // a seed is many points in a small space: each is faint so the seed is a calm light, not a white blot
-    float a = mix(mix(0.05, 0.2, uRest), 0.3, m) * mix(1.0, 0.75, uStripK) * uExposure;
+    float a = mix(mix(0.07, 0.22, uRest), 0.24, m) * mix(1.0, 0.75, uStripK) * uExposure;
     float px = aG.y * uScale / max(dist, 0.001);
     float pxc = clamp(px, uMinPx, uMaxPx);
     a *= pow(min(1.0, px / uMinPx), 1.2) * smoothstep(1.5, 5.0, dist);
@@ -307,7 +345,9 @@ type Trip = { from: number; to: number; t: number; dur: number };
 type Wave = { period: number; offset: number; cycle: number; o: Vector3; c: Vector3 };
 
 export async function createScene(o: SceneOptions): Promise<SceneApi> {
-  const { canvas, light, reduced } = o;
+  const { canvas, light } = o;
+  /** Calm: "Hareketi azalt" or "Sakin görünüm". Cuts instead of flights, finished compositions, no ambient motion. */
+  let reduced = o.reduced;
   const P = W.palette;
   const PW = W.particles;
 
@@ -336,6 +376,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const anch = [0, 1, 2, 3, 4].map(() => new Vector2(-9, -9));
   const frameC = Array.from({ length: MAX_FRAMES }, () => new Vector4());
   const frameO = Array.from({ length: MAX_FRAMES }, () => new Vector4(0, 0, 0, 1));
+  const lineU: number[] = new Array(MAX_FRAMES).fill(0);
   const waveU = [0, 1, 2].map(() => new Vector4(0, -999, 0, 0));
   const waveC = [0, 1, 2].map(() => new Vector4(1, 1, 1, 0));
   const blend = { blending: CustomBlending, blendSrc: OneFactor, blendDst: OneFactor, transparent: true, depthTest: false, depthWrite: false } as const;
@@ -366,9 +407,15 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       uInside: { value: PW.insideShell },
       uBokehPx: { value: PW.bokeh.maxPx },
       uBokehLight: { value: PW.bokeh.light },
-      uVeil: { value: 0 },
-      uVeilA: { value: v3(veil.at) },
-      uVeilR: { value: v3(veil.right) },
+      uBrain: { value: 1 },
+      uReach: { value: 0 },
+      uCut: { value: 1 },
+      uCamAx: { value: 0 },
+      uWrap: { value: LY.tunnel.wrap },
+      uMouth: { value: LY.mouth },
+      uAxisP: { value: v3(LY.axis.p) },
+      uAxisD: { value: v3(LY.axis.d) },
+      uLine: { value: lineU },
       uAmp: { value: W.motion.amp },
       uMScale: { value: W.motion.scale },
       uMSpeed: { value: W.motion.speed },
@@ -399,6 +446,31 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const points = new Points(geo, mat);
   points.frustumCulled = false;
   scene.add(points);
+
+  // ── the tunnel and the hall: their own point sets (same material), made when the camera comes near and freed when it
+  // is far away. The brain is the current or a neighbouring place everywhere on the route, so it stays.
+  type Chunk = { g: BufferGeometry; pts: Points; n: number };
+  const makeChunk = (w: World): Chunk => {
+    const g = new BufferGeometry();
+    g.setAttribute("position", new BufferAttribute(w.pos, 3));
+    g.setAttribute("aC", new BufferAttribute(w.col, 3));
+    g.setAttribute("aD", new BufferAttribute(w.data, 4));
+    g.setAttribute("aPath", new BufferAttribute(w.path, 1));
+    g.setAttribute("aImg", new BufferAttribute(w.img, 1));
+    const pts = new Points(g, mat);
+    pts.frustumCulled = false;
+    scene.add(pts);
+    return { g, pts, n: w.n };
+  };
+  const freeChunk = (c: Chunk | null) => {
+    if (!c) return null;
+    scene.remove(c.pts);
+    c.g.dispose();
+    return null;
+  };
+  let tunnel: Chunk | null = null;
+  let hall: Chunk | null = null;
+  const hallF = hallFrames(samples);
 
   // ── the guide: a second small Points object, same renderer
   const ggeo = new BufferGeometry();
@@ -439,7 +511,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const areaOf = Object.fromEntries(works.map((w) => [w.id, w.area]));
   const workImage = Object.fromEntries(works.map((w) => [w.id, w.image]));
   const orderIn: Record<string, number> = {};
-  const planes = world.frames.map((f) => {
+  const planes = [...hallF, ...world.frames].map((f) => {
     const area = areaOf[f.id];
     orderIn[area] = (orderIn[area] ?? -1) + 1;
     const m = new MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, depthTest: false, side: DoubleSide, toneMapped: false });
@@ -461,9 +533,38 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       basis: new Matrix4().makeBasis(v3(f.right), v3(f.up), v3(f.normal)),
       off: new Vector3(),
       open: 1,
+      line: 1,
+      write: 1,
       fade: 0,
     };
   });
+  // the far glow of the first work of the hall: the one light the tunnel is seen by (a cheap additive plane)
+  const f0 = hallF[0];
+  const s0 = samples[f0.id];
+  const glowCol = new Vector3(0.6, 0.8, 1);
+  if (s0) {
+    glowCol.set(0, 0, 0);
+    for (let q = 0; q < s0.w * s0.h; q += 7) glowCol.add(new Vector3(s0.rgb[q * 3], s0.rgb[q * 3 + 1], s0.rgb[q * 3 + 2]));
+    glowCol.multiplyScalar(7 / (s0.w * s0.h)).lerp(new Vector3(P.offWhite[0], P.offWhite[1], P.offWhite[2]), 0.35);
+  }
+  const glowMat = new ShaderMaterial({
+    blending: CustomBlending,
+    blendSrc: OneFactor,
+    blendDst: OneFactor,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    uniforms: { uCol: { value: glowCol }, uK: { value: 0 } },
+    vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: "precision mediump float; varying vec2 vUv; uniform vec3 uCol; uniform float uK; void main() { vec2 p = abs(vUv - 0.5) * 2.0; float r = max(p.x, p.y); float g = smoothstep(1.0, 0.42, r); gl_FragColor = vec4(uCol * g * g * uK, 0.0); }",
+  });
+  const glow = new Mesh(new PlaneGeometry(f0.w * 2.3, f0.h * 2.0), glowMat);
+  glow.matrixAutoUpdate = false;
+  glow.matrix.makeBasis(v3(f0.right), v3(f0.up), v3(f0.normal)).setPosition(v3(f0.c));
+  glow.matrixWorldNeedsUpdate = true;
+  glow.renderOrder = 2;
+  glow.visible = false;
+  scene.add(glow);
   const maxSide = light ? 960 : 1280;
   const prepare = (p: (typeof planes)[number]) => {
     if (p.state !== "none") return;
@@ -517,8 +618,50 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   };
 
   // ── the route
-  const posCurve = new CatmullRomCurve3(route.map((k) => v3(k.pos)), false, "centripetal");
-  const tarCurve = new CatmullRomCurve3(route.map((k) => v3(k.target)), false, "centripetal");
+  // Işık Yolu: the way in (a curve), the tunnel (the axis, eased), the hall (a slow arrival and a slower push), then a
+  // cut through darkness to the places that are still inside the brain (knots 5..10 of `route`).
+  const LT = LY.t;
+  const posCurve = new CatmullRomCurve3(LY.entry.map((k) => v3(k.pos)), false, "centripetal");
+  const tarCurve = new CatmullRomCurve3(LY.entry.map((k) => v3(k.target)), false, "centripetal");
+  const entryT = [0, LT.swing, LT.fissure, LT.inside, LT.tunnel0];
+  const afterPos = new CatmullRomCurve3(route.slice(5).map((k) => v3(k.pos)), false, "centripetal");
+  const afterTar = new CatmullRomCurve3(route.slice(5).map((k) => v3(k.target)), false, "centripetal");
+  const axP = v3(LY.axis.p);
+  const axD = v3(LY.axis.d);
+  const axU = v3(LY.axis.up);
+  const cutMid = (LT.cut0 + LT.cut1) / 2;
+  /** Curve parameter for route time x over knots at the times ts (the knots are not evenly spaced in time). */
+  const pw = (x: number, ts: number[]) => {
+    let i = 0;
+    while (i < ts.length - 2 && x >= ts[i + 1]) i++;
+    return clamp((i + (x - ts[i]) / (ts[i + 1] - ts[i])) / (ts.length - 1), 0, 1);
+  };
+  const first0 = v3(f0.c);
+  const camAt = (x: number, pos: Vector3, look: Vector3) => {
+    if (x <= LT.tunnel0) {
+      const u = pw(x, entryT);
+      posCurve.getPoint(u, pos);
+      tarCurve.getPoint(u, look);
+    } else if (x <= LT.tunnel1) {
+      // little scroll, a long way: the camera gathers speed and slows down again before the hall
+      const e = ease((x - LT.tunnel0) / (LT.tunnel1 - LT.tunnel0));
+      pos.copy(axP).addScaledVector(axD, e * LY.mouth);
+      look.copy(pos).addScaledVector(axD, 120);
+    } else if (x < cutMid) {
+      const a = sstep(LT.tunnel1, LT.hall, x);
+      const arrive = 1 - (1 - a) * (1 - a); // quick out of the tunnel, slow onto the viewing spot
+      const b = sstep(LT.hall, LT.hallEnd, Math.min(x, LT.hallEnd));
+      pos.copy(axP).addScaledVector(axD, LY.mouth + (LY.view - LY.mouth) * arrive + LY.push[0] * b);
+      pos.x += LY.push[1] * b;
+      pos.addScaledVector(axU, -1.2 * arrive + LY.push[2] * b);
+      look.copy(pos).addScaledVector(axD, 120).lerp(first0, 0.2 * arrive);
+    } else {
+      const u = pw(x, LY.after);
+      afterPos.getPoint(u, pos);
+      afterTar.getPoint(u, look);
+    }
+  };
+  const stopsT = [...stations.map((x) => x.t), ...calmStops].sort((a, b) => a - b);
   const T = stations.map((x) => x.t);
   const tOf = (id: StationId) => stations.find((x) => x.id === id)!.t;
   const tG = tOf("gorsel-hafiza");
@@ -588,6 +731,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     // fewer points: each remaining point carries a little more light, so the forms keep their weight
     mat.uniforms.uExposure.value = PW.exposure * Math.pow(1 / q.points, 0.35);
     geo.setDrawRange(0, Math.round(world.n * q.points));
+    for (const c of [tunnel, hall]) if (c) c.g.setDrawRange(0, Math.round(c.n * q.points));
   };
   const resize = () => {
     width = Math.max(1, canvas.clientWidth);
@@ -596,7 +740,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     // a narrow (portrait) screen gets a wider lens so the same part of the world fits across
     camera.fov = W.fov * clamp(1.35 / camera.aspect, 1, 1.55);
     // a portrait screen sees the overview from higher up: the brain's length then runs up the screen and fills it
-    const ov = camera.aspect < 0.8 ? W.overviewPortrait : route[0];
+    const ov = camera.aspect < 0.8 ? W.overviewPortrait : LY.entry[0];
     posCurve.points[0].set(...ov.pos);
     tarCurve.points[0].set(...ov.target);
     camera.updateProjectionMatrix();
@@ -610,9 +754,9 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   // ── input: wheel, trackpad, drag, touch
   const stepTo = (dir: number) => {
     // "Hareketi azalt": the wheel goes from one station to the next, directly
-    const idx = stations.reduce((best, st, k) => (Math.abs(st.t - s) < Math.abs(stations[best].t - s) ? k : best), 0);
-    const next = clamp(idx + dir, 0, stations.length - 1);
-    s = sTarget = stations[next].t;
+    const idx = stopsT.reduce((best, t, k) => (Math.abs(t - s) < Math.abs(stopsT[best] - s) ? k : best), 0);
+    const next = clamp(idx + dir, 0, stopsT.length - 1);
+    s = sTarget = stopsT[next];
   };
   let reducedAcc = 0;
   /** Last wheel or touch travel (used only if snapping is switched on in the config). */
@@ -735,6 +879,36 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   canvas.addEventListener("pointerup", onUp);
   canvas.addEventListener("pointercancel", onUp);
 
+  // ── keyboard: arrows and PageUp / PageDown travel, Home / End go to the two ends (never while a panel, a menu's
+  // sheet or the brief has the focus)
+  const onKey = (e: KeyboardEvent) => {
+    if (hold || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || canvas.classList.contains("is-blocked")) return;
+    const el = e.target as HTMLElement | null;
+    if (el && el.closest && el.closest('input, textarea, select, [role="dialog"], .vm-pop, .zh-works, [contenteditable]')) return;
+    if (e.key === "Home" || e.key === "End") {
+      e.preventDefault();
+      goTo(e.key === "Home" ? "genel" : "birlikte-uretelim");
+      return;
+    }
+    const step = ({ ArrowDown: 0.03, ArrowRight: 0.03, PageDown: 0.1, ArrowUp: -0.03, ArrowLeft: -0.03, PageUp: -0.1 } as Record<string, number>)[e.key];
+    if (!step) return;
+    e.preventDefault();
+    first();
+    if (reduced) {
+      stepTo(Math.sign(step));
+      kick();
+      return;
+    }
+    if (trip) {
+      sTarget = s;
+      trip = null;
+    }
+    sTarget = clamp(sTarget + step, 0, 1);
+    lastNav = performance.now();
+    kick();
+  };
+  window.addEventListener("keydown", onKey);
+
   // ── trips started by a button: along the same route
   const goTo = (id: StationId) => {
     const st = stations.find((x) => x.id === id);
@@ -804,9 +978,13 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const tmpM = new Matrix4();
   const sc1 = new Vector3();
   const updateMoments = () => {
+    // the hall opens: one light line after the other comes down, and each work is written where its line lands.
+    // The first work is the light the beam came from: it is there from the start.
+    const O = LY.opening;
     for (const p of gorsel) {
-      const a = tG - gm.gorsel.from + gm.gorsel.each * p.order;
-      p.open = sstep(a, a + gm.gorsel.len, s);
+      const a = O.from + O.each * (p.order - 1);
+      p.line = p.order === 0 ? 1 : sstep(a, a + O.line, s);
+      p.write = p.order === 0 ? 1 : sstep(a + O.line * 0.8, a + O.line + O.write, s);
     }
     for (const p of kurgu) {
       const a = tK - gm.kurgu.from + gm.kurgu.each * p.order;
@@ -842,7 +1020,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     while (k < T.length - 2 && s >= T[k + 1]) k++;
     const p = clamp((s - T[k]) / (T[k + 1] - T[k]), 0, 1);
     // the guide runs ahead and waits at the next place: it has arrived when the visitor is `lead` of the way there
-    const g = ease(sstep(0, W.guide.lead, p));
+    const g = ease(sstep(0, k === 1 ? W.guide.leadTunnel : W.guide.lead, p));
     const A = spots[k];
     const B = spots[k + 1];
     gctrl.copy(A).add(B).multiplyScalar(0.5).add(new Vector3(0, 9, 0));
@@ -851,24 +1029,36 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     gtan.copy(gctrl).sub(A).multiplyScalar(2 * u).addScaledVector(B.clone().sub(gctrl), 2 * g);
     // in mid-flight it keeps to the visitor's view: pulled toward a point ahead of the camera (never at the ends)
     camera.getWorldDirection(gahead);
-    gahead.multiplyScalar(W.guide.ahead).add(camera.position).add(new Vector3(0, 2.5, 0));
-    const pull = W.guide.pull * Math.sin(Math.PI * g) * (k === 0 ? 0 : 1);
+    // in the tunnel it flies a little ahead of the visitor, beside the beam, and points the way the light goes
+    gahead.multiplyScalar(W.guide.ahead).add(camera.position).add(new Vector3(k === 1 ? -5.2 : 0, k === 1 ? -3.4 : 2.5, 0));
+    const pull = k === 1 ? Math.min(1, 7 * Math.sin(Math.PI * g)) * 0.97 : 0;
     gpos.lerp(gahead, pull);
+    if (k === 1) gtan.lerp(axD, Math.min(1, pull * 1.2));
+    // seen from behind a level bird is only a line: in the tunnel its back is tipped toward the visitor
+    const tip = k === 1 ? Math.min(1, pull * 1.2) : 0;
     if (gtan.lengthSq() < 1e-6) gtan.set(0, 0, 1);
     gtan.normalize();
     const right = new Vector3().crossVectors(gtan, new Vector3(0, 1, 0));
     if (right.lengthSq() < 1e-6) right.set(1, 0, 0);
     right.normalize();
     const up = new Vector3().crossVectors(right, gtan).normalize();
+    if (tip > 0) {
+      const fwd = gtan.clone().multiplyScalar(Math.cos(0.75 * tip)).addScaledVector(up, Math.sin(0.75 * tip)).normalize();
+      up.crossVectors(right, fwd).normalize();
+      gtan.copy(fwd);
+    }
     gRotM.makeBasis(right, up, gtan);
     const gu = gmat.uniforms;
     gu.uGRot.value.setFromMatrix4(gRotM);
     gu.uGPos.value.copy(gpos);
     // a bird while it travels, a seed of light while it waits (at both ends)
-    const morph = sstep(0.02, 0.22, g) * (1 - sstep(0.78, 0.98, g));
+    // a bird only in the passages (the way in, the tunnel); in the worlds it waits as a seed. Half way through the
+    // tunnel it gathers into the seed for a moment. Wings follow the route position, never a clock.
+    const dip = k === 1 ? 1 - 0.9 * sstep(0.43, 0.5, g) * (1 - sstep(0.5, 0.57, g)) : 1;
+    const morph = k > 1 ? 0 : sstep(0.02, k === 1 ? 0.1 : 0.22, g) * (1 - sstep(k === 1 ? 0.92 : 0.78, 0.99, g)) * dip;
     gu.uMorph.value = morph;
-    gu.uLift.value = 0.7 * Math.sin(g * Math.PI * 4) * morph;
-    gu.uGather.value = k === 0 ? sstep(0.05, 0.8, p) : 1;
+    gu.uLift.value = 0.8 * Math.sin(g * Math.PI * (k === 1 ? 14 : 4)) * morph;
+    gu.uGather.value = 1;
     gu.uStripK.value = sstep(tK - 0.075, tK - 0.045, s) * (1 - sstep(tK - 0.026, tK - 0.004, s));
     gu.uMemK.value = 0.78 * sstep(tD - 0.08, tD - 0.035, s) * (1 - sstep(tD + 0.02, tD + 0.07, s));
     gu.uTintK.value = sstep(tG - 0.01, tG + 0.035, s);
@@ -876,7 +1066,6 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     gu.uLavK.value = sstep(tD + 0.02, tD + 0.06, s);
     gu.uRest.value = sstep(tF - 0.03, tF, s);
     mat.uniforms.uFinal.value = sstep(tF - gm.final.from, tF, s);
-    mat.uniforms.uVeil.value = sstep(tG - veil.from, tG - veil.to, s);
   };
 
   // ── labels follow the places, without overlapping and never under the page's controls
@@ -1002,8 +1191,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     const kd = 1 - Math.exp(-dt * (dragging ? 22 : W.look.damping));
     yaw += (yawT - yaw) * kd;
     pitch += (pitchT - pitch) * kd;
-    posCurve.getPoint(s, camera.position);
-    tarCurve.getPoint(s, look);
+    camAt(s, camera.position, look);
     const v = look.clone().sub(camera.position);
     v.applyAxisAngle(new Vector3(0, 1, 0), yaw);
     const right = new Vector3().crossVectors(v, new Vector3(0, 1, 0)).normalize();
@@ -1022,6 +1210,30 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       mat.uniforms.uOutside.value = sstep(1.0, 1.6, e);
     }
 
+    // the light path: how much of the brain is left, how far the beam is open, the cut, and which point sets exist
+    const inLight = s < cutMid;
+    const brainK = inLight ? 1 - sstep(LY.dissolve[0], LY.dissolve[1], s) : 1;
+    const cutK = sstep(0, (LT.cut1 - LT.cut0) / 2, Math.abs(s - cutMid));
+    mat.uniforms.uBrain.value = brainK;
+    mat.uniforms.uCut.value = cutK;
+    mat.uniforms.uCamAx.value = camera.position.clone().sub(axP).dot(axD);
+    mat.uniforms.uReach.value = 8 + (LY.axis.len + 400) * sstep(LT.fissure * 0.6, LT.tunnel0, s);
+    const wantTunnel = frames > 3 && s < cutMid + 0.03;
+    const wantHall = s > 0.015 && s < cutMid + 0.03;
+    if (wantTunnel && !tunnel) {
+      tunnel = makeChunk(buildTunnel(light ? LY.tunnel.count.light : LY.tunnel.count.desktop, samples));
+      applyQuality();
+    } else if (!wantTunnel && tunnel) tunnel = freeChunk(tunnel);
+    if (wantHall && !hall) {
+      hall = makeChunk(buildHall(light ? LY.hall.count.light : LY.hall.count.desktop, samples, hallF));
+      applyQuality();
+    } else if (!wantHall && hall) hall = freeChunk(hall);
+    if (tunnel) tunnel.pts.visible = inLight;
+    if (hall) hall.pts.visible = inLight && s > LT.fissure;
+    glow.visible = inLight && s > LT.fissure;
+    glowMat.uniforms.uK.value = LY.hall.glow * sstep(50, 240, camera.position.distanceTo(first0)) * cutK;
+    points.visible = brainK > 0.001;
+
     updateMoments();
     updateGuide();
     updateWaves();
@@ -1038,7 +1250,9 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
         prepare(p);
         preparedNow = true;
       }
-      const target = p.state === "ready" ? sstep(W.picture.far, W.picture.near, d) * p.open : 0;
+      const isHall = p.area === "gorsel-hafiza";
+      const shown = isHall ? (inLight ? sstep(0.85, 1, p.write) : 0) : brainK * cutK;
+      const target = p.state === "ready" ? (isHall ? sstep(LY.sharp.far, LY.sharp.near, d) : sstep(W.picture.far, W.picture.near, d)) * shown : 0;
       p.fade += (target - p.fade) * (1 - Math.exp(-dt * 6));
       if (Math.abs(target - p.fade) > 0.004) fadeBusy = true;
       p.mat.opacity = p.fade;
@@ -1051,7 +1265,8 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       }
       if (p.f.img < MAX_FRAMES) {
         frameC[p.f.img].set(p.f.c[0], p.f.c[1], p.f.c[2], p.fade);
-        frameO[p.f.img].set(p.off.x, p.off.y, p.off.z, p.open);
+        frameO[p.f.img].set(p.off.x, p.off.y, p.off.z, isHall ? p.write : 1);
+        lineU[p.f.img] = p.line;
       }
     }
 
@@ -1088,6 +1303,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     canvas.dataset.guide = gpos.toArray().map((x) => x.toFixed(1)).join(",");
     canvas.dataset.morph = gmat.uniforms.uMorph.value.toFixed(2);
     canvas.dataset.time = time.toFixed(2);
+    canvas.dataset.sets = `brain${tunnel ? "+tunnel" : ""}${hall ? "+hall" : ""}`;
 
     const busy =
       trip ||
@@ -1123,6 +1339,12 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     goTo,
     setPaused(p) {
       paused = p;
+      reduced = o.reduced || p;
+      if (reduced) {
+        // cuts, not flights: the camera goes to the nearest stop and stays on stops from now on
+        trip = null;
+        s = sTarget = stopsT.reduce((best, t) => (Math.abs(t - s) < Math.abs(best - s) ? t : best), stopsT[0]);
+      }
       kick();
     },
     setCalm(c) {
@@ -1143,6 +1365,11 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       if (prepTimer) window.clearTimeout(prepTimer);
       ro.disconnect();
       document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("keydown", onKey);
+      freeChunk(tunnel);
+      freeChunk(hall);
+      glow.geometry.dispose();
+      glowMat.dispose();
       canvas.removeEventListener("wheel", onWheel);
       labelLayer?.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("pointerdown", onDown);

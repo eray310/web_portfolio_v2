@@ -83,6 +83,11 @@ const Navbar = () => {
             </a>
           </li>
           <li>
+            <a href="/zihnim">
+              <HoverLinks text="ZİHNİM" />
+            </a>
+          </li>
+          <li>
             <a data-href="#contact" href="#contact">
               <HoverLinks text="İLETİŞİM" />
             </a>

@@ -240,6 +240,9 @@ const AiWorksPage = () => {
               <a href="/hakkimda">Hakkımda</a>
             </li>
             <li>
+              <a href="/zihnim">Zihnim</a>
+            </li>
+            <li>
               <a href="/#contact">İletişim</a>
             </li>
             {aiWorks.map((w) => (

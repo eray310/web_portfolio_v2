@@ -63,16 +63,70 @@ export const route: { pos: V3; target: V3 }[] = [
   { pos: [42, 20, -116], target: [0, 4, -70] }, // 9 out through the back of the brain, looking back at it
   { pos: [0, 46, -172], target: [0, 0, -18] }, //  10 Birlikte Üretelim: the whole brain again, from behind
 ];
-const knotT = (i: number) => i / (route.length - 1);
+/**
+ * "Işık Yolu": the first stretch of the journey leaves the brain. The camera enters the front fissure, the shell
+ * dissolves, and it follows one beam of light along a long axis (the tunnel) to a tall dark hall far outside the brain
+ * (Görsel Hafıza). After the hall a short cut through darkness leads back to the places that are still inside the
+ * brain (Kurgu Masası, Deney Alanı, the final), on knots 5..10 of `route` above. Knots 2..4 of `route` are no longer
+ * travelled; they stay because the layouts of the old places are written relative to them (`seen`).
+ *
+ * Tempo: `t` are route positions 0..1 (what the wheel moves). They are NOT evenly spaced: little scroll for the long
+ * tunnel (the camera accelerates and slows down again), more for the hall.
+ */
+const nrm = (v: V3): V3 => {
+  const l = Math.hypot(v[0], v[1], v[2]);
+  return [v[0] / l, v[1] / l, v[2] / l];
+};
+const AX0: V3 = [0, 14, 52];
+const AXD: V3 = nrm([0, -0.1, -1]);
+const AXU: V3 = [0, -AXD[2], AXD[1]]; // up, at a right angle to the axis (right is +x)
+const TUNNEL_LEN = 1300; // from the start of the axis to the first work of the hall
+const VIEW_DIST = 31; // the hall's viewing spot is this far in front of the first work
+const along = (d: number, x = 0, y = 0): V3 => [AX0[0] + AXD[0] * d + x, AX0[1] + AXD[1] * d + AXU[1] * y, AX0[2] + AXD[2] * d + AXU[2] * y];
+export const light = {
+  axis: { p: AX0, d: AXD, up: AXU, len: TUNNEL_LEN },
+  /** Route times: the opening frame, the fissure, the tunnel (from, to), the hall's viewing spot, the end of the look-around, the cut (from, to). */
+  t: { swing: 0.06, fissure: 0.11, inside: 0.155, tunnel0: 0.19, tunnel1: 0.4, hall: 0.52, hallEnd: 0.62, cut0: 0.625, cut1: 0.655 },
+  /** Camera on the way in: positions and look targets at t = 0, swing, fissure, inside, tunnel0. */
+  entry: [
+    { pos: [-62, 70, 132] as V3, target: [8, -8, 2] as V3 },
+    { pos: [-16, 58, 124] as V3, target: [0, 8, 22] as V3 },
+    { pos: [0, 30, 106] as V3, target: [0, 14, 44] as V3 },
+    { pos: [0, 19, 76] as V3, target: along(60) },
+    { pos: AX0, target: along(120) },
+  ],
+  /** The hall: where the tunnel opens into it (distance along the axis), the viewing spot, and the slow push of the look-around (forward, right, up). */
+  mouth: TUNNEL_LEN - VIEW_DIST - 120,
+  view: TUNNEL_LEN - VIEW_DIST,
+  push: [3, 2, 0.6] as V3,
+  /** The brain's points dissolve between these route times as the camera enters; the beam reaches out of the fissure by `leak` units before that. */
+  dissolve: [0.125, 0.19] as [number, number],
+  leak: 78,
+  /** Route times of knots 5..10 of `route` after the cut. */
+  after: [0.655, 0.74, 0.805, 0.87, 0.935, 1],
+  /** The tunnel: point count (desktop / phone), half size of the beam's section, radius of the faint outer streaks. */
+  tunnel: { count: { desktop: 20000, light: 8000 }, beam: [4.4, 7.6] as [number, number], outer: 26, streaks: 30, wrap: 240 },
+  /** The hall: point count, height the light lines come down from, floor level under the viewing spot, the far glow of the first work. */
+  hall: { count: { desktop: 46000, light: 18000 }, ceiling: 150, floor: -17, glow: 0.26 },
+  /** The hall's opening: each line starts `each` after the one before, comes down in `line`, and its work is written in `write` (route time). */
+  opening: { from: 0.4, each: 0.0095, line: 0.018, write: 0.024 },
+  /** Pictures of the hall turn sharp only this close (the layers behind stay points). */
+  sharp: { far: 58, near: 42 },
+};
+/** A point of the hall as seen from its viewing spot: `d` units ahead, `x` to the right, `y` up. */
+export const hallSeen = (d: number, x: number, y: number): V3 => along(light.view + d, x, y);
+export const hallView: V3 = along(light.view);
 
-export const stations: { id: StationId; title: string; t: number; knot: number }[] = [
-  { id: "genel", title: "Genel görünüm", t: knotT(0), knot: 0 },
-  { id: "giris", title: "Fikir Çekirdeği", t: knotT(2), knot: 2 },
-  { id: "gorsel-hafiza", title: "Görsel Hafıza", t: knotT(4), knot: 4 },
-  { id: "kurgu-masasi", title: "Kurgu Masası", t: knotT(6), knot: 6 },
-  { id: "deney-alani", title: "Deney Alanı", t: knotT(8), knot: 8 },
-  { id: "birlikte-uretelim", title: "Birlikte Üretelim", t: knotT(10), knot: 10 },
+export const stations: { id: StationId; title: string; t: number }[] = [
+  { id: "genel", title: "Genel görünüm", t: 0 },
+  { id: "giris", title: "Giriş", t: light.t.inside },
+  { id: "gorsel-hafiza", title: "Görsel Hafıza", t: light.t.hall },
+  { id: "kurgu-masasi", title: "Kurgu Masası", t: light.after[1] },
+  { id: "deney-alani", title: "Deney Alanı", t: light.after[3] },
+  { id: "birlikte-uretelim", title: "Birlikte Üretelim", t: 1 },
 ];
+/** Extra stops of the calm view (station to station, no flights): the tunnel as one still frame. */
+export const calmStops = [0.3];
 export const stationT = (id: StationId) => stations.find((s) => s.id === id)!.t;
 
 /**
@@ -88,7 +142,7 @@ const PALETTE = {
 };
 
 export const story: Record<StationId, string> = {
-  genel: "Bir fikrin yolculuğu. Rehberi izle; sırayla ilerle.",
+  genel: "Zihnin içi karanlık. Işığı izle.",
   giris: "Bir fikir nereden gelir?",
   "gorsel-hafiza": "Önce görür, biriktiririm.",
   "kurgu-masasi": "Sonra parçalar arasında bir ritim bulurum.",
@@ -110,7 +164,7 @@ export const worldConfig = {
     maxPx: 3.4,
     edge: 1.1,
     exposure: 1.5,
-    alpha: [0.62, 0.34, 0.8, 0.5, 0.6, 0.3, 0.3, 0.26, 0.085],
+    alpha: [0.62, 0.34, 0.8, 0.5, 0.6, 0.3, 0.3, 0.26, 0.085, 0.62, 0.8],
     near: { dist: 28, alpha: 0.4 },
     /** Above `knee` px a point grows only by `slope` of the perspective size: near surfaces stay fine grain. */
     knee: 2.0,
@@ -125,7 +179,7 @@ export const worldConfig = {
    * breathes slowly without drifting. Amplitude in scene units per kind; `speed` in radians per second; `scale` is the
    * spatial frequency of the field. While the camera travels the amplitude drops to `whileMoving`.
    */
-  motion: { amp: [0.5, 0.3, 0.12, 0.12, 0.4, 0.2, 0.7, 0.45, 0.9], speed: 0.32, scale: 0.055, whileMoving: 0.35 },
+  motion: { amp: [0.5, 0.3, 0.12, 0.12, 0.4, 0.2, 0.7, 0.45, 0.9, 0.5, 0.04], speed: 0.32, scale: 0.055, whileMoving: 0.35 },
   /**
    * Light waves: `slots` waves run at the same time with their own period (s). Each starts at a point of the world,
    * spreads along the surface (radius grows to `reach`), leaves a short coloured trail and fades back to the base colour.
@@ -150,7 +204,7 @@ export const worldConfig = {
    * the route moves on, and waits at the next place. `count` points; `seedR` the seed's radius; `span` the bird's wing
    * span; `lead` how far (0..1 of a segment) it runs ahead of the camera; `wait` where in the segment it has arrived.
    */
-  guide: { count: 1100, seedR: 1.1, span: 8, lead: 0.62, size: 0.3, ahead: 26, pull: 0.75 },
+  guide: { count: 560, seedR: 0.9, span: 9, lead: 0.62, leadTunnel: 0.97, size: 0.34, ahead: 30, pull: 0.8 },
   /**
    * Discovery moments, as route time BEFORE each station (they are complete at the station, forwards and backwards):
    * Görsel Hafıza frames open layer by layer; Kurgu Masası frames align one after another; Deney Alanı screens pass
@@ -168,10 +222,10 @@ export const worldConfig = {
   brain: { hemiX: 40, r: [47, 52, 94] as V3, gap: 2.6 },
   core: { c: [0, 8, 0] as V3, r: 8 },
   /** Point counts (desktop / phone). The quality steps draw a share of them. */
-  count: { desktop: 260000, light: 90000 },
+  count: { desktop: 200000, light: 70000 },
   /** Wheel: pixels of wheel for the whole route; the follow rate (1/s) once the wheel stops; largest step of one event. */
   /** snapReach 0: the camera stays exactly where the visitor stops (no pull onto a station). */
-  wheel: { routePx: 6800, follow: 6.5, maxStep: 240, snapAfter: 260, snapReach: 0 },
+  wheel: { routePx: 8200, follow: 7.5, maxStep: 240, snapAfter: 260, snapReach: 0 },
   /** Phone: a vertical drag of this many screen heights runs the whole route. */
   touch: { routeScreens: 3.4 },
   /** A trip started by a button: seconds per whole route, and the limits. */
@@ -198,7 +252,7 @@ export const areas: Area[] = [
     title: "Görsel Hafıza",
     tagline: "İçine girilen bir görsel arşiv: farklı yükseklik ve derinlikte asılı, gerçek çalışmalarımın kareleri.",
     hint: "Bir kareye tıkla ya da listeden seç.",
-    anchor: [-50, 34, 14],
+    anchor: hallSeen(31, 0, 12),
   },
   {
     id: "kurgu-masasi",
@@ -249,17 +303,16 @@ export const seen = (k: number, d: number, x: number, y: number): V3 => {
   const [ux, uy, uz] = [-rz * fy, rz * fx - rx * fz, rx * fy]; // up = right × forward
   return [C[0] + fx * d + rx * x + ux * y, C[1] + fy * d + uy * y, C[2] + fz * d + rz * x + uz * y];
 };
-const G = 4; // route knot of Görsel Hafıza
 const D = 8; // route knot of Deney Alanı
 /** Görsel Hafıza: [title, distance, right, up, width, extra turn]: layers from near to far, kept clear of the card. */
 // three near works carry the frame (clear of each other); the rest recede behind them in two dimmer layers
 const gorselList: [string, number, number, number, number, number?][] = [
   ["Motosan", 31, 0, 1.2, 8.6],
   ["Lay", 35, 13.6, 2.6, 7.6, -0.26],
-  ["Next Telekom", 35, -14, 4.4, 7.6, 0.26],
+  ["Next Telekom", 35, -13.2, 2.6, 7.6, 0.26],
   ["RES360", 50, 24.5, -14.5, 7.5, -0.34],
   ["PayPal", 52, 9.5, -14.5, 7],
-  ["Uber Motion", 56, -35, 12, 7.5, 0.36],
+  ["Uber Motion", 56, -34, 6, 7.5, 0.36],
   ["Fidan Properties", 70, -40, -6, 8.5, 0.3],
   ["Motivasyon vs Disiplin", 72, 4, 22, 8.5],
   ["Allesta", 74, -19, -8, 8.5, 0.2],
@@ -269,13 +322,13 @@ const kurguList: [string, number][] = [
   ["The Lock", 0.2],
   ["Allvex", 0.36],
   ["Voop", 0.53],
-  ["La Vita", 0.7],
-  ["Regnum Riva", 0.83],
-  ["Elaris", 0.94],
+  ["La Vita", 0.69],
+  ["Regnum Riva", 0.81],
+  ["Elaris", 0.92],
 ];
 /** The film strip of Kurgu Masası: a curve through the right lobe; its frames sit at `u` along it. */
 /** Laid out as seen from the station: a gentle arc that comes from the far left, passes the camera (Voop, facing it) and leaves to the right. */
-export const filmStrip: V3[] = [seen(6, 60, -52, 4), seen(6, 43, -28, 1.5), seen(6, 34, -5, 0.5), seen(6, 39, 17, 1.5), seen(6, 54, 36, 4)];
+export const filmStrip: V3[] = [seen(6, 60, -52, 4), seen(6, 43, -28, 1.5), seen(6, 34, -5, 0.5), seen(6, 41, 15, 1.5), seen(6, 62, 25, 4)];
 export const kurguU: Record<string, number> = {};
 
 const web = aiWorks.find((w) => w.id === "web-sitesi")!;
@@ -284,7 +337,7 @@ const app = aiWorks.find((w) => w.id === "uygulama")!;
 export const works: Work[] = [
   ...gorselList.map(([t, d, x, y, width, turn]) => {
     const p = byTitle(t);
-    return { id: `g-${p.poster}`, area: "gorsel-hafiza" as AreaId, title: p.title, text: p.description, image: poster(p), tag: p.categories.join(" · "), at: seen(G, d, x, y), width, turn };
+    return { id: `g-${p.poster}`, area: "gorsel-hafiza" as AreaId, title: p.title, text: p.description, image: poster(p), tag: p.categories.join(" · "), at: hallSeen(d, x, y), width, turn };
   }),
   ...kurguList.map(([t, u]) => {
     const p = byTitle(t);
@@ -353,21 +406,12 @@ export const workById = (id: string | null) => (id ? works.find((w) => w.id === 
  * the card (lower left) and the route indicator (right). At the overview it is still part of the idea core.
  */
 export const guideSpots: Record<StationId, V3> = {
-  genel: [0, 8, 0],
-  giris: [-2, 12, 24],
-  "gorsel-hafiza": seen(4, 24, -3.6, -3.2),
+  genel: [0, 15, 108],
+  giris: along(46, 0, 1),
+  "gorsel-hafiza": hallSeen(24, -3.6, -3.2),
   "kurgu-masasi": seen(6, 20, -9.5, 4.5),
   "deney-alani": seen(8, 32, -8, 2),
   "birlikte-uretelim": seen(10, 34, 0, 5),
   "hareket-atolyesi": [0, 8, 0],
 };
 
-/** Görsel Hafıza's veil: a folded sheet of points in front of the archive (as seen from the station); it parts as the camera arrives. */
-export const veil = (() => {
-  const a = seen(4, 19, 0, 0);
-  const b = seen(4, 19, 1, 0);
-  const c = seen(4, 19, 0, 1);
-  const d = seen(4, 20, 0, 0);
-  const sub = (p: V3, q: V3): V3 => [p[0] - q[0], p[1] - q[1], p[2] - q[2]];
-  return { at: a, right: sub(b, a), up: sub(c, a), fwd: sub(d, a), halfW: 30, halfH: 18, from: 0.085, to: 0.012 };
-})();

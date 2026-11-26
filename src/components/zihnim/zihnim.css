@@ -93,6 +93,37 @@
   text-decoration: none;
   border-radius: 999px;
 }
+.zh-site {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: -8px 0 2px;
+  padding: 0 10px;
+  font-size: 14px;
+  color: var(--zh-dim);
+  text-decoration: none;
+  border-radius: 999px;
+}
+.zh-nav-site {
+  display: flex;
+  gap: 4px;
+  padding-top: 6px !important;
+  border-top: 1px solid rgba(238, 233, 228, 0.16) !important;
+}
+.zh-nav-site a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 15px;
+  color: var(--zh-ink);
+  text-decoration: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .zh-site:hover {
+    color: var(--zh-ink);
+  }
+}
 .zh-home svg {
   width: 20px;
   height: 20px;
@@ -174,7 +205,9 @@
 }
 
 /* the places' labels: positioned by the scene; the buttons at the top are the real controls */
+/* Işık Yolu: the route on the right (and the card) name the places; floating names would repeat them */
 .zh-labels {
+  display: none;
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -763,6 +796,9 @@
     align-items: center;
     grid-column: 2;
     grid-row: 1;
+  }
+  .zh-site {
+    display: none;
   }
   .zh-top nav {
     display: none;

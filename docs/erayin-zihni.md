@@ -123,3 +123,47 @@ Supersedes the notes above where they differ.
 - Not done: the guide bird was not redesigned (only its waiting spots moved); Deney Alanı kept its moment; no depth
   blur pass. The main reference (pendereckisgarden.pl) was seen only up to its entry screen; the particle reference
   images were not attached. Real phones, Safari, Firefox, real trackpad: not tried.
+
+## Isik Yolu, first stretch (branch `design/isik-yolu`, from `design/cinematic-zihnim-ai` at `b1a2681`; local only, not pushed)
+Direction: the inside of the mind is dark; a picture exists only where light falls; every point is unfinished work
+that light and nearness resolve. The brain is a door: the worlds are far apart, outside it.
+Done in this round: outside of the brain -> fissure -> tunnel -> the opening of Gorsel Hafiza (a hall). Kurgu Masasi,
+Deney Alani and the final are unchanged inside the brain; a short cut through darkness (route time 0.625-0.655) links
+the hall to them. That link is temporary.
+
+- Settings: `light` in `zihnimWorld.ts` (axis, route times `t`, entry camera keys, `mouth`, `view`, `push`,
+  `dissolve`, `leak`, `after`, `tunnel`, `hall`, `opening`, `sharp`), `calmStops`, `hallSeen` (layout of the hall as
+  seen from its viewing spot; `gorselList` uses it).
+- Tempo (route time, what the wheel moves; not evenly spaced): outside 0-0.11, way in 0.11-0.19, tunnel 0.19-0.40
+  (about 1150 units, eased: it gathers speed and slows down), opening of the hall 0.40-0.52, look-around 0.52-0.62,
+  cut, Kurgu 0.74, Deney 0.87, final 1. The look-around is shorter than the 35 % first asked for: a long stretch where
+  the wheel hardly moves the camera felt stuck; the visitor can stop anywhere, so time to look does not need scroll.
+- Point sets: the brain (`buildWorld`, 200k desktop / 70k phone, built at start, still holds Kurgu and Deney), the
+  tunnel (`buildTunnel`, 20k / 8k, built after the first frames) and the hall (`buildHall`, 46k / 18k, built when the
+  visitor starts to move). Tunnel and hall are freed after the cut and rebuilt in the dark of the cut on the way back
+  (`wantTunnel`, `wantHall` in `ZihnimScene.ts`; `data-sets` on the canvas shows what exists).
+- Tunnel: kind 9. One stretch of beam dust (`tunnel.wrap` x 2 long) repeats around the camera in the shader
+  (`uCamAx`, `uWrap`), coloured across its section by the first poster; a few faint streaks outside; no rings. The far
+  light is the first work: large points (`BEACON`) and one additive plane (`glow`).
+- Hall: kind 10 lines (`LINE_BASE` + picture, `uLine`) come down one after the other; each work (kind 2, `t` = how
+  far down the picture) is written from the top (`uFrameO.w`); floor pool under each. All driven by route time
+  (`updateMoments`). Only pictures nearer than `sharp` turn into the sharp plane; the layers behind stay points.
+- Entry: `uBrain` takes the brain apart point by point between `dissolve` times; the beam leaks out of the fissure
+  by `leak` units at the opening frame.
+- Guide: 560 points, new bird (line of the leading edge, tapering wings, forked tail); a bird only on the way in
+  and in the tunnel (tipped toward the visitor there, a seed for a moment half way), a seed in the worlds.
+- Input: keyboard (arrows 0.03, PageUp/PageDown 0.1, Home/End); `wheel.follow` 7.5, `routePx` 8200.
+  Calm view ("Sakin gorunum" or reduced motion) now behaves the same: cuts between stops (`stations` + `calmStops`,
+  the tunnel is one still frame at 0.30), no ambient motion.
+- UI: floating place names are off (`.zh-labels`); the route names every station; links to Ana site, AI Isler,
+  Hakkimda at the top (in the Alanlar menu on phones). Main menus (home, AI Isler) have "Zihnim"; under 500 px the home
+  menu is a grid of two rows.
+- Kurgu Masasi: the right end of the strip recedes instead of running under the route (`filmStrip`, `kurguList`).
+- Measured, Chrome on Windows, RTX 4060, 144 Hz, against `b1a2681`: GPU two runs, median 6.9-7.0 ms and p95 7.1 ms in
+  both versions for cold start + wheel, button trip, pointer, phone emulation; the new version has one 62-90 ms frame
+  at cold start (tunnel and hall are built then). Software WebGL (SwiftShader), one run: cold start 41.6 / 34.7 ms
+  median, trip 34.7 / 34.7, pointer 34.7 / 34.7, phone trip 20.9 / 14.0 (old / new).
+- Open: on a portrait phone the three front works of the hall do not all fit across; the centre of the tunnel is
+  close to white where beam dust and the far light overlap; the tail of the bird can read as legs; Kurgu and Deney
+  are still inside the brain and built at start. Not tried: real phones, Safari, Firefox, a real trackpad.
+  pendereckisgarden.pl could not be entered (its cookie notice offers only "Accept"); no reference images were given.

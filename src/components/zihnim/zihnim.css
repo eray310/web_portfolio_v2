@@ -315,13 +315,13 @@
   border-radius: 999px;
   pointer-events: auto;
 }
-/* only the current station is named; the others show their names on hover or keyboard focus */
+/* the route is the place menu on wide screens: every station is named, the current one brightest */
 .zh-route button span {
   padding: 3px 9px;
   white-space: nowrap;
   background: rgba(12, 10, 11, 0.6);
   border-radius: 999px;
-  opacity: 0;
+  opacity: 0.62;
   transition: opacity 0.15s ease;
 }
 .zh-route button.is-on span,

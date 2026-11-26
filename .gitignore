@@ -27,3 +27,5 @@ dist-ssr
 backup/
 .env
 ._*
+# local preview recordings (not committed)
+design-previews/

@@ -98,3 +98,28 @@ are the site's own. The brain, the guide and all forms are procedural (no extern
 Real phones, tablets, low-end GPUs; real trackpad and touch screen (emulated events only); Safari and Firefox; sound
 (none, by choice). The reference images mentioned in the brief of this round were not attached to the message, so they
 were not compared.
+
+## Cinematic round (branch `design/cinematic-zihnim-ai`, from `main` at `297e619`; preview only, not merged)
+Supersedes the notes above where they differ.
+- Opening frame: three-quarter view (`route[0]`, `route[1]`), the brain fills the frame. Lobes moved closer
+  (`brain.hemiX` 40), wider folds, dark patches in the surface (`patch` noise in `worldGeometry.ts`).
+- Points: soft-centred dot (`exp` falloff in `FRAG`), size knee (`particles.knee`, `slope`), smaller `maxPx`,
+  shell dimmer from inside (`insideShell`). Kind 8 = near motes along the route (`particles.bokeh`): large, soft, few.
+  Far dust lies in banks with gaps.
+- Görsel Hafıza: a veil (`veil` in `zihnimWorld.ts`, `VEIL_PATH`) parts before the station; three leading works,
+  two dimmer layers behind (`gorselList`; `picture.dim*` darkens far pictures).
+- Kurgu Masası: the strip is laid out from the station with `seen(6, ...)` (`filmStrip`, `kurguList`). The covers
+  were mirrored (left-handed basis in `worldGeometry.ts`); fixed. Rails are dim.
+- A slow light runs along the entrance fibres while the camera is at the opening frame (`ZihnimScene.ts`, `pathGoal`).
+- UI: "Hareketi durdur" and the row of place buttons are gone on wide screens (the route on the right is the place
+  menu; phones keep "Alanlar"). One "Görünüm" menu (`components/ViewMenu.tsx`, state in `utils/viewMode.ts`, key
+  `gorunum-sakin`) with "Sakin görünüm": world time stops, travel, panels, videos and the brief still work.
+  "Hareketi azalt" switches it on and locks the switch. Labels are quiet names with a dot.
+- Input: `wheel.follow` 6.5, `wheel.routePx` 6800, trips `perRoute` 3.4 (min 1.6, max 4.2). Final knot is closer.
+- Measured (Chrome, RTX 4060, 144 Hz, one run each, baseline `297e619`): cold start + wheel, button trip, pointer,
+  phone emulation: median 6.9-7.0 ms and p95 7.1 ms in both. Software WebGL (SwiftShader): cold start 41.7 / 41.6 ms
+  median, trip 34.8 / 34.8, pointer 34.7 / 41.6, phone trip 20.8 / 27.8 (old / new); differences are one frame step
+  and were not repeated, so no cause is claimed.
+- Not done: the guide bird was not redesigned (only its waiting spots moved); Deney Alanı kept its moment; no depth
+  blur pass. The main reference (pendereckisgarden.pl) was seen only up to its entry screen; the particle reference
+  images were not attached. Real phones, Safari, Firefox, real trackpad: not tried.

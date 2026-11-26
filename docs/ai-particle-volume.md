@@ -88,3 +88,14 @@ loop and breathing; `debugSet(null)` lets time run.
 
 Not done / not measured: real phones and low-end devices; the step-title buttons are not in the tab order of the old page
 (they are new); extending the story to Hakkımda is not done.
+
+## Cinematic round (branch `design/cinematic-zihnim-ai`, from `main` at `297e619`; preview only, not merged)
+- "Arka planı durdur" (opening and footer) and "Demoyu durdur" are removed (`ai/SpaceToggle.tsx` deleted). The header
+  has the shared "Görünüm" menu (`components/ViewMenu.tsx`, `utils/viewMode.ts`). "Sakin görünüm": the scene keeps no
+  ambient motion and no pointer push but still follows the scroll (`setCalm` in `ai/spaceScene.ts`, it draws only
+  while the page moves); the web and app demos show their finished state; the silent previews stop; the showreel
+  waits for its own Play; "Tam videoyu aç" still works. "Hareketi azalt" switches it on.
+- Ground: the same warm black as /zihnim (`BG_FRAG` base colours, `#0c0a0b` in `AiWorksPage.css` and the still picture).
+- The title "AI İşler" is one colour (the gradient on one word is gone).
+- Not done in this round: new opening composition of the volume, a longer web demo, shared-element transitions in the
+  app demo, stronger shapes for "Birlikte nasıl çalışırız", typography scale review. The demos and content are as before.

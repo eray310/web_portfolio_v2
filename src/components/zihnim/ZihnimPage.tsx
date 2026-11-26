@@ -229,7 +229,7 @@ const ZihnimPage = () => {
     const prev = { o: document.body.style.overflow, b: document.body.style.backgroundColor };
     document.body.style.overflow = "hidden";
     document.body.style.backgroundColor = "#0c0a0b";
-    document.title = "Eray’ın Zihni — Eray Ömeroğlu (önizleme)";
+    document.title = "Eray’ın Zihni — Eray Ömeroğlu";
     return () => {
       document.body.style.overflow = prev.o;
       document.body.style.backgroundColor = prev.b;

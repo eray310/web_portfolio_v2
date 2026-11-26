@@ -1629,6 +1629,10 @@ html {
 .yr a.yr-toplink:hover {
   color: var(--accentColor);
 }
+/* the way into /zihnim ("Eray'ın Zihni") */
+.yr a.yr-worldlink {
+  color: var(--accentColor);
+}
 .yr-bgtoggle {
   min-height: 44px;
   padding: 0 14px;

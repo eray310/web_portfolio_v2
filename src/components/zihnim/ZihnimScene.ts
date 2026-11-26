@@ -474,7 +474,8 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const prepNext = () => {
     prepTimer = 0;
     if (disposed) return;
-    const moving = !!trip || Math.abs(sTarget - s) > 0.002 || hold;
+    // not in the first seconds, and not while the visitor is scrolling: uploads then would cost frames
+    const moving = !!trip || Math.abs(sTarget - s) > 0.002 || hold || performance.now() - startedAt < 2000 || performance.now() - lastNav < 800;
     if (!moving) {
       const next = planes
         .filter((p) => p.state === "none")
@@ -520,6 +521,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   let level = 0;
   let ema = 16;
   let slowChecks = 0;
+  const startedAt = performance.now();
   let frames = 0;
   let station: StationId | null = "genel";
   let lastProgress = -1;

@@ -861,6 +861,9 @@ const OrbitPage = () => {
           <a className="yr-toplink" href="/ai-isler">
             AI İşler
           </a>
+          <a className="yr-toplink yr-worldlink" href="/zihnim">
+            Dünyamı keşfet
+          </a>
           <BackLink />
         </nav>
       </header>

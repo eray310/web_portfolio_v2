@@ -404,3 +404,20 @@ Next round: Görev B (/hakkimda, the album inner sleeve) on a new branch `design
 For it: Career data is still inside `Career.tsx` (to be moved to a data file), the covers and collages are in
 `public/kapaklar` and `public/grafik` (webp + jpg), `utils/lang.ts`, `ViewMenu`, `utils/viewMode.ts` and the main menu of
 `Navbar.tsx` are ready to reuse; the old page is `OrbitPage.tsx`.
+
+## Polish round (branch `design/isik-yolu`; local only, not pushed)
+- 05 -> 06: points of the summit set (`STREAM`, `summit.streams`) carry the colours of the places to the screen
+  (`uFlow`, `screen.flow`), then the screen lights up warm white with soft edges (`uFill`, `screen.turn`, `screen.light`).
+  The final card has its own dark ground (93 %), and the screen is lower behind it.
+- 05: camera `summit` (up 210, beyond 380, lookAt 300), 22k silhouette points on a desktop (9k phone), the quote at 30 %
+  of the height, a wide ice-blue gradient on the horizon (`dawnMat`, `summit.dawn`). Camera far plane 4200.
+- Prism of 04: triangular section, three edge lines and two end triangles, colour splitting inside, one plain beam in,
+  the thin beams leave from it (`buildRoom`).
+- First notches: `wheel.startGain` 1.3 over `startReach` 0.06 (forward only); `routePx` 15950. First 100 px notch moves
+  the route by 0.018. Scripted journey (0.3 s per notch, 3.5 s rest at six chapters): 63 s.
+- Phones: the fan of 04 is upright and tighter (`roomFrames`, `isPortrait`). Card of 04 links to /ai-isler#web-sitesi.
+- NOT done: freeing the brain after the tunnel. Rebuilding 173k points on the way back is one synchronous step
+  (`buildWorld`); doing it in pieces needs a rewrite of the builder, and it was not tried.
+- Points on a desktop: 193k at the start; 239k at 01, 263k at 02 (largest), 258k at 03, 234k at 04, 210k at 05, 195k at 06.
+- Measured against `b1a2681`: GPU two runs, median 6.9-7.0 ms, p95 7.1-7.2 ms in both. Software WebGL one run:
+  cold start 41.6 / 34.6 ms median, trip 34.7 / 27.8, pointer 34.7 / 27.8, phone trip 20.9 / 13.9 (old / new).

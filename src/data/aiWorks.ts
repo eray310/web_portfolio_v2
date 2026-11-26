@@ -21,9 +21,9 @@
 export type AiStage =
   | {
       kind: "web";
-      /** Browser pictures (the second one is scrolled to). */
+      /** Browser pictures (the second one is the Hakkımda page, the third one a long AI İşler page that is scrolled). */
       desktop: { src: string; alt: string }[];
-      /** Phone pictures (the second one is scrolled to). */
+      /** Phone pictures (the second one is the Hakkımda page, the third one a long AI İşler page that is scrolled). */
       phone: { src: string; alt: string }[];
       caption: string;
       /** Read out by a screen reader instead of the moving picture. */
@@ -92,13 +92,15 @@ export const aiWorks: AiWork[] = [
       desktop: [
         { src: "ai-works/web-sitesi/portfolyo-masaustu.jpg", alt: "Portfolyo sitesinin ana sayfası, masaüstü görünümü" },
         { src: "ai-works/web-sitesi/portfolyo-masaustu-2.jpg", alt: "Aynı sitenin Hakkımda sayfası, masaüstü görünümü" },
+        { src: "ai-works/web-sitesi/portfolyo-ai-masaustu.jpg", alt: "Aynı sitenin AI İşler sayfası, uzun sayfa, masaüstü görünümü" },
       ],
       phone: [
         { src: "ai-works/web-sitesi/portfolyo-mobil.jpg", alt: "Portfolyo sitesinin ana sayfası, telefon görünümü" },
         { src: "ai-works/web-sitesi/portfolyo-mobil-2.jpg", alt: "Aynı sitenin Hakkımda sayfası, telefon görünümü" },
+        { src: "ai-works/web-sitesi/portfolyo-ai-mobil.jpg", alt: "Aynı sitenin AI İşler sayfası, uzun sayfa, telefon görünümü" },
       ],
       caption: "Bu portfolyo sitesi, masaüstünde ve telefonda",
-      summary: "Bu portfolyo sitesinin ana sayfası masaüstü tarayıcıda kuruluyor, telefon görünümü yanına geliyor, ardından site Hakkımda sayfasına kayıyor.",
+      summary: "Bu portfolyo sitesinin kısa bir gösterimi: ana sayfa masaüstü tarayıcıda açılıyor, menüden AI İşler sayfasına geçilip sayfa aşağı kaydırılıyor, sonra menüden Hakkımda sayfasına geçiliyor. Telefon aynı sayfaların mobil görünümünü gösteriyor. Gösterim yaklaşık on altı saniyelik bir döngüdür.",
     },
   },
   {
@@ -133,12 +135,12 @@ export const aiWorks: AiWork[] = [
       "Şu an yayında gösterebileceğim tamamlanmış bir uygulama yok; bu bölüm olası proje kapsamlarını anlatıyor.",
       "Olası kapsamlar: mobil uygulama fikri, küçük bir iç araç, bir hizmetin web uygulaması hâli.",
       "Çıktılar projeye göre değişir; ilk görüşmede kapsamı birlikte netleştiririz.",
-      "Gösterilen akış tamamlanmış bir uygulama değil, bir konsept prototip: hizmet seçilir, seçim sonraki ekrana taşınır, gün ve saat seçilir, randevu onaylanır.",
+      "Gösterilen akış tamamlanmış bir uygulama değil, bir konsept prototip: görüşme konusu seçilir, gün ve saat seçilir, özet görülür, randevu onaylanır. Gün ve saatler örnektir; gerçek bir randevu veya müsaitlik işlemi yapılmaz.",
     ],
     stage: {
       kind: "app",
-      caption: "Konsept prototip: randevu akışı",
-      summary: "Konsept prototip: üç ekranlı bir randevu akışı. Önce bir hizmet seçiliyor, seçim sonraki ekrana taşınıyor, gün ve saat seçiliyor, son ekranda randevu onaylanıyor ve başarı işareti beliriyor.",
+      caption: "Konsept prototip: görüşme randevusu akışı (örnek gün ve saatler)",
+      summary: "Konsept prototip, otomatik oynayan örnek bir akış; gerçek bir randevu oluşturmaz. Bir tasarım stüdyosundan görüşme randevusu alınıyor: önce görüşme konusu seçiliyor (Web Sitesi, Video Projesi veya Uygulama Fikri Görüşmesi), sonra bir gün ve saat seçiliyor, özet ekranında seçimler birlikte görünüyor, onaylanınca kısa bir işlem durumunun ardından başarı görünümü geliyor. Gösterilen gün ve saatler örnektir. Demo yaklaşık on yedi saniyelik bir döngüdür ve Demoyu durdur düğmesiyle durdurulabilir.",
     },
   },
 ];

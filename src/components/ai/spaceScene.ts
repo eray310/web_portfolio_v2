@@ -37,6 +37,7 @@ import {
 import { spaceBus } from "./spaceBus";
 import { createFlowField } from "./flowField";
 import { createVolumeLayer } from "./volumeLayer";
+import { createStoryLayer } from "./storyLayer";
 
 export type SpaceOptions = {
   canvas: HTMLCanvasElement;
@@ -409,6 +410,9 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
   // the particle volume (opening and Web Sitesi): one more Points object in this same scene
   const volume = createVolumeLayer({ light, still, shared: shared as unknown as Record<string, { value: unknown }> });
   scene.add(volume.points);
+  const story = createStoryLayer({ light, still, shared: shared as unknown as Record<string, { value: unknown }> });
+  scene.add(story.points);
+  (canvas as unknown as { __story?: unknown }).__story = story;
   let volFrac = 1;
   // read-only hook for tests: freeze the colour loop / breathing at a chosen moment
   (canvas as unknown as { __volume?: unknown }).__volume = volume;
@@ -572,7 +576,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     const reading = performance.now() - lastScrollT > 300;
     const flowing = !!flow && flow.energy > 0.02; // the pointer is moving things: draw every frame
     // the volume moves all the time: while it is on screen every frame is drawn (unless the machine is slowest)
-    const every = level >= 3 ? 2 : reading && !flowing && !spaceBus.stageLive && !volume.visible() ? 2 : 1;
+    const every = level >= 3 ? 2 : reading && !flowing && !spaceBus.stageLive && !volume.visible() && !story.visible() ? 2 : 1;
     if (every > 1 && last && tick % every !== 0 && !paused && !document.hidden && !spaceBus.briefOpen) {
       raf = requestAnimationFrame(frame);
       return;
@@ -647,6 +651,26 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     const bs = bt * bt * (3 - 2 * bt);
     const vClear = lb0 && lb1 ? { cx: lb0.cx + (lb1.cx - lb0.cx) * bs, cy: lb0.cy + (lb1.cy - lb0.cy) * bs, rx: lb0.rx + (lb1.rx - lb0.rx) * bs, ry: lb0.ry + (lb1.ry - lb0.ry) * bs, amount: 1 } : { cx: 0.7, cy: 0.5, rx: 0.3, ry: 0.4, amount: 0 };
     volume.update({ clear: vClear, shiftU: vClear.amount ? vClear.cx + (0.5 - vClear.cx) * 0.85 - vp.x : 0, aspect: camera.aspect, fov: camera.fov, dt: still ? 0 : dt, s: sCur, px: idleP ? 0 : pointerX, py: idleP ? 0 : pointerY, calm: calmPlayer * (1 - Math.min(1, Math.max(0, (Math.abs(sCur - 2) - 0.4) / 0.8))), pushK: flow && vtf && level < 3 ? (level === 0 ? 1 : level === 1 ? 0.7 : 0.4) : 0 });
+    // the process story: drawn into the box the page reports (the sticky box, or the card of the step on a phone)
+    {
+      const sb = spaceBus.story;
+      const sbox = sb.box;
+      const on = !!sbox && sb.show > 0.001;
+      story.setDrawFraction(volFrac);
+      story.update({
+        dt: still ? 0 : dt,
+        u: sb.u,
+        show: on ? sb.show * (1 - 0.7 * (spaceBus.briefOpen ? 1 : 0)) : 0,
+        box: sbox ? { cx: (sbox.x + sbox.w / 2) / w, cy: 1 - (sbox.y + sbox.h / 2) / h, w: sbox.w / w, h: sbox.h / h } : { cx: 0.5, cy: 0.5, w: 0.3, h: 0.3 },
+        vp: { x: vp.x, y: vp.y },
+        aspect: camera.aspect,
+        fov: camera.fov,
+        px: idleP ? 0 : pointerX,
+        py: idleP ? 0 : pointerY,
+        pushK: flow && vtf && level < 3 ? (level === 0 ? 1 : level === 1 ? 0.7 : 0.4) : 0,
+        calm: 0,
+      });
+    }
     shared.uTravel.value = travel;
     shared.uTime.value = time;
     shared.uClearC.value.copy(clearC);
@@ -712,8 +736,16 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     pointerY = -(e.clientY / window.innerHeight - 0.5) * 2;
     lastMove = performance.now();
   };
+  let stillRaf = 0;
   const onScroll = () => {
     lastScrollT = performance.now();
+    // "Hareketi azalt": no loop, but the story steps still have to follow the scroll (one still frame each time)
+    if (still && !stillRaf && (spaceBus.story.show > 0.001 || story.visible())) {
+      stillRaf = requestAnimationFrame(() => {
+        stillRaf = 0;
+        drawOnce();
+      });
+    }
   };
   const onVis = () => {
     if (document.hidden) {
@@ -794,6 +826,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
         l.mat.dispose();
       });
       volume.dispose();
+      story.dispose();
       flow?.dispose();
       flowTex?.dispose();
       tgeo.dispose();

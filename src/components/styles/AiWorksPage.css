@@ -380,63 +380,6 @@ main:focus {
   color: rgba(234, 229, 236, 0.82);
 }
 
-/* ── Working together ── */
-.ai-flow {
-  width: min(1240px, calc(100% - 40px));
-  margin: 0 auto;
-  padding: clamp(44px, 9vh, 96px) 0 clamp(56px, 11vh, 130px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.ai-flow h2 {
-  margin: 0 0 28px;
-  font-size: clamp(30px, 4vw, 48px);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: #ffffff;
-}
-
-.ai-steps {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(14px, 2vw, 24px);
-  margin: 0 0 34px;
-  padding: 0;
-  list-style: none;
-}
-
-.ai-steps li {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 22px;
-  font-size: 16px;
-  line-height: 1.55;
-  color: rgba(234, 229, 236, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-}
-
-.ai-steps strong {
-  font-size: 20px;
-  font-weight: 600;
-  color: #ffffff;
-}
-
-.ai-step-n {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  font-weight: 600;
-  color: #0a0e17;
-  background: var(--accentColor);
-  border-radius: 50%;
-}
-
 /* ── Footer ── */
 .ai-foot {
   width: min(1240px, calc(100% - 40px));
@@ -499,9 +442,6 @@ main:focus {
     row-gap: 28px;
   }
 
-  .ai-steps {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media only screen and (max-width: 560px) {
@@ -600,9 +540,6 @@ main:focus {
     font-size: 15px;
   }
 
-  .ai-steps {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

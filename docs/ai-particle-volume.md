@@ -62,3 +62,29 @@ loop and breathing; `debugSet(null)` lets time run.
    a depth; near the pointer they spread along the flow, swell (size, brightness, small parallax) and take a faint ice
    blue / turquoise tint; they are back in place about a second after the pointer stops. Settings: `ai/orbitWaveConfig.ts`.
    Touch screens and "Hareketi azalt": resting picture only; the loop sleeps when nothing moves.
+
+## Revision 3 (process story, web demo, app demo)
+1. **"Birlikte nasıl çalışırız?"** is one continuous particle story (`ai/ProcessStory.tsx`, `ai/storyLayer.ts`, settings in
+   `ai/storyConfig.ts`). It uses the real four steps of `aiSteps` (data/aiWorks.ts): 1 Brief'i anlat (scattered clusters
+   gather into one linked core), 2 Kapsamı netleştirelim (orbits and linked focal points), 3 Tasarla, üret, geliştir
+   (the orbit points flow into nested frames), 4 Teslim et (the layers line up into one calm composition). Every point
+   has a place in all five shapes and moves along a curved, visible path. It lives in the page's one WebGL scene (one more `Points`
+   object), no extra canvas. The page writes `spaceBus.story` (position `u` 0..4, box, visibility); the scene reads it.
+   - Wide screens: two columns, text left, picture right, both pinned for about 3.2 screens of NATIVE scrolling (CSS
+     `position: sticky`; `--ai-pinned` in AiStory.css, `pinned` in the config). No wheel capture, no snapping.
+     Step k is settled at `u = k + 1`. The step titles are buttons (keyboard and pointer go to that step).
+   - Phones: no pinning; each step has its own picture box under its text, and the one set of points travels from box to box.
+   - "Hareketi azalt": only settled shapes, one still frame per step. No WebGL: a dotted SVG per step (`ai/StoryArt.tsx`).
+     The step text is plain HTML in all cases.
+2. **Web Sitesi demo** (`WebStage` in `ai/stages.tsx`, CSS in `AiStages.css`): about 16 s. Browser is set up, home page,
+   menu click on AI İşler, the real AI İşler page scrolls, menu click on Hakkımda, a calm end of about 4 s, soft restart; the
+   phone shows the same pages. Pictures are real captures in `public/ai-works/web-sitesi/` (`portfolyo-ai-masaustu.jpg`,
+   `portfolyo-ai-mobil.jpg` are new; made with the page itself, the Web Sitesi stage of the capture hidden). The only
+   additions are a small pointer and a ring where the menu is clicked.
+3. **Uygulama Prototipleri demo** (`ai/AppDemo.tsx`, `styles/AiApp.css`): a concept meeting-booking flow of a design studio,
+   about 17 s: choose a topic, day, time, summary, confirm, processing, success, rest, soft restart. Labeled "Konsept prototip",
+   the sample days and times are marked as examples. Visible "Demoyu durdur / oynat" button; the picture takes no focus.
+   Runs only on screen and with a visible tab; "Hareketi azalt" shows the completed screen.
+
+Not done / not measured: real phones and low-end devices; the step-title buttons are not in the tab order of the old page
+(they are new); extending the story to Hakkımda is not done.

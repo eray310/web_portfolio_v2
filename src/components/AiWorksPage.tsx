@@ -1,12 +1,14 @@
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MdArrowForward, MdPause, MdPlayArrow } from "react-icons/md";
-import { aiHero, aiSteps, aiWorks, type AiWork } from "../data/aiWorks";
+import { aiHero, aiWorks, type AiWork } from "../data/aiWorks";
 import { prefersReducedMotion } from "../utils/motion";
 import SpaceBackground from "./ai/SpaceBackground";
 import SpaceToggle from "./ai/SpaceToggle";
 import { spaceBus } from "./ai/spaceBus";
-import { AppStage, VideoStage, WebStage } from "./ai/stages";
+import { VideoStage, WebStage } from "./ai/stages";
+import AppDemo from "./ai/AppDemo";
 import { AiWebParticles } from "./ai/AiWebParticles";
+import ProcessStory from "./ai/ProcessStory";
 
 // ?prototip=parcacik: the particle version of the Web Sitesi loop (design prototype)
 const particlePrototype = new URLSearchParams(window.location.search).get("prototip") === "parcacik";
@@ -109,7 +111,7 @@ const Stage = ({ work }: { work: AiWork }) => {
   const st = work.stage;
   if (st.kind === "web") return particlePrototype ? <AiWebParticles s={st} /> : <WebStage s={st} />;
   if (st.kind === "video") return <VideoStage s={st} id={work.id} />;
-  return <AppStage s={st} />;
+  return <AppDemo s={st} />;
 };
 
 const AiWorksPage = () => {
@@ -282,25 +284,7 @@ const AiWorksPage = () => {
           </section>
         ))}
 
-        <section className="ai-flow" aria-labelledby="ai-flow-h">
-          <div className="ai-reveal">
-            <h2 id="ai-flow-h">Birlikte nasıl çalışırız?</h2>
-            <ol className="ai-steps">
-              {aiSteps.map((s, i) => (
-                <li key={s.title}>
-                  <span className="ai-step-n" aria-hidden="true">
-                    {i + 1}
-                  </span>
-                  <strong>{s.title}</strong>
-                  <span>{s.text}</span>
-                </li>
-              ))}
-            </ol>
-            <button type="button" className="ai-cta ai-cta-big" onClick={(e) => open([], e.currentTarget)}>
-              Projeni anlat <MdArrowForward aria-hidden="true" />
-            </button>
-          </div>
-        </section>
+        <ProcessStory onBrief={(el) => open([], el)} />
       </main>
 
       <footer className="ai-foot">

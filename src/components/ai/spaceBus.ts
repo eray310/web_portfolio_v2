@@ -27,11 +27,16 @@ export const spaceBus = {
   stage: null as StageHost | null,
   /** The stage's box is on screen: every frame is drawn, not every second one. */
   stageLive: false,
+  /**
+   * "Birlikte nasıl çalışırız?" (written by the page, read by the scene every frame):
+   * show 0..1 how much of the story is on screen, u the story position 0..4, box where to draw (viewport px).
+   */
+  story: { show: 0, u: 0, box: null as { x: number; y: number; w: number; h: number } | null },
 };
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
-let state = { live: false, paused: false };
+let state = { live: false, paused: false, gl: false };
 
 export const spaceControl = {
   subscribe(fn: Listener) {

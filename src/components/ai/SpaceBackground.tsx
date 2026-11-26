@@ -80,6 +80,7 @@ const SpaceBackground = ({ rootRef }: { rootRef: React.RefObject<HTMLElement> })
           try {
             const scene = createSpaceScene({ canvas: el, light, still: reduced, stops });
             api.current = scene;
+            spaceControl.set({ gl: true });
             // boxes move with the scroll: the scene reads them again when they can have changed
             const refresh = () => scene.refresh();
             ro = new ResizeObserver(refresh);
@@ -96,9 +97,10 @@ const SpaceBackground = ({ rootRef }: { rootRef: React.RefObject<HTMLElement> })
               e.preventDefault();
               setLive(false);
               setFailed(true);
-              spaceControl.set({ live: false });
+              spaceControl.set({ live: false, gl: false });
             });
           } catch {
+            spaceControl.set({ gl: false });
             setFailed(true);
           }
         })
@@ -111,7 +113,7 @@ const SpaceBackground = ({ rootRef }: { rootRef: React.RefObject<HTMLElement> })
       ro?.disconnect();
       api.current?.dispose();
       api.current = null;
-      spaceControl.set({ live: false, paused: false });
+      spaceControl.set({ live: false, paused: false, gl: false });
     };
   }, [rootRef, reduced]);
 

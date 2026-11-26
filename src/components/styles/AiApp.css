@@ -1,0 +1,500 @@
+/* ══ Uygulama Prototipleri: the concept appointment demo (ai/AppDemo.tsx) ══ */
+.ap-app {
+  position: relative;
+  display: grid;
+  grid-template-columns: 238px minmax(0, 1fr);
+  align-items: center;
+  column-gap: clamp(22px, 3.4vw, 46px);
+  padding: 38px 0 4px;
+}
+
+.ap-concept {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accentColor);
+  border: 1px solid rgba(94, 234, 212, 0.55);
+  border-radius: 999px;
+  background: rgba(8, 11, 17, 0.5);
+}
+
+/* The phone: header, body (the three screens slide inside it) and the button keep their places on every screen */
+.ap-phone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 238px;
+  max-width: 100%;
+  aspect-ratio: 9 / 18.4;
+  overflow: hidden;
+  color: #eef2f6;
+  background: #0b1018;
+  border: 7px solid #171f2e;
+  border-radius: 36px;
+  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.55), 0 0 60px rgba(94, 234, 212, 0.07);
+  transition: opacity 0.6s ease;
+}
+.ap-app.is-reset .ap-phone {
+  opacity: 0;
+}
+
+.ap-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 8px;
+}
+.ap-head b {
+  font-size: 14px;
+  font-weight: 600;
+}
+.ap-dots {
+  display: flex;
+  gap: 5px;
+}
+.ap-dots i {
+  width: 18px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  transition: background-color 0.3s ease;
+}
+.ap-dots i.is-now {
+  background: rgba(94, 234, 212, 0.6);
+}
+.ap-dots i.is-done {
+  background: var(--accentColor);
+}
+
+.ap-body {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+.ap-track {
+  display: flex;
+  width: 300%;
+  height: 100%;
+  transition: transform 0.65s cubic-bezier(0.77, 0, 0.175, 1);
+}
+.ap-app[data-step="0"] .ap-track,
+.ap-app.is-still .ap-track {
+  transition: none;
+}
+.ap-screen {
+  display: flex;
+  flex: 0 0 33.3334%;
+  flex-direction: column;
+  gap: 9px;
+  box-sizing: border-box;
+  padding: 6px 14px 0;
+}
+.ap-q {
+  margin: 0 0 2px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #ffffff;
+}
+.ap-note {
+  margin: auto 0 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(234, 229, 236, 0.7);
+}
+
+/* screen 1: the services */
+.ap-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 15px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.ap-card strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.ap-card small {
+  display: block;
+  max-height: 0;
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: rgba(234, 229, 236, 0.85);
+  opacity: 0;
+  transition: max-height 0.35s ease, opacity 0.3s ease, margin 0.3s ease;
+}
+.ap-card.is-aim {
+  border-color: rgba(94, 234, 212, 0.7);
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.16);
+}
+.ap-card.is-on {
+  background: rgba(94, 234, 212, 0.12);
+  border-color: var(--accentColor);
+}
+.ap-card.is-on small,
+.ap-app.is-still .ap-card.is-on small {
+  max-height: 40px;
+  margin-top: 3px;
+  opacity: 1;
+}
+.ap-radio {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  color: #0a0e17;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+.ap-radio svg {
+  width: 14px;
+  height: 14px;
+}
+.ap-card.is-on .ap-radio {
+  background: var(--accentColor);
+  border-color: var(--accentColor);
+}
+
+/* screen 2: day and time */
+.ap-days,
+.ap-times {
+  display: grid;
+  gap: 8px;
+}
+.ap-days {
+  grid-template-columns: repeat(4, 1fr);
+}
+.ap-times {
+  grid-template-columns: repeat(2, 1fr);
+  opacity: 0.32;
+  transition: opacity 0.4s ease;
+}
+.ap-times.is-open {
+  opacity: 1;
+}
+.ap-days span,
+.ap-times span {
+  display: grid;
+  place-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+.ap-days small {
+  font-size: 11.5px;
+  color: rgba(234, 229, 236, 0.75);
+}
+.ap-days b {
+  font-size: 16px;
+  font-weight: 600;
+}
+.ap-times span {
+  padding: 11px 0;
+  font-weight: 600;
+}
+.ap-days .is-on,
+.ap-times .is-on {
+  color: #0a0e17;
+  background: var(--accentColor);
+  border-color: var(--accentColor);
+}
+.ap-days .is-on small {
+  color: rgba(10, 14, 23, 0.8);
+}
+
+/* screen 3: the summary */
+.ap-sum {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.ap-sum > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 13px;
+}
+.ap-sum dt {
+  grid-column: 1;
+  font-size: 11.5px;
+  color: rgba(234, 229, 236, 0.75);
+}
+.ap-sum dd {
+  grid-column: 1;
+  margin: 1px 0 0;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.ap-sum svg {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 20px;
+  height: 20px;
+  color: var(--accentColor);
+}
+
+/* processing and success cover the body, the header and the button stay where they are */
+.ap-over {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 18px;
+  text-align: center;
+  background: #0b1018;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease, visibility 0.35s;
+}
+.ap-over.is-proc,
+.ap-over.is-ok {
+  opacity: 1;
+  visibility: visible;
+}
+.ap-over b {
+  font-size: 17px;
+  font-weight: 600;
+}
+.ap-over small {
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(234, 229, 236, 0.85);
+}
+.ap-over .ap-ex {
+  color: var(--accentColor);
+}
+.ap-spin,
+.ap-okc {
+  position: absolute;
+  top: 24%;
+  opacity: 0;
+}
+.ap-spin {
+  width: 38px;
+  height: 38px;
+  border: 3px solid rgba(255, 255, 255, 0.16);
+  border-top-color: var(--accentColor);
+  border-radius: 50%;
+  animation: apSpin 0.9s linear infinite;
+  animation-play-state: paused;
+}
+.ap-over.is-proc .ap-spin {
+  opacity: 1;
+  animation-play-state: running;
+}
+.ap-okc {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  color: #0a0e17;
+  background: var(--accentColor);
+  border-radius: 50%;
+  transform: scale(0.6);
+  transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.3s ease;
+}
+.ap-okc svg {
+  width: 36px;
+  height: 36px;
+}
+.ap-over.is-ok .ap-okc {
+  opacity: 1;
+  transform: scale(1);
+}
+.ap-over b {
+  margin-top: 62px;
+}
+@keyframes apSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ap-foot {
+  display: grid;
+  place-items: center;
+  height: 44px;
+  margin: 8px 14px 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(234, 229, 236, 0.6);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.15s ease, opacity 0.4s ease;
+}
+.ap-foot.is-ready {
+  color: #0a0e17;
+  background: var(--accentColor);
+}
+.ap-foot.is-press {
+  transform: scale(0.96);
+}
+.ap-foot.is-done {
+  opacity: 0.35;
+}
+
+/* beside the phone: where the choices are, step by step (also written text) */
+.ap-flow {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ap-flow li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: rgba(234, 229, 236, 0.72);
+  transition: color 0.3s ease;
+}
+.ap-flow b,
+.ap-flow small,
+.ap-card strong,
+.ap-card small,
+.ap-sum dd {
+  overflow-wrap: anywhere;
+}
+.ap-flow b {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.ap-flow small {
+  display: block;
+  margin-top: 2px;
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+.ap-fn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(234, 229, 236, 0.85);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.ap-fn svg {
+  width: 17px;
+  height: 17px;
+}
+.ap-flow li.is-now {
+  color: #ffffff;
+}
+.ap-flow li.is-now .ap-fn {
+  color: #0a0e17;
+  background: rgba(94, 234, 212, 0.75);
+}
+.ap-flow li.is-done {
+  color: rgba(244, 240, 247, 0.92);
+}
+.ap-flow li.is-done .ap-fn {
+  color: #0a0e17;
+  background: var(--accentColor);
+}
+
+/* Demoyu durdur / oynat: a plain, visible button */
+.ap-ctl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  margin: 14px auto 0;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 14.5px;
+  color: #eae5ec;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.ap-ctl svg {
+  width: 20px;
+  height: 20px;
+  color: var(--accentColor);
+}
+.ap-fig {
+  display: flex;
+  flex-direction: column;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ap-ctl:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
+.ap-ctl:active {
+  transform: scale(0.97);
+}
+.ap-ctl:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 3px;
+}
+
+/* Narrow screens: one big phone, the progress under it in two columns */
+@media only screen and (max-width: 700px) {
+  .ap-app {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 22px;
+    justify-items: center;
+  }
+  .ap-phone {
+    width: min(88%, 310px);
+  }
+  .ap-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 12px;
+    width: 100%;
+  }
+  .ap-flow small {
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-app *,
+  .ap-ctl {
+    animation: none !important;
+    transition: none !important;
+  }
+}

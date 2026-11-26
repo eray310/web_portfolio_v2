@@ -1,0 +1,206 @@
+/* ══ "Birlikte nasıl çalışırız?": the process story (ai/ProcessStory.tsx) ══ */
+.ai-flow {
+  width: min(1240px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ai-flow-pin {
+  display: block;
+  padding: clamp(44px, 9vh, 96px) 0 clamp(56px, 11vh, 130px);
+}
+
+.ai .ai-flow h2 {
+  margin: 0 0 12px;
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.ai-flow-intro {
+  margin: 0 0 22px;
+  font-size: clamp(17px, 1.4vw, 19px);
+  line-height: 1.5;
+  color: rgba(234, 229, 236, 0.9);
+}
+
+.ai-flow-steps {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 26px;
+  padding: 0;
+  list-style: none;
+}
+
+.ai-flow-steps li {
+  display: block;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+
+/* The step title is a button (keyboard and pointer go to that step); its whole text stays visible */
+.ai-flow-btn {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  column-gap: 16px;
+  row-gap: 4px;
+  align-items: start;
+  width: 100%;
+  padding: 14px 16px 14px 14px;
+  font: inherit;
+  text-align: left;
+  color: rgba(234, 229, 236, 0.78);
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  transition: color 0.22s ease, background-color 0.22s ease, border-color 0.22s ease;
+  /* touch: no delayed tap, no grey flash, no text selection on a long press (the text itself stays selectable elsewhere) */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.ai-flow-btn strong,
+.ai-flow-txt {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ai-flow-btn .ai-step-n {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  grid-row: 1 / span 2;
+  width: 36px;
+  height: 36px;
+  font-weight: 600;
+  color: #e9f2f1;
+  background: rgba(255, 255, 255, 0.1);
+  transition: background-color 0.22s ease, color 0.22s ease;
+}
+.ai-flow-btn strong {
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.86);
+}
+.ai-flow-txt {
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+.ai-flow-steps li.is-active .ai-flow-btn {
+  color: rgba(244, 240, 247, 0.96);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
+  border-color: rgba(94, 234, 212, 0.4);
+}
+.ai-flow-steps li.is-active .ai-flow-btn strong {
+  color: #ffffff;
+}
+.ai-flow-steps li.is-active .ai-step-n {
+  color: #0a0e17;
+  background: var(--accentColor);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ai-flow-btn:hover {
+    color: rgba(244, 240, 247, 0.96);
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+.ai-flow-btn:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 2px;
+}
+
+.ai-flow-cta.is-ready {
+  box-shadow: 0 0 0 4px rgba(94, 234, 212, 0.18);
+}
+
+/* The right side: empty on purpose. The particles are drawn behind it by the page's one WebGL scene. */
+.ai-flow-stage {
+  position: relative;
+  pointer-events: none;
+}
+.ai-flow-fig {
+  position: relative;
+  pointer-events: none;
+}
+.ai-flow-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Wide screens: two columns, both pinned while the page scrolls through the section */
+@media only screen and (min-width: 1001px) {
+  .ai-flow {
+    height: calc(100vh * (1 + var(--ai-pinned, 3.2)));
+  }
+  .ai-flow-pin {
+    position: sticky;
+    top: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    column-gap: clamp(32px, 5vw, 72px);
+    align-items: center;
+    height: 100vh;
+    padding: 64px 0 28px;
+    box-sizing: border-box;
+  }
+  .ai-flow-stage {
+    height: min(100%, 640px);
+    min-height: 340px;
+  }
+  .ai-flow-fig {
+    display: none;
+  }
+}
+@media only screen and (min-width: 1001px) and (max-height: 800px) {
+  .ai .ai-flow h2 {
+    margin-bottom: 8px;
+    font-size: clamp(28px, 3.4vw, 40px);
+  }
+  .ai-flow-intro {
+    margin-bottom: 14px;
+  }
+  .ai-flow-btn {
+    padding: 10px 14px 10px 12px;
+  }
+  .ai-flow-btn strong {
+    font-size: 17.5px;
+  }
+  .ai-flow-txt {
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+  .ai-flow-steps {
+    margin-bottom: 18px;
+  }
+}
+
+/* Narrower screens: no pinning; every step has its own picture box under its text */
+@media only screen and (max-width: 1000px) {
+  .ai-flow-stage {
+    display: none;
+  }
+  .ai-flow-steps {
+    gap: 22px;
+  }
+  .ai-flow-fig {
+    height: clamp(210px, 60vw, 330px);
+    margin: 6px 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-flow-btn,
+  .ai-flow-btn .ai-step-n {
+    transition: none;
+  }
+}

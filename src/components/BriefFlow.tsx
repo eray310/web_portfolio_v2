@@ -1,3 +1,4 @@
+import { enLang } from "../utils/lang";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MdArrowBack, MdArrowForward, MdCheck, MdClose } from "react-icons/md";
@@ -353,7 +354,9 @@ const BriefFlow = ({ initialServices, onClose, lock, unlock }: Props) => {
                           <span className="bf-card-mark" aria-hidden="true">
                             <MdCheck />
                           </span>
-                          <span className="bf-card-title">{s.label}</span>
+                          <span className="bf-card-title" lang={enLang(s.label)}>
+                            {s.label}
+                          </span>
                         </label>
                       );
                     })}

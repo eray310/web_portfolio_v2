@@ -1,3 +1,4 @@
+import { enLang } from "../utils/lang";
 import { lazy, Suspense, useCallback, useRef, useState } from "react";
 import { lockScroll, unlockScroll } from "./utils/scrollLock";
 import "./styles/Career.css";
@@ -43,7 +44,9 @@ const Starters = () => {
             <button type="button" className="starter" onClick={(e) => open(s.service, e.currentTarget)} data-cursor="disable">
               <img className="starter-img" src={cover(s.image)} alt="" loading="lazy" decoding="async" draggable={false} />
               <span className="starter-body">
-                <span className="starter-service">{s.service}</span>
+                <span className="starter-service" lang={enLang(s.service)}>
+                  {s.service}
+                </span>
                 <span className="starter-title">{s.title}</span>
               </span>
               <span className="starter-arrow" aria-hidden="true">

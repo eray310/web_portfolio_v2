@@ -5,7 +5,7 @@ import { prefersReducedMotion } from "../utils/motion";
 
 import Marquee from "react-fast-marquee";
 
-// The opening, in the order it always had: the percentage counts up, "Hoş geldiniz" replaces it
+// The opening, in the order it always had: the percentage counts up, "Hoş geldin" replaces it
 // (600 ms after 100 %), the pill opens (1 s later), the screen slides away (900 ms later) and only
 // then the heading is revealed and the 3D character is shown and starts its intro.
 const WELCOME_MS = 600;
@@ -85,7 +85,7 @@ const Loading = ({ percent }: { percent: number }) => {
   }
 
   return (
-    <div className={calm ? "loading-still" : undefined} role="status" aria-label={loaded ? "Hoş geldiniz" : "Yükleniyor"}>
+    <div className={calm ? "loading-still" : undefined} role="status" aria-label={loaded ? "Hoş geldin" : "Yükleniyor"}>
       <div className="loading-header">
         <a href="/#" className="loader-title" data-cursor="disable">
           EÖ
@@ -102,7 +102,7 @@ const Loading = ({ percent }: { percent: number }) => {
         </div>
       </div>
       <div className="loading-screen">
-        <div className="loading-marquee" aria-hidden="true">
+        <div className="loading-marquee" aria-hidden="true" lang="en">
           <Marquee play={!calm}>
             <span>Motion Designer</span> <span>Art Director</span>
             <span>Video Editor</span> <span>AI Artist</span>
@@ -121,7 +121,7 @@ const Loading = ({ percent }: { percent: number }) => {
               <div className="loading-box"></div>
             </div>
             <div className="loading-content2">
-              <span>Hoş geldiniz</span>
+              <span>Hoş geldin</span>
             </div>
           </div>
         </div>

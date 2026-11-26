@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { allesta } from "../data/interactive";
 import type { CreativeRequest } from "./creative/CreativeHost";
 import { tools } from "../data/tools";
+import { enLang } from "../utils/lang";
 import OrbitFlow from "./ai/OrbitFlow";
 import "./styles/OrbitPage.css";
 
@@ -339,7 +340,7 @@ const StillOrbit = ({ hasCv, onBrief }: { hasCv: boolean; onBrief: () => void })
         <ul>
           {scenes.map((s, i) => (
             <li key={s.title}>
-              <a href={`#sahne-${i + 1}`}>
+              <a href={`#sahne-${i + 1}`} lang={enLang(s.title)}>
                 {s.n} {s.title}
               </a>
             </li>
@@ -360,7 +361,9 @@ const StillOrbit = ({ hasCv, onBrief }: { hasCv: boolean; onBrief: () => void })
             </div>
           </div>
           <span className="yr-num">{s.n}</span>
-          <h2 id={`yr-st-${i}`}>{s.title}</h2>
+          <h2 id={`yr-st-${i}`} lang={enLang(s.title)}>
+            {s.title}
+          </h2>
           <p>{s.text}</p>
         </section>
       ))}
@@ -735,7 +738,7 @@ const LiveOrbit = ({ hasCv, onBrief }: { hasCv: boolean; onBrief: () => void }) 
         <div className="yr-caps">
           {scenes.map((s, i) => (
             <div key={s.title} className="yr-cap" style={vars({ "--ci": `var(--c${i})` })}>
-              <h2>{s.title}</h2>
+              <h2 lang={enLang(s.title)}>{s.title}</h2>
               <p>{s.text}</p>
               {ACTIONS[i] && (
                 <button type="button" className="yr-cap-btn" disabled={scene !== i} onClick={() => setCreative(ACTIONS[i].request)}>
@@ -754,7 +757,7 @@ const LiveOrbit = ({ hasCv, onBrief }: { hasCv: boolean; onBrief: () => void }) 
           <ul id="yr-nav-list" hidden={!navOpen}>
             {scenes.map((s, i) => (
               <li key={s.title}>
-                <button type="button" aria-current={scene === i ? "true" : undefined} onClick={() => goScene(i)}>
+                <button type="button" lang={enLang(s.title)} aria-current={scene === i ? "true" : undefined} onClick={() => goScene(i)}>
                   <span>{s.n}</span> {s.title}
                 </button>
               </li>
@@ -769,7 +772,7 @@ const LiveOrbit = ({ hasCv, onBrief }: { hasCv: boolean; onBrief: () => void }) 
           </svg>
           {STARS.map((s, i) => (
             <button key={s.k} type="button" className={`yr-star yr-star-${s.k}`} style={{ left: `${s.x}%`, top: `${s.y}%` }} onClick={() => goScene(i)} aria-label={`${scenes[i].title} sahnesine dön`}>
-              <span className="yr-star-label" aria-hidden="true">
+              <span className="yr-star-label" aria-hidden="true" lang={enLang(scenes[i].title)}>
                 {scenes[i].title}
               </span>
             </button>

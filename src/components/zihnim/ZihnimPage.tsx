@@ -4,7 +4,7 @@ import { prefersReducedMotion } from "../../utils/motion";
 import { hasWebGL } from "../../utils/webgl";
 import { useCalmView } from "../../utils/viewMode";
 import ViewMenu from "../ViewMenu";
-import { areaById, readyAreas, stations, story, workById, worksOf, type StationId, type Work } from "./zihnimWorld";
+import { areaById, readyAreas, stations, workById, worksOf, type StationId, type Work } from "./zihnimWorld";
 import type { SceneApi } from "./ZihnimScene";
 import "./zihnim.css";
 
@@ -21,6 +21,15 @@ const BriefFlow = lazy(() => import("../BriefFlow"));
  * works, panels and brief.
  */
 const HINT_KEY = "zihnim-hint-seen";
+/** The door screen is shown once per visit (session): "Hikâyeyi izle" or "Doğrudan alanlara git". */
+const GATE_KEY = "zihnim-kapi";
+const readGate = () => {
+  try {
+    return window.sessionStorage.getItem(GATE_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
 const readHint = () => {
   try {
     return window.localStorage.getItem(HINT_KEY) === "1";
@@ -29,7 +38,6 @@ const readHint = () => {
   }
 };
 const MAP_SPOTS: Record<string, [number, number]> = { "gorsel-hafiza": [96, 104], "kurgu-masasi": [304, 118], "deney-alani": [200, 196], "birlikte-uretelim": [200, 40] };
-const placeStations = stations.filter((s) => s.id !== "genel");
 
 const StaticMap = () => (
   <svg className="zh-map" viewBox="0 0 400 260" role="img" aria-label="Eray'ın Zihni haritası: iki lob, ortada Fikir Çekirdeği, üç alan ve Birlikte Üretelim">
@@ -138,6 +146,19 @@ const ZihnimPage = () => {
   const [brief, setBrief] = useState(false);
   const calmView = useCalmView();
   const [menu, setMenu] = useState(false);
+  const [gate, setGate] = useState<"open" | "list" | "done">(() => (readGate() ? "done" : "open"));
+  const gateBtn = useRef<HTMLButtonElement>(null);
+  const closeGate = useCallback(() => {
+    setGate("done");
+    try {
+      window.sessionStorage.setItem(GATE_KEY, "1");
+    } catch {
+      /* private mode: the door shows again next time */
+    }
+  }, []);
+  useEffect(() => {
+    if (gate === "open") gateBtn.current?.focus();
+  }, [gate, mode]);
   const [hint, setHint] = useState(() => !readHint());
   const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches);
   const [say, setSay] = useState("");
@@ -198,7 +219,7 @@ const ZihnimPage = () => {
             setStation(id);
             setShowWorks(false);
             const st = stations.find((x) => x.id === id);
-            if (st) setSay(`${st.title}. ${story[st.id]}`);
+            if (st) setSay(`${st.n} ${st.label}. ${st.title} ${st.line}`);
           },
           onPickWork: (id) => openWork(id, null),
           onFirstInput: hideHint,
@@ -231,7 +252,7 @@ const ZihnimPage = () => {
     const prev = { o: document.body.style.overflow, b: document.body.style.backgroundColor };
     document.body.style.overflow = "hidden";
     document.body.style.backgroundColor = "#0c0a0b";
-    document.title = "Eray’ın Zihni — Eray Ömeroğlu";
+    document.title = "Zihnim: Her şey bir şarkı kapağıyla başladı — Eray Ömeroğlu";
     return () => {
       document.body.style.overflow = prev.o;
       document.body.style.backgroundColor = prev.b;
@@ -241,8 +262,8 @@ const ZihnimPage = () => {
   // a panel calms the world; the rest of the page cannot be reached while a panel or the brief is open
   useEffect(() => {
     scene.current?.setCalm(work ? 1 : 0);
-    ui.current?.toggleAttribute("inert", !!work || brief);
-  }, [work, brief, mode]);
+    ui.current?.toggleAttribute("inert", !!work || brief || (gate !== "done" && mode === "world"));
+  }, [work, brief, mode, gate]);
   useEffect(() => {
     scene.current?.setPaused(calmView);
   }, [calmView, mode]);
@@ -294,41 +315,26 @@ const ZihnimPage = () => {
       <div ref={ui} className="zh-ui">
         <header className="zh-top">
           <div className="zh-brand">
-            <a className="zh-home" href="/" aria-label="Ana siteye dön">
+            <a className="zh-home" href="/">
               <MdArrowBack aria-hidden="true" />
-              <span>Ana site</span>
+              <span>Siteye geç</span>
             </a>
-            <a className="zh-site" href="/ai-isler">
-              AI İşler
-            </a>
-            <a className="zh-site" href="/hakkimda">
-              Hakkımda
-            </a>
-            <h1>Eray’ın Zihni</h1>
+            <h1>Zihnim</h1>
           </div>
           {mode === "world" && (
             <>
               <button type="button" className="zh-menu-btn" aria-expanded={menu} aria-controls="zh-nav" onClick={() => setMenu((m) => !m)}>
-                Alanlar
+                Bölümler
               </button>
-              <nav id="zh-nav" className={menu ? "is-open" : ""} aria-label="Alanlar">
+              <nav id="zh-nav" className={menu ? "is-open" : ""} aria-label="Bölümler">
                 <ul>
-                  {readyAreas.map((a) => (
-                    <li key={a.id}>
-                      <button type="button" className={`zh-area-btn${station === a.id ? " is-on" : ""}`} aria-pressed={station === a.id} onClick={() => go(a.id)}>
-                        {a.title}
+                  {stations.map((st) => (
+                    <li key={st.id}>
+                      <button type="button" className={`zh-area-btn${station === st.id ? " is-on" : ""}`} aria-current={station === st.id ? "location" : undefined} onClick={() => go(st.id)}>
+                        <b>{st.n}</b> {st.label}
                       </button>
                     </li>
                   ))}
-                  <li>
-                    <button type="button" className="zh-area-btn zh-overview" onClick={() => go("genel")} disabled={station === "genel"}>
-                      Genel görünüm
-                    </button>
-                  </li>
-                  <li className="zh-nav-site">
-                    <a href="/ai-isler">AI İşler</a>
-                    <a href="/hakkimda">Hakkımda</a>
-                  </li>
                 </ul>
               </nav>
               <ViewMenu className="zh-view" />
@@ -373,7 +379,10 @@ const ZihnimPage = () => {
                 <li key={st.id} style={{ [narrow ? "left" : "top"]: `${st.t * 100}%` }}>
                   <button type="button" className={k === stIndex ? "is-on" : progress >= st.t - 0.001 ? "is-past" : ""} aria-current={k === stIndex ? "location" : undefined} onClick={() => go(st.id)}>
                     <i aria-hidden="true" />
-                    <span>{st.title}</span>
+                    <span>
+                      <b>{st.n}</b>
+                      <em>{st.label}</em>
+                    </span>
                   </button>
                 </li>
               ))}
@@ -381,43 +390,47 @@ const ZihnimPage = () => {
           </nav>
         )}
 
-        {mode === "world" && hint && (
-          <p className="zh-hint" role="note">
-            {narrow ? "Sürükleyerek ışığı izle" : "Tekerlekle ışığı izle"}
-          </p>
-        )}
+
 
         {mode === "world" && (
           <section className={`zh-card${here ? " is-here" : " is-between"}${here?.id === "birlikte-uretelim" ? " is-final" : ""}`} aria-labelledby="zh-card-h">
             {here ? (
               <>
+                <p className="zh-ch">
+                  <b>{here.n}</b> {here.label}
+                </p>
                 <h2 id="zh-card-h">{here.title}</h2>
-                <p className="zh-line">{story[here.id]}</p>
-                {here.id === "birlikte-uretelim" && briefButton()}
+                {here.quote ? (
+                  <blockquote className="zh-quote">
+                    <p>“{here.quote.text}”</p>
+                    <footer>— {here.quote.by}</footer>
+                  </blockquote>
+                ) : (
+                  <p className="zh-line" lang={here.id === "birlikte-uretelim" ? "en" : undefined}>
+                    {here.line}
+                  </p>
+                )}
+                {here.id === "birlikte-uretelim" && (
+                  <>
+                    <p className="zh-line zh-yours">Sıradaki hikâye senin.</p>
+                    {briefButton()}
+                  </>
+                )}
                 {hereWorks.length > 0 && (
                   <>
                     <button type="button" className="zh-more" aria-expanded={showWorks} aria-controls="zh-card-works" onClick={() => setShowWorks((v) => !v)}>
-                      {showWorks ? "Çalışmaları gizle" : `Çalışmaları gör (${hereWorks.length})`}
+                      {showWorks ? "İşleri gizle" : `İşleri gör (${hereWorks.length})`}
                       {showWorks ? <MdExpandLess aria-hidden="true" /> : <MdExpandMore aria-hidden="true" />}
                     </button>
                     {showWorks && <div id="zh-card-works">{worksList(here.id)}</div>}
                   </>
                 )}
-                {stIndex < stations.length - 1 && (
-                  <p className="zh-next">
-                    <MdArrowForward aria-hidden="true" /> Sıradaki: {stations[stIndex + 1].title}
-                  </p>
-                )}
+                {here.hint && hint && <p className="zh-tip">{here.id === "genel" && narrow ? "Kaydırarak ilerle" : here.hint}</p>}
               </>
             ) : (
-              <>
-                <p className="zh-next zh-next-top">
-                  <MdArrowForward aria-hidden="true" /> {ahead.title}
-                </p>
-                <h2 id="zh-card-h" className="zh-line">
-                  {story[ahead.id]}
-                </h2>
-              </>
+              <p className="zh-ch zh-ch-next" id="zh-card-h">
+                <MdArrowForward aria-hidden="true" /> <b>{ahead.n}</b> {ahead.label}
+              </p>
             )}
           </section>
         )}
@@ -434,25 +447,75 @@ const ZihnimPage = () => {
         {mode === "static" && (
           <main className="zh-static">
             <StaticMap />
-            <p className="zh-static-lead">Bir fikrin yolculuğu. {story.giris}</p>
+            <p className="zh-static-lead">Bu işe kendi şarkılarıma kapak yaparak başladım. Yedi kısa bölümde yolum:</p>
             <ol className="zh-static-list">
-              {placeStations.map((st) => {
-                const a = areaById(st.id);
-                return (
-                  <li key={st.id}>
-                    <h2>{st.title}</h2>
-                    <p className="zh-line">{story[st.id]}</p>
-                    {a && st.id !== "birlikte-uretelim" && <p>{a.tagline}</p>}
-                    {worksOf(st.id).length > 0 && worksList(st.id)}
-                    {st.id === "birlikte-uretelim" && briefButton()}
-                  </li>
-                );
-              })}
+              {stations.map((st) => (
+                <li key={st.id}>
+                  <p className="zh-ch">
+                    <b>{st.n}</b> {st.label}
+                  </p>
+                  <h2>{st.title}</h2>
+                  {st.quote ? (
+                    <blockquote className="zh-quote">
+                      <p>“{st.quote.text}”</p>
+                      <footer>— {st.quote.by}</footer>
+                    </blockquote>
+                  ) : (
+                    <p className="zh-line" lang={st.id === "birlikte-uretelim" ? "en" : undefined}>
+                      {st.line}
+                    </p>
+                  )}
+                  {worksOf(st.id).length > 0 && worksList(st.id)}
+                  {st.id === "birlikte-uretelim" && briefButton()}
+                </li>
+              ))}
             </ol>
             <p className="zh-note">Üç boyutlu dünya bu cihazda açılamadı; aynı yolculuk, çalışmalar ve brief burada.</p>
           </main>
         )}
       </div>
+
+      {mode === "world" && gate !== "done" && (
+        <div className="zh-gate" role="dialog" aria-modal="true" aria-labelledby="zh-gate-h">
+          <div className="zh-gate-in">
+            <p className="zh-ch">
+              <b>00</b> Kapı
+            </p>
+            <h2 id="zh-gate-h">Her şey bir şarkı kapağıyla başladı.</h2>
+            <p className="zh-line">Yedi kısa bölümde yolum. Gerçek işlerimle.</p>
+            {gate === "open" ? (
+              <div className="zh-gate-acts">
+                <button ref={gateBtn} type="button" className="zh-cta" onClick={closeGate}>
+                  Hikâyeyi izle <MdArrowForward aria-hidden="true" />
+                </button>
+                <button type="button" className="zh-more" onClick={() => setGate("list")}>
+                  Doğrudan alanlara git
+                </button>
+              </div>
+            ) : (
+              <ul className="zh-gate-list">
+                {stations.map((st) => (
+                  <li key={st.id}>
+                    <button
+                      type="button"
+                      className="zh-area-btn"
+                      onClick={() => {
+                        closeGate();
+                        go(st.id);
+                      }}
+                    >
+                      <b>{st.n}</b> {st.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <a className="zh-gate-site" href="/">
+              Siteye geç
+            </a>
+          </div>
+        </div>
+      )}
 
       <p className="zh-sr" role="status" aria-live="polite">
         {say}

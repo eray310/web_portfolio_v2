@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { tools } from "../data/tools";
+import { enLang } from "../utils/lang";
 import "./styles/AboutPage.css";
 
 const titles = ["Motion Designer", "Art Director", "Video Editor", "AI Artist"];
@@ -220,7 +221,9 @@ const AboutPage = () => {
             </p>
             <ul className="ap-titles" lang="en">
               {titles.map((t) => (
-                <li key={t}>{t}</li>
+                <li key={t} lang="en">
+                  {t}
+                </li>
               ))}
             </ul>
           </div>
@@ -236,7 +239,9 @@ const AboutPage = () => {
                   <span className="ap-num" aria-hidden="true">
                     {s.n}
                   </span>
-                  <h2 id={s.id}>{s.title}</h2>
+                  <h2 id={s.id} lang={enLang(s.title)}>
+                    {s.title}
+                  </h2>
                   <p>{s.text}</p>
                 </div>
               </article>

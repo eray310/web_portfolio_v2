@@ -15,7 +15,7 @@ import { aiWorks } from "../../data/aiWorks";
 
 export type V3 = [number, number, number];
 export type AreaId = "gorsel-hafiza" | "kurgu-masasi" | "deney-alani" | "hareket-atolyesi" | "birlikte-uretelim";
-export type StationId = "genel" | "giris" | AreaId;
+export type StationId = "genel" | "giris" | "zirve" | AreaId;
 
 export type Work = {
   id: string;
@@ -105,11 +105,18 @@ export const light = {
   /** Route times of knots 5..10 of `route` after the cut. */
   after: [0.655, 0.74, 0.805, 0.87, 0.935, 1],
   /** The tunnel: point count (desktop / phone), half size of the beam's section, radius of the faint outer streaks. */
-  tunnel: { count: { desktop: 20000, light: 8000 }, beam: [4.4, 7.6] as [number, number], outer: 26, streaks: 30, wrap: 240 },
+  tunnel: { count: { desktop: 20000, light: 8000 }, beam: [6, 6] as [number, number], outer: 26, streaks: 30, wrap: 240, farDim: [60, 210, 0.1] as V3 },
+  /**
+   * The far light of the tunnel: a SQUARE, the first song cover. No real cover is in the repository yet, so it is an
+   * abstract square of points in a warm gradient (`coverColor`). It stands where the tunnel opens into the hall; as
+   * the camera reaches it, its points leave for the screens of the hall (one square, many squares) between the
+   * route times `split`.
+   */
+  cover: { side: 13, at: TUNNEL_LEN - VIEW_DIST - 110, points: 0.06, split: [0.378, 0.44] as [number, number], glow: 0.16 },
   /** The hall: point count, height the light lines come down from, floor level under the viewing spot, the far glow of the first work. */
-  hall: { count: { desktop: 46000, light: 18000 }, ceiling: 150, floor: -17, glow: 0.26 },
+  hall: { count: { desktop: 46000, light: 18000 }, ceiling: 150, floor: -17 },
   /** The hall's opening: each line starts `each` after the one before, comes down in `line`, and its work is written in `write` (route time). */
-  opening: { from: 0.4, each: 0.0095, line: 0.018, write: 0.024 },
+  opening: { from: 0.4, each: 0.0088, line: 0.018, write: 0.024 },
   /** Pictures of the hall turn sharp only this close (the layers behind stay points). */
   sharp: { far: 58, near: 42 },
 };
@@ -117,13 +124,29 @@ export const light = {
 export const hallSeen = (d: number, x: number, y: number): V3 => along(light.view + d, x, y);
 export const hallView: V3 = along(light.view);
 
-export const stations: { id: StationId; title: string; t: number }[] = [
-  { id: "genel", title: "Genel görünüm", t: 0 },
-  { id: "giris", title: "Giriş", t: light.t.inside },
-  { id: "gorsel-hafiza", title: "Görsel Hafıza", t: light.t.hall },
-  { id: "kurgu-masasi", title: "Kurgu Masası", t: light.after[1] },
-  { id: "deney-alani", title: "Deney Alanı", t: light.after[3] },
-  { id: "birlikte-uretelim", title: "Birlikte Üretelim", t: 1 },
+/** The colour of the abstract cover at (u, v) 0..1: amber to coral to a deep warm rose, on a diagonal. */
+export const coverColor = (u: number, v: number): V3 => {
+  const k = Math.min(1, Math.max(0, 0.55 * u + 0.45 * v));
+  const a: V3 = [0.98, 0.72, 0.36];
+  const b: V3 = [0.93, 0.42, 0.34];
+  const c: V3 = [0.62, 0.26, 0.4];
+  const m = (p: V3, q: V3, t: number): V3 => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, p[2] + (q[2] - p[2]) * t];
+  return k < 0.5 ? m(a, b, k * 2) : m(b, c, k * 2 - 1);
+};
+export const coverAt: V3 = along(light.cover.at);
+
+/**
+ * The seven chapters of the story (00..06): Eray's own way into this work. One text pattern for each: number, label,
+ * a title of at most two lines, one sentence, at most one hint. `title` is also the station's name for screen readers.
+ */
+export const stations: { id: StationId; n: string; label: string; title: string; line: string; hint?: string; quote?: { text: string; by: string }; t: number }[] = [
+  { id: "genel", n: "00", label: "Kapı", title: "Her şey bir şarkı kapağıyla başladı.", line: "Işığı izle; nereye vardığını gör.", hint: "Tekerlekle ilerle", t: 0 },
+  { id: "giris", n: "01", label: "Başlangıç", title: "Kendi şarkılarıma kapak yapıyordum.", line: "Bir şarkıya yüz vermek, ilk tasarımlarımdı.", t: light.t.inside },
+  { id: "gorsel-hafiza", n: "02", label: "Görsel Hafıza", title: "Önce görmeyi öğrendim.", line: "Kapaklardan markalara: görsel bir dil kurmak.", hint: "Bir kareye dokun", t: light.t.hall },
+  { id: "kurgu-masasi", n: "03", label: "Hareket", title: "Grafik tasarım bana yetmedi.", line: "Hareket daha dinamik, daha etkili geldi.", t: light.after[1] },
+  { id: "deney-alani", n: "04", label: "Yapay zekâ", title: "İşimi büyütmek isterken yapay zekâ geldi.", line: "Bir fikir artık onlarca biçim alabiliyor.", t: light.after[3] },
+  { id: "zirve", n: "05", label: "Zirve", title: "Yukarıdan bakınca yol görünüyor.", line: "", quote: { text: "Dağa tırman, seni dünya görsün diye değil, dünyayı görebilmen için.", by: "david mccullough jr." }, t: light.after[4] },
+  { id: "birlikte-uretelim", n: "06", label: "Ben", title: "Ben Eray Ömeroğlu.", line: "Motion Designer · Art Director · Video Editor · AI Artist", t: 1 },
 ];
 /** Extra stops of the calm view (station to station, no flights): the tunnel as one still frame. */
 export const calmStops = [0.3];
@@ -142,12 +165,13 @@ const PALETTE = {
 };
 
 export const story: Record<StationId, string> = {
-  genel: "Zihnin içi karanlık. Işığı izle.",
-  giris: "Bir fikir nereden gelir?",
-  "gorsel-hafiza": "Önce görür, biriktiririm.",
-  "kurgu-masasi": "Sonra parçalar arasında bir ritim bulurum.",
-  "deney-alani": "Peki başka türlü olsaydı?",
-  "birlikte-uretelim": "Sıradaki fikir senin olabilir.",
+  genel: "",
+  giris: "",
+  zirve: "",
+  "gorsel-hafiza": "",
+  "kurgu-masasi": "",
+  "deney-alani": "",
+  "birlikte-uretelim": "",
   "hareket-atolyesi": "",
 };
 
@@ -204,7 +228,7 @@ export const worldConfig = {
    * the route moves on, and waits at the next place. `count` points; `seedR` the seed's radius; `span` the bird's wing
    * span; `lead` how far (0..1 of a segment) it runs ahead of the camera; `wait` where in the segment it has arrived.
    */
-  guide: { count: 560, seedR: 0.9, span: 9, lead: 0.62, leadTunnel: 0.97, size: 0.34, ahead: 30, pull: 0.8 },
+  guide: { count: 520, seedR: 0.9, span: 9, lead: 0.62, leadTunnel: 0.72, size: 0.34, ahead: 34, pull: 0.8 },
   /**
    * Discovery moments, as route time BEFORE each station (they are complete at the station, forwards and backwards):
    * Görsel Hafıza frames open layer by layer; Kurgu Masası frames align one after another; Deney Alanı screens pass
@@ -305,8 +329,22 @@ export const seen = (k: number, d: number, x: number, y: number): V3 => {
 };
 const D = 8; // route knot of Deney Alanı
 /** Görsel Hafıza: [title, distance, right, up, width, extra turn]: layers from near to far, kept clear of the card. */
+/** A portrait screen (a phone) is narrow: there the three near works are stepped in height and depth so none is cut. */
+const PORTRAIT = typeof window !== "undefined" && window.innerWidth / Math.max(1, window.innerHeight) < 0.8;
+const gorselPortrait: [string, number, number, number, number, number?][] = [
+  ["Motosan", 36, 0, 12, 8.6],
+  ["Lay", 40, 6.3, -3.4, 7],
+  ["Next Telekom", 40, -6.3, -3.4, 7],
+  ["RES360", 58, 14, 17, 7],
+  ["PayPal", 60, -15, 18, 7],
+  ["Uber Motion", 64, 0, 33, 7],
+  ["Fidan Properties", 74, 20, 2, 8],
+  ["Motivasyon vs Disiplin", 76, -21, 3, 8],
+  ["Allesta", 80, 9, 42, 8],
+  ["Siux", 82, -10, 44, 8.5],
+];
 // three near works carry the frame (clear of each other); the rest recede behind them in two dimmer layers
-const gorselList: [string, number, number, number, number, number?][] = [
+const gorselWide: [string, number, number, number, number, number?][] = [
   ["Motosan", 31, 0, 1.2, 8.6],
   ["Lay", 35, 13.6, 2.6, 7.6, -0.26],
   ["Next Telekom", 35, -13.2, 2.6, 7.6, 0.26],
@@ -318,6 +356,7 @@ const gorselList: [string, number, number, number, number, number?][] = [
   ["Allesta", 74, -19, -8, 8.5, 0.2],
   ["Siux", 78, 30, 21, 9, -0.2],
 ];
+const gorselList = PORTRAIT ? gorselPortrait : gorselWide;
 const kurguList: [string, number][] = [
   ["The Lock", 0.2],
   ["Allvex", 0.36],
@@ -406,9 +445,10 @@ export const workById = (id: string | null) => (id ? works.find((w) => w.id === 
  * the card (lower left) and the route indicator (right). At the overview it is still part of the idea core.
  */
 export const guideSpots: Record<StationId, V3> = {
+  zirve: [16, 16, -104],
   genel: [0, 15, 108],
   giris: along(46, 0, 1),
-  "gorsel-hafiza": hallSeen(24, -3.6, -3.2),
+  "gorsel-hafiza": PORTRAIT ? hallSeen(26, 0, 2.4) : hallSeen(24, -3.6, -3.2),
   "kurgu-masasi": seen(6, 20, -9.5, 4.5),
   "deney-alani": seen(8, 32, -8, 2),
   "birlikte-uretelim": seen(10, 34, 0, 5),

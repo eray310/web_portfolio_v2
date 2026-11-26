@@ -1,3 +1,4 @@
+import { enLang } from "../utils/lang";
 import { useEffect, useRef, useState } from "react";
 import Starters from "./Starters";
 import "./styles/Career.css";
@@ -99,7 +100,9 @@ const Career = () => {
                     }
                     data-cursor="disable"
                   >
-                    <span className="career-role">{item.role}</span>
+                    <span className="career-role" lang={enLang(item.role)}>
+                      {item.role}
+                    </span>
                     <span className="career-meta">
                       <span className="career-company">{item.company}</span>
                       <span className="career-date">{item.date}</span>

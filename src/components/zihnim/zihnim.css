@@ -934,3 +934,170 @@
     transition: none;
   }
 }
+
+/* ── the story frame (00..06): one text pattern per chapter, a numbered progress indicator, the door ── */
+.zh-ch {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--zh-dim);
+}
+.zh-ch b {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--zh-accent);
+}
+.zh-ch-next {
+  align-items: center;
+  margin: 0;
+}
+.zh-ch-next svg {
+  width: 18px;
+  height: 18px;
+  color: var(--zh-accent);
+}
+.zh .zh-card {
+  width: min(460px, calc(100% - 32px));
+}
+.zh .zh-card h2 {
+  margin: 0 0 8px;
+  font-size: clamp(22px, 2.3vw, 30px);
+  font-weight: 700;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.zh .zh-card .zh-line {
+  margin: 0 0 10px;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--zh-ink);
+}
+.zh-quote {
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+}
+.zh-quote p {
+  margin: 0 0 6px;
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--zh-ink);
+}
+.zh-quote footer {
+  font-size: 14px;
+  color: var(--zh-dim);
+}
+.zh-tip {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--zh-accent);
+}
+.zh-yours {
+  font-weight: 600;
+}
+/* the indicator: numbers for all, the name beside the current one */
+.zh-route button span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.zh-route button span b {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.zh-route button span em {
+  display: none;
+  font-style: normal;
+}
+.zh-route button.is-on span em,
+.zh-route button:focus-visible span em,
+.zh-route:hover button span em {
+  display: inline;
+}
+.zh-area-btn b {
+  margin-right: 8px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--zh-accent);
+}
+.zh-area-btn.is-on b {
+  color: inherit;
+}
+/* the door: shown once per visit, over the first frame */
+.zh-gate {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: radial-gradient(70% 60% at 50% 50%, rgba(12, 10, 11, 0.9), rgba(12, 10, 11, 0.7));
+}
+.zh-gate-in {
+  width: min(520px, 100%);
+}
+.zh-gate h2 {
+  margin: 0 0 10px;
+  font-size: clamp(30px, 5vw, 48px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.zh-gate .zh-line {
+  margin: 0 0 22px;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--zh-dim);
+}
+.zh-gate-acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.zh-gate-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.zh-gate-list li {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+.zh-gate-list .zh-area-btn {
+  width: 100%;
+  text-align: left;
+}
+.zh-gate-site {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 14px;
+  font-size: 15px;
+  color: var(--zh-dim);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+@media only screen and (max-width: 760px) {
+  .zh .zh-card {
+    width: auto;
+  }
+  .zh .zh-card h2 {
+    font-size: 20px;
+  }
+  .zh .zh-card .zh-line,
+  .zh-quote p {
+    font-size: 15px;
+  }
+}

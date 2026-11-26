@@ -9,7 +9,7 @@
  * Points of a real picture keep the picture's colour and an image index (aImg): the scene fades them out when the
  * sharp picture (a textured plane) fades in.
  */
-import { hallView, light, route, worldConfig as W, works, filmStrip, kurguU, type V3, type Work } from "./zihnimWorld";
+import { coverColor, guideSpots, hallView, light, route, worldConfig as W, works, filmStrip, kurguU, type V3, type Work } from "./zihnimWorld";
 
 export type Samples = { w: number; h: number; lum: Float32Array; rgb: Float32Array };
 export type Frame = { id: string; c: V3; right: V3; up: V3; normal: V3; w: number; h: number; img: number };
@@ -474,8 +474,9 @@ export type Guide = {
 };
 
 /**
- * The guide: a small group of points that starts in the idea core. The same points (same index in every array) form
- * the seed, the bird, a stretch of the film strip and a patch of a membrane, so every change of form is continuous.
+ * The guide: a seed of light (there is no bird). The same points (same index in every array) form the seed, the light
+ * it hands to the screens of the hall, a stretch of the film strip and a patch of a membrane, so every change of form
+ * is continuous.
  */
 export function buildGuide(count: number, imgs: Record<string, Samples | null>): Guide {
   const r = rng(4242);
@@ -489,7 +490,7 @@ export function buildGuide(count: number, imgs: Record<string, Samples | null>):
   const tint = new Float32Array(n * 3);
   const data = new Float32Array(n * 4);
   const cc = W.core.c;
-  const half = G.span / 2;
+  const hallF = hallFrames(imgs);
   const gImgs = works.filter((w) => w.area === "gorsel-hafiza").map((w) => imgs[w.id]).filter((s): s is Samples => !!s);
   const dc: V3 = [2, -22, -82];
   for (let k = 0; k < n; k++) {
@@ -505,40 +506,13 @@ export function buildGuide(count: number, imgs: Record<string, Samples | null>):
     const a1 = r() * TAU;
     const b1 = Math.acos(2 * r() - 1);
     seed.set([Math.sin(b1) * Math.cos(a1) * Rs, Math.cos(b1) * Rs, Math.sin(b1) * Math.sin(a1) * Rs], k * 3);
-    // bird: body (a slim spindle), two swept wings (denser on the leading edge), a small fanned tail
-    const part = r();
-    let bx = 0;
-    let by = 0;
-    let bz = 0;
-    let span = 0;
-    if (part < 0.2) {
-      const t = r();
-      const z = -2.2 + t * 5.0;
-      const rad = 0.3 * Math.sin(Math.PI * Math.min(1, t * 1.05)) * (t > 0.85 ? 0.6 : 1);
-      const th = r() * TAU;
-      bx = Math.cos(th) * rad;
-      by = Math.sin(th) * rad * 0.8;
-      bz = z;
-    } else if (part < 0.9) {
-      const side = r() < 0.5 ? -1 : 1;
-      const u = Math.pow(r(), 0.85); // along the span
-      const v = Math.pow(r(), 2.6); // from the leading edge back: most points draw the leading edge as a clear line
-      // long, tapering wings swept back: wide at the body, a point at the tip
-      const chord = 1.9 * (1 - u) * (1 - u) + 0.12;
-      const lead: V3 = [0.25 + u * (half - 0.25), 0.5 * u * u, 0.9 - u * u * 3.4];
-      const trail: V3 = [lead[0] - 0.15 * u, 0.4 * u * u, lead[2] - chord];
-      bx = side * (lead[0] + (trail[0] - lead[0]) * v);
-      by = lead[1] + (trail[1] - lead[1]) * v;
-      bz = lead[2] + (trail[2] - lead[2]) * v;
-      span = side * u;
-    } else {
-      // a forked tail: two short lines
-      const u = r();
-      bx = (r() < 0.5 ? -1 : 1) * (0.08 + u * 0.75) + gauss(r) * 0.03;
-      by = 0.05 * u;
-      bz = -2.2 - u * 1.9;
-    }
-    bird.set([bx, by, bz], k * 3);
+    // "bird" is no bird any more: it is where this point lands when the seed opens in the hall and hands its light to
+    // the screens (the top edge of a work, where its light line arrives), relative to the place the seed waits at
+    const hf = hallF[k % hallF.length];
+    const hx = (r() - 0.5) * hf.w;
+    const spot = guideSpots["gorsel-hafiza"];
+    bird.set([hf.c[0] + hf.right[0] * hx - spot[0], hf.c[1] + hf.h / 2 - spot[1], hf.c[2] + hf.right[2] * hx - spot[2]], k * 3);
+    const span = 0;
     // strip: along the middle of the film strip, on its rails and cell edges
     const u = 0.28 + r() * 0.3;
     const c = catmull(filmStrip, u);
@@ -579,12 +553,12 @@ function bag(total: number, seed: number) {
   const path = new Float32Array(total).fill(-1);
   const img = new Float32Array(total).fill(-1);
   let i = 0;
-  const put = (p: V3, c: V3, kind: number, t: number, pathId = -1, imgId = -1, sizeK = 1) => {
+  const put = (p: V3, c: V3, kind: number, t: number, pathId = -1, imgId = -1, sizeK = 1, seedV?: number) => {
     if (i >= total) return;
     pos.set(p, i * 3);
     col.set(c, i * 3);
     const [a, b] = SIZE[kind];
-    data.set([r(), (a + Math.pow(r(), 3) * (b - a)) * sizeK, kind, t], i * 4);
+    data.set([seedV ?? r(), (a + Math.pow(r(), 3) * (b - a)) * sizeK, kind, t], i * 4);
     path[i] = pathId;
     img[i] = imgId;
     i++;
@@ -639,12 +613,11 @@ export function hallFrames(imgs: Record<string, Samples | null>): Frame[] {
  * few faint, long streaks that run with the axis (they give the perspective and the speed). No rings, no walls.
  * t = distance along the axis / length (the scene lets the beam reach out of the fissure first).
  */
-export function buildTunnel(total: number, imgs: Record<string, Samples | null>): World {
+export function buildTunnel(total: number): World {
   const B = bag(total, 7717);
   const { r, put } = B;
   const P = W.palette;
   const A = light.axis;
-  const first = imgs[hallWorks()[0].id];
   const at = (d: number, x: number, y: number): V3 => [A.p[0] + A.d[0] * d + x, A.p[1] + A.d[1] * d + A.up[1] * y, A.p[2] + A.d[2] * d + A.up[2] * y];
   // one stretch of the axis, twice `wrap` long: the shader repeats it around the camera
   const from = 0;
@@ -656,8 +629,9 @@ export function buildTunnel(total: number, imgs: Record<string, Samples | null>)
     // soft-edged section; a little denser along the middle
     const x = (r() + r() - 1) * bw * 1.25;
     const y = (r() + r() - 1) * bh * 1.25;
-    const c = colorAt(first, 0.5 + x / (bw * 2.5), 0.5 - y / (bh * 2.5), P.ice);
-    put(at(d, x, y), mix(P.offWhite, c, 0.72), 9, d / A.len, -1, -1, 0.7 + 0.6 * r());
+    // the beam comes from the square cover at its end: its dust carries the colours of the cover across its section
+    const c = coverColor(0.5 + x / (bw * 2.5), 0.5 - y / (bh * 2.5));
+    put(at(d, x, y), mix(P.offWhite, c, 0.7), 9, d / A.len, -1, -1, 0.7 + 0.6 * r());
   }
   // the faint outside: long streaks parallel to the axis, each a gentle curve
   const streaks = Array.from({ length: light.tunnel.streaks }, () => ({ a: r() * TAU, rad: 9 + r() * light.tunnel.outer, d0: from + r() * (to - from), len: 90 + r() * 200, bend: (r() - 0.5) * 9, c: mix(scale(P.grey, 0.7), r() < 0.2 ? P.lavender : P.ice, 0.35) }));
@@ -721,13 +695,15 @@ export function buildHall(total: number, imgs: Record<string, Samples | null>, f
       put([f.c[0] + Math.cos(a) * rad, floorY + gauss(r) * 0.04, f.c[2] + Math.sin(a) * rad * 0.7], scale(mix(P.offWhite, avg, 0.6), 0.5 * (1 - rad / (f.w * 0.9)) + 0.1), 10, 2, LINE_BASE + f.img);
     }
   });
-  // far away the first work is only a few large points of its colours
-  const f0 = frames[0];
-  const s0 = imgs[list[0].id];
-  for (let q = 0; q < Math.floor(total * 0.02); q++) {
+  // the square cover at the end of the tunnel (BEACON): each of its points is stored at the place on a screen it will
+  // fly to; the shader holds it in the square (t = across, seed = up) until the camera arrives: one square, many squares
+  for (let q = 0; q < Math.floor(total * light.cover.points); q++) {
     const u = r();
     const v = r();
-    put([f0.c[0] + (u - 0.5) * f0.w, f0.c[1] + (0.5 - v) * f0.h, f0.c[2]], colorAt(s0, u, v, P.ice), 10, 0, BEACON, -1, 5);
+    const f = frames[q % frames.length];
+    const lx = (r() - 0.5) * f.w;
+    const ly = (r() - 0.5) * f.h;
+    put([f.c[0] + f.right[0] * lx, f.c[1] + ly, f.c[2] + f.right[2] * lx], coverColor(u, 1 - v), 10, u, BEACON, -1, 4, v);
   }
   // the air of the hall: very sparse dust, a little more in the height above the works
   while (!B.full()) {

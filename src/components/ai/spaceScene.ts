@@ -480,6 +480,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
   let travel = 37; // the still frame uses this too
   let time = 0;
   let stops: StopInfo[] = [];
+  let stopsScrollY = 0; // where the page was scrolled when the boxes of `stops` were measured (they are viewport px)
   let clearC = new Vector2(0.7, 0.5);
   let clearR = new Vector2(0.3, 0.4);
   let vp = new Vector2(0.7, 0.5);
@@ -544,6 +545,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     shared.uLeftCalm.value = wide ? 1 : 0.35;
     bgMat.uniforms.uLeftCalm.value = wide ? 1 : 0.35;
     stops = opts.stops();
+    stopsScrollY = window.scrollY;
   };
 
   // scroll position -> s (0 opening ... 4 closing), eased inside each step
@@ -660,7 +662,18 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     volFrac += (volGoal - volFrac) * (1 - Math.exp(-dt * 2));
     volume.setDrawFraction(volFrac);
     const idleP = light || performance.now() - lastMove > 900;
-    volume.update({ dt: still ? 0 : dt, s: sCur, px: idleP ? 0 : pointerX, py: idleP ? 0 : pointerY, calm: calmPlayer, pushK: flow && vtf && level < 3 ? (level === 0 ? 1 : level === 1 ? 0.7 : 0.4) : 0 });
+    // the example boxes were measured at some scroll position; move them to where they are on screen now
+    const liveBox = (b: StopInfo["box"]) => {
+      if (!b) return null;
+      const sy = window.scrollY - stopsScrollY;
+      return { cx: (b.x + b.w / 2) / w, cy: 1 - (b.y - sy + b.h / 2) / h, rx: Math.max(0.12, (b.w / w) * 0.75), ry: Math.max(0.15, (b.h / h) * 0.75) };
+    };
+    const lb0 = liveBox(b0) ?? liveBox(b1);
+    const lb1 = liveBox(b1) ?? lb0;
+    const bt = Math.min(1, Math.max(0, (f0 - 0.25) / 0.5));
+    const bs = bt * bt * (3 - 2 * bt);
+    const vClear = lb0 && lb1 ? { cx: lb0.cx + (lb1.cx - lb0.cx) * bs, cy: lb0.cy + (lb1.cy - lb0.cy) * bs, rx: lb0.rx + (lb1.rx - lb0.rx) * bs, ry: lb0.ry + (lb1.ry - lb0.ry) * bs, amount: 1 } : { cx: 0.7, cy: 0.5, rx: 0.3, ry: 0.4, amount: 0 };
+    volume.update({ clear: vClear, dt: still ? 0 : dt, s: sCur, px: idleP ? 0 : pointerX, py: idleP ? 0 : pointerY, calm: calmPlayer, pushK: flow && vtf && level < 3 ? (level === 0 ? 1 : level === 1 ? 0.7 : 0.4) : 0 });
     shared.uTravel.value = travel;
     shared.uTime.value = time;
     shared.uClearC.value.copy(clearC);
@@ -790,6 +803,7 @@ export function createSpaceScene(opts: SpaceOptions): SpaceApi {
     isPaused: () => paused,
     refresh() {
       stops = opts.stops();
+      stopsScrollY = window.scrollY;
       readScroll();
       if (still || paused) drawOnce();
     },

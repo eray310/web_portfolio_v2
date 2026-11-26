@@ -313,8 +313,8 @@ const VERT = /* glsl */ `
     float left = mix(1.0, uTextCol, uLeftCalm * (1.0 - smoothstep(0.12, 0.64, uv.x)));
     vec2 dd = (uv - uClearC - vec2(0.0, -0.07)) / (uClearR * vec2(1.0, 1.4));
     float len = length(dd);
-    float behind = mix(1.0, uBehind, uClear * (1.0 - smoothstep(0.55, 1.15, len)));
-    float halo = 1.0 + (uAround - 1.0) * uClear * exp(-pow((len - 0.95) / 0.3, 2.0));
+    float behind = mix(1.0, uBehind, uClear * (1.0 - smoothstep(0.6, 0.88, len)));
+    float halo = 1.0 + (uAround - 1.0) * uClear * exp(-pow((len - 1.0) / 0.3, 2.0));
     float edge = 1.0 - smoothstep(0.88, 1.12, max(abs(uv.x - 0.5), abs(uv.y - 0.5)) * 2.0);
     float tierA = aTier < 0.5 ? uAlphaTier.x : aTier > 1.5 ? uAlphaTier.z : uAlphaTier.y;
     float alpha = tierA * depthFade * nearFade * left * behind * halo * mix(0.35, 1.0, edge) * uShow;
@@ -380,6 +380,8 @@ export type VolumeInputs = {
   py: number;
   /** 0..1: a video player is open (the movement calms). */
   calm: number;
+  /** The example box of the nearest stop, live on screen (centre and half-extent in 0..1 screen units, y up) and how much to clear. */
+  clear: { cx: number; cy: number; rx: number; ry: number; amount: number };
   /** Flow-field displacement gain for this quality level (0 = off). */
   pushK: number;
 };
@@ -434,9 +436,9 @@ export function createVolumeLayer(opts: { light: boolean; shared: Record<string,
       uMaxPx: { value: C.size.maxPx },
       uLeftCalm: opts.shared.uLeftCalm,
       uTextCol: { value: C.readability.textColumn },
-      uClearC: opts.shared.uClearC,
-      uClearR: opts.shared.uClearR,
-      uClear: opts.shared.uClear,
+      uClearC: { value: new Vector2(0.7, 0.5) },
+      uClearR: { value: new Vector2(0.3, 0.4) },
+      uClear: { value: 0 },
       uBehind: { value: C.readability.behindBox },
       uAround: { value: C.readability.aroundMedia },
       uLight: { value: light ? 1 : 0 },
@@ -481,7 +483,7 @@ export function createVolumeLayer(opts: { light: boolean; shared: Record<string,
 
   const api: VolumeApi = {
     points,
-    update({ dt, s, px, py, calm, pushK }) {
+    update({ dt, s, px, py, calm, pushK, clear }) {
       const u = mat.uniforms;
       if (hold) {
         // a test froze the clocks (see `debugSet`)
@@ -505,6 +507,9 @@ export function createVolumeLayer(opts: { light: boolean; shared: Record<string,
       const breathe = Math.sin(u.uPhase.value * 2) * C.motion.turn;
       setRot(0.34 * (1 - morph) - 0.1 * morph + breathe + rotSmooth.x * C.motion.parallax, 0.08 * (1 - morph) - rotSmooth.y * C.motion.parallax * 0.7 + Math.sin(u.uPhase.value * 3 + 1) * C.motion.turn * 0.4);
       u.uPush.value = pushK * C.pointer.push;
+      (u.uClearC.value as Vector2).set(clear.cx, clear.cy);
+      (u.uClearR.value as Vector2).set(clear.rx, clear.ry);
+      u.uClear.value = clear.amount;
     },
     setDrawFraction(f) {
       geo.setDrawRange(0, Math.max(0, Math.round(b.n * clamp(f, 0, 1))));

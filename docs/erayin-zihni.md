@@ -243,3 +243,68 @@ phone trip 20.9 / 13.9 (old / new).
 The far cover reads as a warm glow more than a crisp square until the camera is close; no deep link for the works;
 `hallSeen` layout does not follow a rotation of the phone; og image for /zihnim missing; the brain still builds Kurgu
 and Deney at start; 60-90 s for the whole journey was not timed. Not tried: real phones, Safari, Firefox, real trackpad.
+
+## Görev A: every chapter as cinematic as the tunnel (branch `design/isik-yolu`; local only, not pushed)
+This section replaces the ones above where they differ. Done in this round: the card system (all chapters), 01 with the
+real cover, 02 with its hero frame and camera move, the quote of 05 and the card of 06. NOT done: 03 outside the brain
+with the shutter, the prism room of 04, the climb of 05, the single screen of 06, the Grafik Tasarım filter on the home
+page. They are drafted below.
+
+### The rule
+Every chapter: arrival (a change of place), a moment of reveal, a hero frame, the chapter card, a calm pause; its own
+place, its own colour of light and ONE signature camera move. All of it follows the route position.
+
+| Chapter | Place | Light | Signature move | State |
+| --- | --- | --- | --- | --- |
+| 00 Kapı | outside of the brain | off-white, teal in the fissure | still, three-quarter frame | built |
+| 01 Başlangıç | narrow tunnel on the axis | the colours of the cover "Sabah Olmadan" | dolly forward | built |
+| 02 Görsel dil | tall hall of light lines | off-white (paper) | look up, then settle down onto the hero work | built |
+| 03 Hareket | long gallery on the axis, outside the brain | warm projection light | truck sideways | NOT built (old scene in the brain) |
+| 04 Yapay zekâ | room of split light (prism) | a little lavender | small slow arc | NOT built (old scene in the brain) |
+| 05 Zirve | open sky above the whole road | ice-blue dawn | crane up | only the quote (old view) |
+| 06 Ben | one empty screen, light turns to the camera | all colours calm | push in | only the card (old final view) |
+
+### The chapter card (`Chapter` in `zihnimWorld.ts`, card in `ZihnimPage.tsx`, styles at the end of `zihnim.css`)
+A printed slip: thin top rule, square corners, no glass and no glow. Number, label and `meta` (period, place), a title
+of at most two lines, one sentence, `facts` (two or three lines of real data), one hint, at most one link. It fades in
+after the arrival (`zhCardIn`), shrinks to "→ nn label" while travelling, and shows at once in the calm view. On phones
+it sits at the bottom and shows only the first fact. 05 has no title: the quote is the chapter, centred, with the
+credit "— David McCullough Jr. · sevdiğim söz"; the wheel passes through it. 06 is a little larger and has the
+signature line "Dünyayı görebilmek için tırmanıyorum.", "Sıradaki hikâye senin.", "Projeni anlat" and "Siteye dön".
+Facts come from Career.tsx (MODD Group, Retro Yazılım), tools.ts and the covers. AI tools: a placeholder line, no names.
+
+### 01 with the real cover (`light.cover`)
+`public/kapaklar/sabah-olmadan.jpg` is sampled once. The beam dust takes only its coloured cells (`vivid` in
+`worldGeometry.ts`), so the beam is turquoise, blue and a little orange, not the pale paper. The far square has a thin
+edge of points (a fifth of the cover points), its paper points are kept low (never white). At the arrival the real
+picture is sharp (`cover.sharp`), then "Her Gece" and "Yeterli Değil" join it, smaller (`cover.others`, `cover.join`):
+three squares; then all leave for the screens of the hall (`cover.split`).
+
+### 02 with personal graphic works (`PERSONAL`, `gorselWide`, `gorselPortrait`)
+Kendrick Lamar collage in the middle, Novak × Sinner and blonded radio beside it; client works behind as points.
+Collages carry the tag "Kişisel çalışma · Kolaj" in the panel and "kişisel çalışma" in the list; they are not in any
+list of brands. Camera: `light.hallMove` (look up 46 units, 7 higher, both gone at the viewing spot).
+
+### Other changes
+- Every work panel has an address: `/zihnim?is=<work id>`. Opening it goes to the chapter of the work with the panel
+  open; Back closes the panel.
+- A phone that is turned reloads at the same route position (`zihnim-s` in sessionStorage) with the hall laid out for
+  the new shape (`isPortrait`).
+- `public/og/zihnim.jpg` (1200 x 630): the tunnel just before the arrival, only "Sabah Olmadan" in frame. Meta added.
+- `wheel.routePx` 10400. A scripted run (one 100 px notch every 0.4 s, 2.6 s rest at seven stops) took 47 s at 8200;
+  with 10400 the travelling part is about a quarter longer. It was not timed by a person.
+- New images: webp and jpg beside the originals in `public/kapaklar` and `public/grafik` (the png originals are untouched).
+
+### Drafts for the next round
+- 03: a fourth point set on the axis after the hall. Shutter: the light lines of the hall dim and return in a slow
+  rhythm tied to the route position (low amplitude). The squares slide into one row and begin to move one step at a
+  time; the camera trucks sideways and stays calm, the row runs past it; Voop is the large screen at the end. The cut
+  after the hall goes away and the brain stops building Kurgu at start (report the point counts before and after).
+- 04: one square (the Allesta ad) opens into several versions along a few thin beams; lavender; a slow arc.
+- 05: crane up above the axis; the places below as a landscape of squares, each a calm patch of its own colour.
+- 06: the colours gather on one empty screen; the light turns to the camera; push in.
+- Home page: "Grafik Tasarım" filter in Seçili İşler with the three covers and three collages (image-only cards).
+
+### Measured (Chrome, Windows, RTX 4060, 144 Hz, against `b1a2681`)
+GPU, two runs: median 6.9-7.0 ms, p95 7.1 ms in both versions. Software WebGL, one run: cold start 34.7 / 34.8 ms
+median (p95 69.4 / 90.3), trip 34.7 / 34.7, pointer 34.7 / 34.7, phone trip 20.8 / 13.9 (old / new).

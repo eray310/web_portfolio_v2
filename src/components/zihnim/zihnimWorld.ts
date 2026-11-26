@@ -321,7 +321,7 @@ export const worldConfig = {
   count: { desktop: 200000, light: 70000 },
   /** Wheel: pixels of wheel for the whole route; the follow rate (1/s) once the wheel stops; largest step of one event. */
   /** snapReach 0: the camera stays exactly where the visitor stops (no pull onto a station). */
-  wheel: { routePx: 8200, follow: 7.5, maxStep: 240, snapAfter: 260, snapReach: 0 },
+  wheel: { routePx: 10400, follow: 7.5, maxStep: 240, snapAfter: 260, snapReach: 0 },
   /** Phone: a vertical drag of this many screen heights runs the whole route. */
   touch: { routeScreens: 3.4 },
   /** A trip started by a button: seconds per whole route, and the limits. */

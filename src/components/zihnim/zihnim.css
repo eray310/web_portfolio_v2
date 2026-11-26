@@ -1274,3 +1274,12 @@
 .zh .zh-card.is-quote {
   pointer-events: none;
 }
+/* phones: the card stays low so it does not cover the works; only the first fact shows (the rest is in the works list and in the no-WebGL page) */
+@media only screen and (max-width: 760px) {
+  .zh .zh-card:not(.is-final) .zh-facts li:nth-child(n + 2) {
+    display: none;
+  }
+  .zh .zh-card .zh-tip {
+    display: none;
+  }
+}

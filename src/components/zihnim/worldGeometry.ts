@@ -9,7 +9,7 @@
  * Points of a real picture keep the picture's colour and an image index (aImg): the scene fades them out when the
  * sharp picture (a textured plane) fades in.
  */
-import { coverColor, galAt, galX, guideSpots, hallView, light, roomX, route, worldConfig as W, works, filmStrip, type V3, type Work } from "./zihnimWorld";
+import { coverColor, galAt, galX, guideSpots, hallView, isPortrait, light, roomX, route, worldConfig as W, works, filmStrip, type V3, type Work } from "./zihnimWorld";
 
 export type Samples = { w: number; h: number; lum: Float32Array; rgb: Float32Array };
 export type Frame = { id: string; c: V3; right: V3; up: V3; normal: V3; w: number; h: number; img: number };
@@ -763,17 +763,24 @@ export function buildGallery(total: number, imgs: Record<string, Samples | null>
 
 /** Picture indices of the room of 04 (after the hall and the gallery). */
 export const ROOM_FRAMES = 16;
+/** aPath of the points that carry the light of the places to the screen of 06. */
+export const STREAM = 70;
 /** 04: the Allesta frame in the middle and real frames of its making around it, a calm fan. Sets each work's place. */
 export function roomFrames(imgs: Record<string, Samples | null>): Frame[] {
   const list = works.filter((w) => w.area === "deney-alani");
   const A = light.axis;
-  const fan: [number, number, number][] = [[0, 0.4, 0], [-13.5, 6.6, -7], [13.5, 6.6, -7], [-15.5, -5.8, -5], [15.5, -5.8, -5]];
+  // a narrow (portrait) screen gets a tighter, upright arrangement: the frames stand beside the poster, none is cut
+  const tall = isPortrait();
+  const fan: [number, number, number][] = tall
+    ? [[0, 1, 0], [-7.3, 9.6, -3], [7.3, 9.6, -3], [-7.3, 0.4, -2], [7.3, 0.4, -2]]
+    : [[0, 0.4, 0], [-13.5, 6.6, -7], [13.5, 6.6, -7], [-15.5, -5.8, -5], [15.5, -5.8, -5]];
   return list.map((w, k) => {
     const s = imgs[w.id];
-    const h = s ? (w.width * s.h) / s.w : w.width * 0.6;
+    const width = tall ? (k === 0 ? 6.8 : 4.3) : w.width;
+    const h = s ? (width * s.h) / s.w : width * 0.6;
     const c = galAt(roomX() + fan[k][0], fan[k][1], fan[k][2]);
     w.at = c;
-    return { id: w.id, c, right: [1, 0, 0] as V3, up: A.up, normal: scale(A.d, -1), w: w.width, h, img: ROOM_FRAMES + k };
+    return { id: w.id, c, right: [1, 0, 0] as V3, up: A.up, normal: scale(A.d, -1), w: width, h, img: ROOM_FRAMES + k };
   });
 }
 const framePoints = (B: ReturnType<typeof bag>, f: Frame, s: Samples | null, count: number, fallback: V3) => {
@@ -797,16 +804,43 @@ export function buildRoom(total: number, imgs: Record<string, Samples | null>, f
   const { r, put } = B;
   const P = W.palette;
   frames.forEach((f, k) => framePoints(B, f, imgs[f.id], Math.floor((total * 0.6) / frames.length) * (k === 0 ? 2 : 0.75), scale(P.lavender, 0.6)));
-  const px = roomX() - 15;
-  for (let q = 0; q < Math.floor(total * 0.1); q++) {
-    const y = (r() - 0.5) * 22;
-    put(galAt(px + y * 0.18 + gauss(r) * 0.05, y, (r() - 0.5) * 5), scale(mix(P.ice, P.lavender, r()), 0.45 + 0.4 * r()), 10, 0, -1, -1, 1.2);
+  // the prism: a triangular section (seen from above) standing upright. Its three edges and its two end triangles are
+  // thin lines of light; inside, the light is already splitting (ice to lavender to teal across it). One plain beam
+  // comes in from the side of the row.
+  const px = roomX() - (isPortrait() ? 11 : 15);
+  const PH = 10;
+  const tri: [number, number][] = [[-2.6, 2.4], [2.6, 2.4], [0, -2.6]]; // x, toward the camera
+  const nPrism = Math.floor(total * 0.12);
+  for (let q = 0; q < nPrism; q++) {
+    const part = r();
+    if (part < 0.42) {
+      const v = tri[q % 3];
+      put(galAt(px + v[0] + gauss(r) * 0.03, (r() * 2 - 1) * PH, v[1]), scale(P.offWhite, 0.75), 10, 0, -1, -1, 1.5);
+    } else if (part < 0.68) {
+      const a = tri[q % 3];
+      const b = tri[(q + 1) % 3];
+      const t = r();
+      put(galAt(px + a[0] + (b[0] - a[0]) * t, (q % 2 ? 1 : -1) * PH, a[1] + (b[1] - a[1]) * t), scale(P.offWhite, 0.7), 10, 0, -1, -1, 1.4);
+    } else {
+      let u = r();
+      let v = r();
+      if (u + v > 1) {
+        u = 1 - u;
+        v = 1 - v;
+      }
+      const x = tri[0][0] + (tri[1][0] - tri[0][0]) * u + (tri[2][0] - tri[0][0]) * v;
+      const z = tri[0][1] + (tri[1][1] - tri[0][1]) * u + (tri[2][1] - tri[0][1]) * v;
+      const k = (x + 2.6) / 5.2;
+      const c = k < 0.5 ? mix(P.ice, P.lavender, k * 2) : mix(P.lavender, P.teal, k * 2 - 1);
+      put(galAt(px + x, (r() * 2 - 1) * PH * 0.92, z), scale(c, 0.28 + 0.3 * r()), 10, 0, -1, -1, 1);
+    }
   }
+  for (let q = 0; q < Math.floor(total * 0.02); q++) put(galAt(px - 3 - r() * 26, gauss(r) * 0.25, gauss(r) * 0.25), scale(P.offWhite, 0.45 + 0.3 * r()), 10, 0, -1, -1, 1.1);
   const tints: V3[] = [P.lavender, P.ice, P.teal, P.lavender, P.ice];
   frames.forEach((f, k) => {
     for (let q = 0; q < Math.floor(total * 0.03); q++) {
       const t = r();
-      const a = galAt(px, (k - 2) * 1.2, 0);
+      const a = galAt(px + 2.2, (k - 2) * 1.6, 0.6);
       put(mix(a, f.c, t), scale(tints[k], 0.3 + 0.3 * t), 10, 0, -1, -1, 1);
     }
   });
@@ -824,11 +858,22 @@ export function buildSummit(total: number, sets: { frames: Frame[]; color: V3 }[
   const { r, put } = B;
   const P = W.palette;
   const big = 9;
+  // the light of every place walks to the screen of 06 in thin streams (STREAM): each point is stored where it starts
+  // and the shader carries it to its place on the screen (t across, seed up) as the route goes on
+  const starts: { at: () => V3; color: V3 }[] = [
+    { at: () => [gauss(r) * 30, gauss(r) * 14, gauss(r) * 40], color: mix(P.offWhite, P.teal, 0.5) },
+    { at: () => { const d = 80 + r() * (light.mouth - 80); return [light.axis.p[0] + light.axis.d[0] * d, light.axis.p[1] + light.axis.d[1] * d, light.axis.p[2] + light.axis.d[2] * d]; }, color: mix(P.ice, P.teal, 0.5) },
+    ...sets.map((s) => ({ at: (): V3 => { const f = s.frames[Math.floor(r() * s.frames.length)]; return [f.c[0] + gauss(r) * 4, f.c[1] + gauss(r) * 4, f.c[2] + gauss(r) * 4]; }, color: s.color })),
+  ];
+  for (let q = 0; q < Math.floor(total * light.summit.streams); q++) {
+    const st = starts[q % starts.length];
+    put(st.at(), scale(st.color, 0.8), 10, r(), STREAM, -1, 4, r());
+  }
   for (let q = 0; q < Math.floor(total * 0.3); q++) {
     const side = r() < 0.5 ? -1 : 1;
     const a = r() * TAU;
     const b = Math.acos(2 * r() - 1);
-    put([side * W.brain.hemiX + Math.sin(b) * Math.cos(a) * W.brain.r[0], Math.sin(b) * Math.sin(a) * W.brain.r[1] - 4, Math.cos(b) * W.brain.r[2]], scale(mix(P.offWhite, P.teal, 0.45), 0.5 + 0.4 * r()), 10, 0, -1, -1, big);
+    put([side * W.brain.hemiX + Math.sin(b) * Math.cos(a) * W.brain.r[0], Math.sin(b) * Math.sin(a) * W.brain.r[1] - 4, Math.cos(b) * W.brain.r[2]], scale(mix(P.offWhite, P.teal, 0.45), 0.32 + 0.3 * r()), 10, 0, -1, -1, big * 1.5);
   }
   const A = light.axis;
   for (let q = 0; q < Math.floor(total * 0.16); q++) {

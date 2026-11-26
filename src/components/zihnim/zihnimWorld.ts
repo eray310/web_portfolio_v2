@@ -137,8 +137,8 @@ export const light = {
    * the room. 06: one empty screen in the sky in front of the camera; the light turns to the visitor, the camera
    * pushes in and stops `stop` in front of it.
    */
-  summit: { count: { desktop: 11000, light: 5000 }, up: 300, beyond: 300, side: 70, lookAt: 1040 },
-  screen: { dist: 150, w: 34, h: 19, stop: 40, light: 0.5 },
+  summit: { count: { desktop: 22000, light: 9000 }, up: 210, beyond: 380, side: 60, lookAt: 300, streams: 0.16, dawn: 0.24 },
+  screen: { dist: 150, w: 34, h: 19, stop: 40, light: 0.52, flow: [0.945, 0.985] as [number, number], turn: [0.968, 1] as [number, number] },
   /** The tunnel: point count (desktop / phone), half size of the beam's section, radius of the faint outer streaks. */
   tunnel: { count: { desktop: 20000, light: 8000 }, beam: [6, 6] as [number, number], outer: 26, streaks: 30, wrap: 240, farDim: [60, 210, 0.1] as V3 },
   /**
@@ -263,7 +263,7 @@ export const stations: Chapter[] = [
     title: "İşimi büyütmek isterken yapay zekâ geldi.",
     line: "Bir fikir artık onlarca biçim alabiliyor.",
     facts: ["Görsel ve video üretiminde güncel yapay zekâ araçları"],
-    link: { href: "/ai-isler", label: "AI İşler’i gör" },
+    link: { href: "/ai-isler#web-sitesi", label: "Web sitesi ve uygulama örnekleri → AI İşler" },
     t: light.after[1],
   },
   { id: "zirve", n: "05", label: "Zirve", title: "Zirve", line: "", quote: { text: "Dağa tırman, seni dünya görsün diye değil, dünyayı görebilmen için.", by: "David McCullough Jr.", note: "sevdiğim söz" }, t: light.after[2] },
@@ -370,7 +370,7 @@ export const worldConfig = {
   count: { desktop: 173000, light: 60000 },
   /** Wheel: pixels of wheel for the whole route; the follow rate (1/s) once the wheel stops; largest step of one event. */
   /** snapReach 0: the camera stays exactly where the visitor stops (no pull onto a station). */
-  wheel: { routePx: 15600, follow: 7.5, maxStep: 240, snapAfter: 260, snapReach: 0 },
+  wheel: { routePx: 15950, startGain: 1.3, startReach: 0.06, follow: 7.5, maxStep: 240, snapAfter: 260, snapReach: 0 },
   /** Phone: a vertical drag of this many screen heights runs the whole route. */
   touch: { routeScreens: 3.4 },
   /** A trip started by a button: seconds per whole route, and the limits. */

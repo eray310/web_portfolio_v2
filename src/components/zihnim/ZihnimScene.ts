@@ -38,7 +38,7 @@ import {
   WebGLRenderer,
 } from "three";
 import { calmStops, coverAt, galAt, galX, galleryStart, guideSpots, roomX, summitLook, summitPos, light as LY, readyAreas, route, stations, worldConfig as W, works, type StationId, type V3 } from "./zihnimWorld";
-import { BEACON, FRAME_BASE, LINE_BASE, buildGallery, buildGuide, buildHall, buildRoom, buildSummit, buildTunnel, buildWorld, galleryFrames, hallFrames, roomFrames, sampleImage, type Samples, type World } from "./worldGeometry";
+import { BEACON, FRAME_BASE, LINE_BASE, STREAM, buildGallery, buildGuide, buildHall, buildRoom, buildSummit, buildTunnel, buildWorld, galleryFrames, hallFrames, roomFrames, sampleImage, type Samples, type World } from "./worldGeometry";
 
 export type SceneOptions = {
   canvas: HTMLCanvasElement;
@@ -92,7 +92,9 @@ const VERT = /* glsl */ `
   uniform float uKnee, uSlope, uInside, uBokehPx, uBokehLight;
   uniform float uBrain, uReach, uCut, uCamAx, uWrap, uMouth, uSplit, uCoverS;
   uniform vec3 uCoverC, uCoverU, uFarDim;
-  uniform float uShutA, uShutP;
+  uniform float uShutA, uShutP, uFlow;
+  uniform vec3 uScrC, uScrR, uScrU;
+  uniform vec2 uScrS;
   uniform vec3 uAxisP, uAxisD;
   uniform float uLine[${MAX_FRAMES}];
   uniform float uMScale, uMSpeed;
@@ -156,6 +158,15 @@ const VERT = /* glsl */ `
       coverK = 1.0 - smoothstep(st * 0.5, st * 0.5 + 0.5, uSplit);
       vec3 cp = uCoverC + vec3(1.0, 0.0, 0.0) * (t - 0.5) * uCoverS + uCoverU * (seed - 0.5) * uCoverS;
       p = mix(p, cp, coverK * coverK * (3.0 - 2.0 * coverK));
+    }
+
+    // 05 -> 06: the light of every place walks to the one screen, in thin streams, and fills it
+    float flowK = -1.0;
+    if (ki == 10 && abs(aPath - ${STREAM.toFixed(1)}) < 0.5) {
+      float st = fract(seed * 7.31) * 0.62;
+      flowK = smoothstep(st, st + 0.38, uFlow);
+      vec3 tp = uScrC + uScrR * (t - 0.5) * uScrS.x + uScrU * (seed - 0.5) * uScrS.y;
+      p = mix(p, tp, flowK) + vec3(0.0, 1.0, 0.0) * sin(flowK * 3.14159) * 30.0;
     }
 
     // the dust of the beam is one stretch of the axis that repeats around the camera: the same few points are always
@@ -247,7 +258,8 @@ const VERT = /* glsl */ `
           // the shutter: a slow, shallow rhythm of the lines before the journey turns to motion (route position, no clock)
           a *= 1.0 - uShutA * (0.5 + 0.5 * sin(uShutP + float(li) * 1.7));
         }
-      } else if (coverK > -0.5) a *= 0.45 * smoothstep(0.0, 0.4, coverK) * clamp(40000.0 / (dist * dist), 0.06, 1.0); // far away its points share a few pixels: each gives less, so the square keeps one brightness
+      } else if (flowK > -0.5) a *= smoothstep(0.0, 0.06, flowK) * (1.0 - 0.75 * smoothstep(0.8, 1.0, flowK));
+      else if (coverK > -0.5) a *= 0.45 * smoothstep(0.0, 0.4, coverK) * clamp(40000.0 / (dist * dist), 0.06, 1.0); // far away its points share a few pixels: each gives less, so the square keeps one brightness
     }
     // the shell, the tracts and the inner dust open around the camera (a corridor of view)
     if (ki == 0 || ki == 6 || ki == 7) a *= smoothstep(uOpenNear, uOpenFar, dist);
@@ -387,7 +399,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const renderer = new WebGLRenderer({ canvas, context: gl, antialias: false, alpha: false });
   renderer.setClearColor(W.ground, 1);
   const scene = new Scene();
-  const camera = new PerspectiveCamera(W.fov, 1, 0.5, 1400);
+  const camera = new PerspectiveCamera(W.fov, 1, 0.5, 4200); // far enough for the summit, where the brain lies about 1700 units away
 
   // ── the world's points
   const geo = new BufferGeometry();
@@ -442,6 +454,11 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       uCoverU: { value: v3(LY.axis.up) },
       uFarDim: { value: v3(LY.tunnel.farDim) },
       uShutA: { value: 0 },
+      uFlow: { value: 0 },
+      uScrC: { value: new Vector3() },
+      uScrR: { value: new Vector3(1, 0, 0) },
+      uScrU: { value: new Vector3(0, 1, 0) },
+      uScrS: { value: new Vector2(LY.screen.w, LY.screen.h) },
       uShutP: { value: 0 },
       uAxisP: { value: v3(LY.axis.p) },
       uAxisD: { value: v3(LY.axis.d) },
@@ -687,9 +704,11 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     transparent: true,
     depthTest: false,
     depthWrite: false,
-    uniforms: { uK: { value: 0 } },
+    uniforms: { uK: { value: 0 }, uFill: { value: 0 } },
     vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-    fragmentShader: "precision mediump float; varying vec2 vUv; uniform float uK; void main() { vec2 p = abs(vUv - 0.5) * 2.0; vec2 e = smoothstep(vec2(1.0), vec2(0.86), p); float inside = e.x * e.y; float edge = inside * (1.0 - smoothstep(0.0, 0.1, min(1.0 - p.x, (1.0 - p.y) * 0.56))); vec3 c = mix(vec3(0.93, 0.91, 0.88), vec3(0.6, 0.82, 1.0), vUv.y * 0.5); gl_FragColor = vec4(c * (inside * (0.1 + 0.16 * vUv.y) + edge * 0.7) * uK, 0.0); }",
+    // a calm surface of warm white light with soft edges: faint while the streams arrive, then it lights up (the light
+    // turns to the visitor); the lower right, where the card stands, stays a little lower
+    fragmentShader: "precision mediump float; varying vec2 vUv; uniform float uK; uniform float uFill; void main() { vec2 p = abs(vUv - 0.5) * 2.0; vec2 e = smoothstep(vec2(1.0), vec2(0.7), p); float inside = e.x * e.y; float card = 1.0 - 0.45 * smoothstep(0.35, 0.8, vUv.x) * smoothstep(0.6, 0.2, vUv.y); gl_FragColor = vec4(vec3(1.0, 0.95, 0.88) * inside * (0.07 * uK + uFill * card * (0.72 + 0.28 * (1.0 - max(p.x, p.y)))), 0.0); }",
   });
   const screen = new Mesh(new PlaneGeometry(LY.screen.w * 1.16, LY.screen.h * 1.16), screenMat);
   {
@@ -699,8 +718,34 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     const upv = new Vector3().crossVectors(n, rgt).normalize();
     screen.matrixAutoUpdate = false;
     screen.matrix.makeBasis(rgt, upv, n).setPosition(c);
+    mat.uniforms.uScrC.value.copy(c);
+    mat.uniforms.uScrR.value.copy(rgt);
+    mat.uniforms.uScrU.value.copy(upv);
     screen.matrixWorldNeedsUpdate = true;
   }
+  // 05: a very soft ice-blue dawn on the horizon behind the far brain (one wide additive gradient, no bloom)
+  const dawnMat = new ShaderMaterial({
+    blending: CustomBlending,
+    blendSrc: OneFactor,
+    blendDst: OneFactor,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    uniforms: { uK: { value: 0 } },
+    vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: "precision mediump float; varying vec2 vUv; uniform float uK; void main() { float h = 1.0 - vUv.y; float x = 1.0 - abs(vUv.x - 0.5) * 2.0; float g = pow(h, 2.0) * smoothstep(0.0, 0.7, x) * smoothstep(0.0, 0.3, vUv.y); gl_FragColor = vec4(vec3(0.42, 0.68, 1.0) * g * uK, 0.0); }",
+  });
+  const dawn = new Mesh(new PlaneGeometry(2600, 700), dawnMat);
+  {
+    const n = v3(summitPos).setY(0).normalize();
+    const rgt = new Vector3().crossVectors(new Vector3(0, 1, 0), n).normalize();
+    dawn.matrixAutoUpdate = false;
+    dawn.matrix.makeBasis(rgt, new Vector3(0, 1, 0), n).setPosition(new Vector3(0, 330, 120));
+    dawn.matrixWorldNeedsUpdate = true;
+  }
+  dawn.renderOrder = 1;
+  dawn.visible = false;
+  scene.add(dawn);
   screen.renderOrder = 2;
   screen.visible = false;
   scene.add(screen);
@@ -936,7 +981,8 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       sTarget = s; // the visitor takes over from where the camera is
       trip = null;
     }
-    sTarget = clamp(sTarget + dy / W.wheel.routePx, 0, 1);
+    const gain = dy > 0 ? 1 + W.wheel.startGain * (1 - sstep(0, W.wheel.startReach, sTarget)) : 1;
+    sTarget = clamp(sTarget + (dy * gain) / W.wheel.routePx, 0, 1);
     lastNav = performance.now();
     kick();
   };
@@ -1413,7 +1459,11 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     if (summit) summit.pts.visible = s > LT.crane0 + 0.006;
     // 06: one empty screen; its light comes up as the camera turns to it
     screen.visible = s > LT.summit - 0.01;
-    screenMat.uniforms.uK.value = LY.screen.light * sstep(LT.summit, 0.99, s);
+    screenMat.uniforms.uK.value = sstep(LT.summit, LY.screen.flow[0] + 0.01, s);
+    screenMat.uniforms.uFill.value = LY.screen.light * sstep(LY.screen.turn[0], LY.screen.turn[1], s);
+    mat.uniforms.uFlow.value = sstep(LY.screen.flow[0], LY.screen.flow[1], s);
+    dawn.visible = s > LT.crane0;
+    dawnMat.uniforms.uK.value = LY.summit.dawn * sstep(LT.crane0, LT.summit, s) * (1 - 0.5 * sstep(LY.screen.turn[0], 1, s));
     if (wantTunnel && !tunnel) {
       tunnel = makeChunk(buildTunnel(light ? LY.tunnel.count.light : LY.tunnel.count.desktop, coverS));
       applyQuality();
@@ -1582,6 +1632,8 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       freeChunk(gallery);
       freeChunk(room);
       freeChunk(summit);
+      dawn.geometry.dispose();
+      dawnMat.dispose();
       screen.geometry.dispose();
       screenMat.dispose();
       for (const c of [coverMain, ...coverOthers]) {

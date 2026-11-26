@@ -1283,3 +1283,23 @@
     display: none;
   }
 }
+
+/* helper text is smaller and quieter than the title and the sentence (still above 4.5:1 on the ground) */
+.zh .zh-card .zh-facts li {
+  font-size: 13px;
+  color: rgba(238, 233, 228, 0.62);
+}
+.zh .zh-panel .zh-panel-tag,
+.zh .zh-vid-mark {
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(238, 233, 228, 0.62);
+}
+/* a soft veil of light where the journey changes place without a flight (never a black cut) */
+.zh-veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(70% 60% at 50% 45%, rgba(178, 158, 242, 0.5), rgba(153, 209, 255, 0.22) 55%, rgba(12, 10, 11, 0) 80%);
+  opacity: var(--zh-veil, 0);
+}

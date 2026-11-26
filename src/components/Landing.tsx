@@ -22,7 +22,8 @@ const Landing = ({ children }: PropsWithChildren) => {
                 <li key={title}>{title}</li>
               ))}
             </ul>
-            {/* Phones only: replaces the vertical link at the right edge. */}
+            {/* Phones only: the line and the two links fill the room between the roles and the character. */}
+            <p className="landing-line">Görsele hareket, hikâyeye karakter.</p>
             <a
               className="landing-cta"
               href="#work"

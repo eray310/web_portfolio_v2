@@ -425,3 +425,20 @@
     bottom: 50px;
   }
 }
+
+/* Phones: one line under the roles (hidden on wider screens, where the heading of "Hakkımda" says it) */
+.landing-line {
+  display: none;
+}
+@media screen and (max-width: 767px) {
+  .landing-line {
+    display: block;
+    margin: 10px 0 0;
+    font-size: 15px;
+    line-height: 1.35;
+    color: #eae5ec;
+  }
+  .landing-cta {
+    margin-top: 12px;
+  }
+}

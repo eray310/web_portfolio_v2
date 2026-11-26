@@ -29,3 +29,6 @@ backup/
 ._*
 # local preview recordings (not committed)
 design-previews/
+
+# originals of images (the site serves the webp and jpg versions in public/)
+source-assets/

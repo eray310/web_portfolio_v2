@@ -741,7 +741,11 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     prepTimer = window.setTimeout(prepNext, moving ? 400 : 160);
   };
 
-  // the one empty screen of 06: a calm rectangle of light that faces the visitor (a cheap additive plane)
+  // the one empty screen of 06: a surface of fine points of light with soft edges, facing the visitor (one cheap
+  // additive plane). The colours of the streams arrive in its points and drift, then the points settle into an even
+  // warm white; when the light turns to the visitor it gathers a little toward the middle. The pattern and the glow
+  // only move light around: the average brightness stays that of a plain surface. The lower right, where the card
+  // stands, stays a little lower.
   const screenMat = new ShaderMaterial({
     blending: CustomBlending,
     blendSrc: OneFactor,
@@ -749,11 +753,41 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     transparent: true,
     depthTest: false,
     depthWrite: false,
-    uniforms: { uK: { value: 0 }, uFill: { value: 0 } },
+    uniforms: { uK: { value: 0 }, uFill: { value: 0 }, uSettle: { value: 0 }, uGlow: { value: 0 }, uTime: { value: 0 } },
     vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-    // a calm surface of warm white light with soft edges: faint while the streams arrive, then it lights up (the light
-    // turns to the visitor); the lower right, where the card stands, stays a little lower
-    fragmentShader: "precision mediump float; varying vec2 vUv; uniform float uK; uniform float uFill; void main() { vec2 p = abs(vUv - 0.5) * 2.0; vec2 e = smoothstep(vec2(1.0), vec2(0.7), p); float inside = e.x * e.y; float card = 1.0 - 0.45 * smoothstep(0.35, 0.8, vUv.x) * smoothstep(0.6, 0.2, vUv.y); gl_FragColor = vec4(vec3(1.0, 0.95, 0.88) * inside * (0.07 * uK + uFill * card * (0.72 + 0.28 * (1.0 - max(p.x, p.y)))), 0.0); }",
+    fragmentShader: `precision mediump float;
+      varying vec2 vUv;
+      uniform float uK, uFill, uSettle, uGlow, uTime;
+      float hash(vec2 c) { return fract(sin(dot(c, vec2(127.1, 311.7))) * 43758.5453); }
+      void main() {
+        vec2 p = abs(vUv - 0.5) * 2.0;
+        vec2 e = smoothstep(vec2(1.0), vec2(0.7), p);
+        float inside = e.x * e.y;
+        float card = 1.0 - 0.45 * smoothstep(0.35, 0.8, vUv.x) * smoothstep(0.6, 0.2, vUv.y);
+        float base = 0.07 * uK + uFill * card * (0.72 + 0.28 * (1.0 - max(p.x, p.y)));
+        // points: a fine grid; until they settle each one drifts a little around its place and carries a colour
+        vec2 g = vUv * vec2(150.0, 84.0);
+        vec2 id = floor(g);
+        float h = hash(id);
+        float h2 = hash(id + 17.0);
+        float loose = 1.0 - uSettle;
+        vec2 off = 0.16 * (vec2(h, h2) - 0.5) + loose * 0.3 * vec2(sin(uTime * (0.7 + h) + h * 6.28), cos(uTime * (0.6 + h) + h * 9.1));
+        float r = length(fract(g) - 0.5 - off);
+        float w = fwidth(r) + 0.02;
+        float dotv = 1.0 - smoothstep(0.3 - w, 0.3 + w, r);
+        // part of the light gathers in the points, the rest stays between them; divided by the points' average cover
+        // (pi * 0.3^2, a little more with the soft rim) so the average is unchanged
+        float pts = 0.62 + 0.38 * (0.7 + 0.6 * h2) * dotv / (0.283 + 0.63 * w * w);
+        // far away (a point smaller than a few pixels) the texture fades to a plain surface, so it never shimmers
+        pts = mix(1.0, pts, smoothstep(0.4, 0.22, fwidth(g.x)));
+        vec3 tint = h < 0.34 ? vec3(0.9, 0.93, 1.0) : h < 0.67 ? vec3(1.0, 0.8, 0.55) : vec3(0.78, 0.72, 1.0);
+        vec3 col = mix(tint, vec3(1.0, 0.95, 0.88), uSettle);
+        // the turn to the visitor: a soft gathering toward the middle, balanced (0.41: its average over the lit surface)
+        // so the average stays the same
+        vec2 q = (vUv - 0.5) * 2.0;
+        float glow = 1.0 + uGlow * 0.14 * (exp(-dot(q, q) * 2.5) - 0.41) / 0.41;
+        gl_FragColor = vec4(col * inside * base * pts * glow, 0.0);
+      }`,
   });
   const screen = new Mesh(new PlaneGeometry(LY.screen.w * 1.16, LY.screen.h * 1.16), screenMat);
   {
@@ -1511,6 +1545,9 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     screen.visible = s > LT.summit - 0.01;
     screenMat.uniforms.uK.value = sstep(LT.summit, LY.screen.flow[0] + 0.01, s);
     screenMat.uniforms.uFill.value = LY.screen.light * sstep(LY.screen.turn[0], LY.screen.turn[1], s);
+    screenMat.uniforms.uSettle.value = sstep(LY.screen.turn[0], LY.screen.turn[1] - 0.004, s);
+    screenMat.uniforms.uGlow.value = sstep(LY.screen.turn[0] + 0.01, 1, s);
+    screenMat.uniforms.uTime.value = time;
     mat.uniforms.uFlow.value = sstep(LY.screen.flow[0], LY.screen.flow[1], s);
     dawn.visible = s > LT.crane0;
     dawnMat.uniforms.uK.value = LY.summit.dawn * sstep(LT.crane0, LT.summit, s) * (1 - 0.5 * sstep(LY.screen.turn[0], 1, s));

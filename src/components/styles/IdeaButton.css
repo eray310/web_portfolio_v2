@@ -7,10 +7,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-/* Moved aside while it would cover another control or text; a keyboard focus brings it back. */
+/* Moved aside while "Seçili İşler" is on screen, while a project panel or another window is open, and
+   while it would cover another control or text; a keyboard focus brings it back. */
 .dock.is-tucked:not(:focus-within) {
   opacity: 0;
   pointer-events: none;

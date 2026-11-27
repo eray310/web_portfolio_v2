@@ -42,8 +42,31 @@ const coversContent = (el: HTMLElement) => {
 const Dock = () => {
   const [open, setOpen] = useState(false);
   const [tucked, setTucked] = useState(false);
+  // True while "Seçili İşler" (#work) is on screen: the row would sit on its controls ("Projeyi keşfet").
+  const [inWork, setInWork] = useState(false);
   const dock = useRef<HTMLDivElement>(null);
   const btn = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    let io: IntersectionObserver | null = null;
+    let wait = 0;
+    const watch = () => {
+      const work = document.getElementById("work");
+      if (!work) {
+        // The section is rendered with the rest of the page; look again shortly.
+        wait = window.setTimeout(watch, 300);
+        return;
+      }
+      io = new IntersectionObserver(([entry]) => setInWork(entry.isIntersecting));
+      io.observe(work);
+    };
+    watch();
+    return () => {
+      window.clearTimeout(wait);
+      io?.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const check = () => {
@@ -75,7 +98,7 @@ const Dock = () => {
 
   return (
     <>
-      <div ref={dock} className={`dock${tucked && !open ? " is-tucked" : ""}`}>
+      <div ref={dock} className={`dock${(tucked || inWork) && !open ? " is-tucked" : ""}`}>
         <a
           className="resume-button"
           href="#experience"

@@ -1505,6 +1505,8 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       pathT = ((time % 6.5) / 6.5) * 1.5 - 0.15;
       pathGoal = 0.75 * (1 - s / (T[1] * 0.85));
     }
+    // at the start, the light that keeps running along the way in is part of the world at rest, not a movement
+    const invite = !trip && pathGoal > 0;
     pathWave += (pathGoal - pathWave) * (1 - Math.exp(-dt * (pathGoal ? 6 : 1.6)));
     mat.uniforms.uPathWave.value = pathWave;
     mat.uniforms.uPathT.value = pathT;
@@ -1685,7 +1687,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       trip ||
       dragging ||
       Math.abs(sTarget - s) > 0.00002 ||
-      pathWave > 0.01 ||
+      (pathWave > 0.01 && !invite) ||
       pointerOn > 0.01 ||
       Math.abs(yaw - yawT) > 0.0005 ||
       Math.abs(pitch - pitchT) > 0.0005 ||

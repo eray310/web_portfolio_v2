@@ -1000,14 +1000,17 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     { points: 0.55, waves: 2, res: 1 },
     { points: 0.4, waves: 2, res: 1, motion: 0.5 },
     { points: 0.4, waves: 1, res: 0.8, motion: 0 },
-  ] as { points: number; waves: number; res: number; motion?: number }[];
+    // a device that is still slow here (no graphics chip, an old phone): fewer points and a lower resolution, the
+    // forms still clear; only this step may go below the usual resolution floor
+    { points: 0.28, waves: 1, res: 0.65, motion: 0, floor: 0.65 },
+  ] as { points: number; waves: number; res: number; motion?: number; floor?: number }[];
   /** The size the lens was last set for; a small change of height alone keeps that lens (see resize). */
   let lensW = 0;
   let lensH = 0;
   const applyQuality = () => {
     const q = Q[level];
     const base = Math.min(window.devicePixelRatio || 1, light ? 1.5 : 1.75);
-    const floor = Math.max(0.9, base * 0.7);
+    const floor = q.floor ?? Math.max(0.9, base * 0.7);
     const dpr = Math.max(Math.min(floor, base), base * q.res);
     renderer.setPixelRatio(dpr);
     renderer.setSize(width, height, false);

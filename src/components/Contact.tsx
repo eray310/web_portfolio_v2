@@ -10,6 +10,15 @@ const Contact = () => {
           <div className="contact-box">
             <h4>Birlikte çalışalım</h4>
             <div className="contact-links">
+              {/* The main way to reach Eray: opens the mail app directly. */}
+              <a
+                href="mailto:omerogluuerayy@gmail.com"
+                data-cursor="disable"
+                className="contact-social contact-mail"
+              >
+                omerogluuerayy@gmail.com <MdArrowOutward />
+              </a>
+              <span className="contact-break" aria-hidden="true" />
               <a
                 href="https://www.behance.net/erayomeroglu"
                 target="_blank"

@@ -10,7 +10,7 @@
  * All works are real and already in the repo (src/data/projects.ts, public/portfolio/, public/ai-works/,
  * public/zihnim/ = captures of the concept app demo of /ai-isler).
  */
-import { fileUrl, projects, type Project } from "../../data/projects";
+import { fileUrl, otherWorks, projects, type Project } from "../../data/projects";
 
 export type V3 = [number, number, number];
 export type AreaId = "gorsel-hafiza" | "kurgu-masasi" | "deney-alani" | "hareket-atolyesi" | "birlikte-uretelim";
@@ -46,7 +46,9 @@ export type Area = {
 };
 
 const url = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
-const byTitle = (start: string) => projects.find((p) => p.title.startsWith(start)) as Project;
+// Works of "Seçili İşler" and the ones taken out of it (otherWorks): this place keeps showing both.
+const byTitle = (start: string) =>
+  [...projects, ...otherWorks].find((p) => p.title.startsWith(start)) as Project;
 
 // ── the route: knots of camera positions (pos) and look targets (target), evenly spaced in route time 0..1
 export const route: { pos: V3; target: V3 }[] = [
@@ -489,7 +491,7 @@ export const isPortrait = () => typeof window !== "undefined" && window.innerWid
 const gorselList = PORTRAIT ? gorselPortrait : gorselWide;
 const kurguList: [string, number][] = [
   ["The Lock", 0.2],
-  ["Allvex", 0.36],
+  ["Allvex | Sosyal", 0.36],
   ["Voop", 0.53],
   ["La Vita", 0.69],
   ["Regnum Riva", 0.81],

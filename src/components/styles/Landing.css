@@ -323,22 +323,12 @@
 
 /* The separator belongs to the item after it, so it appears together with that
    item and can never be left alone at the end of a line. */
-.landing-titles li:nth-child(even)::before {
+/* "Motion Designer · Art Director · AI Artist" runs as one line; when it has to wrap, the dot goes to
+   the next line with its title. */
+.landing-titles li + li::before {
   content: "\00B7";
   margin-right: 8px;
   opacity: 0.6;
-}
-
-/* Always two balanced rows ("Motion Designer · Art Director" / "Video Editor ·
-   AI Artist"), so a separator dot can never be left alone at a line end. */
-.landing-titles::after {
-  content: "";
-  flex-basis: 100%;
-  order: 1;
-}
-
-.landing-titles li:nth-child(n + 3) {
-  order: 2;
 }
 
 @media screen and (min-width: 768px) {

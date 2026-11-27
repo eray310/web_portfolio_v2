@@ -200,7 +200,7 @@ no bloom (the site must not resemble ataberksoylu.com).
 - 04 Yapay zekâ: "İşimi büyütmek isterken yapay zekâ geldi." / "Bir fikir artık onlarca biçim alabiliyor."
 - 05 Zirve: title "Yukarıdan bakınca yol görünüyor." (a working title, not from Eray) and the quote "Dağa tırman, seni dünya
   görsün diye değil, dünyayı görebilmen için." with the credit "— david mccullough jr."
-- 06 Ben: "Ben Eray Ömeroğlu." / "Motion Designer · Art Director · Video Editor · AI Artist" / "Sıradaki hikâye senin." / Projeni anlat
+- 06 Ben: "Ben Eray Ömeroğlu." / "Motion Designer · Art Director · AI Artist" / "Sıradaki hikâye senin." / Projeni anlat
 
 Done in full: 00, 01, 02. 03 and 04 keep their scenes inside the brain with the new numbers and texts. 05 and 06 use the
 old final (the brain seen from behind): 05 at route time 0.935, 06 at 1.

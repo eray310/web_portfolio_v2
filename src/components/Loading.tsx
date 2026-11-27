@@ -122,7 +122,7 @@ const Loading = ({ percent }: { percent: number }) => {
         <div className="loading-marquee" aria-hidden="true" lang="en">
           <Marquee play={!calm}>
             <span>Motion Designer</span> <span>Art Director</span>
-            <span>Video Editor</span> <span>AI Artist</span>
+            <span>AI Artist</span>
           </Marquee>
         </div>
         <div className={`loading-wrap ${clicked && "loading-clicked"}`} onMouseMove={(e) => handleMouseMove(e)}>

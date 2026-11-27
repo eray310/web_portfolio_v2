@@ -7,7 +7,7 @@ const About = () => {
         <h3 className="title about-label">Hakkımda</h3>
         <h2 className="about-heading">Görsele hareket, hikâyeye karakter.</h2>
         <p className="para about-name">Ben Eray Ömeroğlu.</p>
-        <p className="para about-role">Motion designer, art director, video editör ve AI artist olarak çalışıyorum.</p>
+        <p className="para about-role">Motion designer, art director ve AI artist olarak çalışıyorum.</p>
         <p className="para about-text">
           Markalar için hareketli grafikler, reklam filmleri ve sosyal medya
           içerikleri tasarlıyorum. After Effects, Premiere Pro ve yapay zekâ

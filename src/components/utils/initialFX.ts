@@ -47,7 +47,7 @@ export function initialFX() {
     }
   );
 
-  // Four titles appear one after another and stay visible together.
+  // The titles appear one after another and stay visible together.
   gsap.fromTo(
     ".landing-titles li",
     { opacity: 0, y: 30, filter: "blur(5px)" },

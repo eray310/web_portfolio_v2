@@ -3,7 +3,7 @@ import { TbNotes } from "react-icons/tb";
 import { scrollToSection } from "./utils/scrollToSection";
 import "./styles/Landing.css";
 
-const titles = ["Motion Designer", "Art Director", "Video Editor", "AI Artist"];
+const titles = ["Motion Designer", "Art Director", "AI Artist"];
 
 const Landing = ({ children }: PropsWithChildren) => {
   return (

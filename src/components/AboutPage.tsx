@@ -3,7 +3,7 @@ import { tools } from "../data/tools";
 import { enLang } from "../utils/lang";
 import "./styles/AboutPage.css";
 
-const titles = ["Motion Designer", "Art Director", "Video Editor", "AI Artist"];
+const titles = ["Motion Designer", "Art Director", "AI Artist"];
 
 const asset = (file: string) => `${import.meta.env.BASE_URL}portfolio/${file}`;
 

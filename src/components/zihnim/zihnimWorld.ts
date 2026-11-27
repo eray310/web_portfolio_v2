@@ -269,7 +269,7 @@ export const stations: Chapter[] = [
     t: light.after[1],
   },
   { id: "zirve", n: "05", label: "Zirve", title: "Zirve", line: "", quote: { text: "Dağa tırman, seni dünya görsün diye değil, dünyayı görebilmen için.", by: "David McCullough Jr.", note: "sevdiğim söz" }, t: light.after[2] },
-  { id: "birlikte-uretelim", n: "06", label: "Ben", title: "Ben Eray Ömeroğlu.", line: "Motion Designer · Art Director · Video Editor · AI Artist", t: 1 },
+  { id: "birlikte-uretelim", n: "06", label: "Ben", title: "Ben Eray Ömeroğlu.", line: "Motion Designer · Art Director · AI Artist", t: 1 },
 ];
 /** Extra stops of the calm view (station to station, no flights): the tunnel as one still frame. */
 export const calmStops = [0.3];

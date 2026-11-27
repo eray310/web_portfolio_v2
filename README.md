@@ -2,7 +2,7 @@
 
 <h1>Eray Ömeroğlu — Portfolyo</h1>
 
-<p><strong>Motion designer ve video editörü Eray Ömeroğlu'nun interaktif 3D portfolyosu: fizik tabanlı araç topları, scroll animasyonları ve video galerisi.</strong></p>
+<p><strong>Motion designer ve art director Eray Ömeroğlu'nun interaktif 3D portfolyosu: fizik tabanlı araç topları, scroll animasyonları ve video galerisi.</strong></p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![React](https://img.shields.io/badge/React-18.3-61dafb?logo=react)](https://react.dev)

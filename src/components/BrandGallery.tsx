@@ -18,18 +18,41 @@ const FOCUSABLE = "button, video[controls]";
 type Props = { brand: Brand; videos: BrandVideo[]; onClose: () => void };
 
 const BrandGallery = ({ brand, videos, onClose }: Props) => {
-  const [playing, setPlaying] = useState<BrandVideo | null>(null);
+  // One video: it is shown at once (no list, no way back to a list). Several: covers first.
+  const single = videos.length === 1;
+  const [playing, setPlaying] = useState<BrandVideo | null>(single ? videos[0] : null);
   const [hover, setHover] = useState<number | null>(null);
   // Shapes read from the cover images when the data file gives no ratio.
   const [ratios, setRatios] = useState<Record<string, number>>({});
   const [playerRatio, setPlayerRatio] = useState<number | undefined>();
   const [previewOk] = useState(canHoverPreview);
   const dialog = useRef<HTMLDivElement>(null);
+  const player = useRef<HTMLVideoElement>(null);
+  // The card whose video is playing, so the focus can go back to it from the player.
+  const lastCard = useRef<number | null>(null);
 
   useEffect(() => {
     lockScroll();
     return unlockScroll;
   }, []);
+
+  // A video that leaves the window (another video, back to the list, window closed) stops at
+  // once, sound included, and stops downloading. Opened again, it starts from the beginning.
+  useEffect(() => {
+    const v = player.current;
+    if (!v) return;
+    return () => {
+      v.pause();
+      v.removeAttribute("src");
+      v.load();
+    };
+  }, [playing]);
+
+  // Back from the player: the focus returns to the cover that was opened.
+  useEffect(() => {
+    if (playing || lastCard.current === null) return;
+    dialog.current?.querySelectorAll<HTMLElement>(".bg-card")[lastCard.current]?.focus();
+  }, [playing]);
 
   // Esc closes the window; Tab stays inside it.
   useEffect(() => {
@@ -58,7 +81,8 @@ const BrandGallery = ({ brand, videos, onClose }: Props) => {
 
   const ratioOf = (v: BrandVideo) => v.ratio ?? ratios[v.poster] ?? 9 / 16;
 
-  const open = (v: BrandVideo) => {
+  const open = (v: BrandVideo, i: number) => {
+    lastCard.current = i;
     setHover(null);
     setPlayerRatio(v.ratio ?? ratios[v.poster]);
     setPlaying(v);
@@ -78,7 +102,7 @@ const BrandGallery = ({ brand, videos, onClose }: Props) => {
     >
       <div className="bg-panel" ref={dialog} onClick={(e) => e.stopPropagation()}>
         <div className="bg-head">
-          {playing ? (
+          {playing && !single ? (
             <button
               className="bg-back"
               onClick={() => setPlaying(null)}
@@ -95,7 +119,7 @@ const BrandGallery = ({ brand, videos, onClose }: Props) => {
             onClick={onClose}
             aria-label="Kapat"
             data-cursor="disable"
-            autoFocus={!playing}
+            autoFocus={!playing || single}
           >
             <MdClose />
           </button>
@@ -105,6 +129,7 @@ const BrandGallery = ({ brand, videos, onClose }: Props) => {
           <div className="bg-player" style={playerWidth ? { width: playerWidth } : undefined}>
             <video
               key={playing.video}
+              ref={player}
               src={url(playing.video)}
               poster={url(playing.poster)}
               controls
@@ -126,7 +151,7 @@ const BrandGallery = ({ brand, videos, onClose }: Props) => {
                 <li key={v.video} style={{ aspectRatio: ratioOf(v) }}>
                   <button
                     className="bg-card"
-                    onClick={() => open(v)}
+                    onClick={() => open(v, i)}
                     onMouseEnter={() => setHover(i)}
                     onMouseLeave={() => setHover((h) => (h === i ? null : h))}
                     aria-label={`${v.title} videosunu oynat`}

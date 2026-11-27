@@ -166,6 +166,16 @@ export const projects: Project[] = [
       "Metin yerleşimini mobil izlemeye göre düzenledim.",
     ],
   },
+  // Kept after the first Allvex entry: /zihnim picks works by the start of the title (first match).
+  {
+    title: "Allvex | O mu? Bu mu?",
+    description:
+      "Allvex’in D Vitamini ve Ferritin testlerini yan yana tanıtan dikey video. İki testin belirtileri ekranda listeleniyor; video “Şimdi eczanelerde!” çağrısıyla kapanıyor.",
+    video: "web/allvex-omu-bumu.mp4",
+    poster: "allvex-omu-bumu.jpg",
+    preview: "allvex-omu-bumu.mp4",
+    categories: ["Motion Graphics"],
+  },
   {
     title: "Motivasyon vs Disiplin",
     description:

@@ -42,4 +42,5 @@ export const brands: Brand[] = [
   { name: "Yiğit Group", logo: "brands/white/yigitgroup.png" },
   { name: "Voop", logo: "brands/white/voop.png" },
   { name: "Blackbörk", logo: "brands/white/blackbork.png", wide: true },
+  { name: "Elaris", logo: "brands/white/elaris.png" },
 ];

@@ -487,3 +487,9 @@
 .loading-button {
   box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.45);
 }
+/* When the pill opens the ring leaves together with "Hoş geldin"; without this an empty outlined
+   pill stayed on the dark fill until the screen was gone. */
+.loading-clicked .loading-button {
+  box-shadow: 0 0 0 1px rgba(94, 234, 212, 0);
+  transition: box-shadow 0.5s;
+}

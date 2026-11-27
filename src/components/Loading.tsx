@@ -41,14 +41,31 @@ const Loading = ({ percent }: { percent: number }) => {
     timers.current.push(window.setTimeout(fn, ms));
   };
 
+  // The page's opening effects are fetched as soon as the screen appears, not when it closes: on a
+  // slow link the closing frame (the dark fill) would otherwise wait for this download.
+  const fx = useRef<Promise<typeof import("./utils/initialFX")> | null>(null);
+  if (!fx.current) {
+    fx.current = import("./utils/initialFX");
+    fx.current.catch(() => {}); // handled in finish(); no "uncaught" report before that
+  }
+
   const finish = () => {
     if (done.current) return;
     done.current = true;
-    import("./utils/initialFX").then((module) => {
-      module.initialFX?.();
-      startIntro();
-      setIsLoading(false);
-    });
+    fx.current!
+      .then((module) => module.initialFX?.())
+      .catch((error) => {
+        // The effects could not be loaded or failed: the screen still ends and the page is usable
+        // (scrolling on, static heading) instead of staying on the closing frame for ever.
+        console.error(error);
+        document.body.style.overflowY = "auto";
+        document.documentElement.classList.add("fx-ready");
+        import("./Navbar").then((m) => m.smoother?.paused(false)).catch(() => {});
+      })
+      .finally(() => {
+        startIntro();
+        setIsLoading(false);
+      });
   };
 
   // 100 % (or the longest wait): run the closing sequence once.

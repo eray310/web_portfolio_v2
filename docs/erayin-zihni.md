@@ -3,7 +3,21 @@
 Branch: `design/erayin-zihni`, started from `design/ai-particle-volume` at `eff92c0` ("AI Isler polish").
 Rounds: first prototype `1698ea1`; enterable brain and wheel route `e4415b8`; third round (this note), started from
 `e4415b8`: particle quality, local life, light waves, and the story "Bir fikrin yolculuğu" with a guide.
-Status: design preview only. It is not linked from the menu or from any page, and it is not published.
+Status in the third round: design preview only, not linked from the menu or from any page, not published. That is no
+longer the case; see "Status now" below.
+
+Status now (checked 2026-11-27, before the release of the brand videos and the opening fix that came later the same
+day; the bundle names below belong to `c8c02d0` and changed with that release):
+- Git: `design/isik-yolu` is on `origin`, and `origin/main` points to the same commit (`c8c02d0`). The rounds below
+  are all in `main`. Their commit messages still say "local, not pushed"; that was true when they were written and is
+  no longer.
+- Links in the code of `c8c02d0`: "Zihnim" in the main menu (`Navbar.tsx`), "Hikâyemi izle" on the home page
+  (`Landing.tsx`), the door on the home page (`ZihnimDoor.tsx`), links from AI İşler and Hakkımda; `/zihnim` is in
+  `public/sitemap.xml`, and `zihnim/index.html` has no noindex.
+- Live site: https://www.erayomeroglu.com/zihnim answers 200 with the title "Zihnim: Her şey bir şarkı kapağıyla
+  başladı". `/` and `/zihnim` load the same hashed bundle (`assets/main-cNu68k3B.js`, `assets/main-CbyMK4Ww.css`) as a
+  local production build of `c8c02d0`, so the live site serves that commit. Vercel reports Last-Modified
+  2026-11-26 23:17 UTC. Being merged into `main` was not taken as proof on its own; the bundle comparison is the proof.
 
 ## The story
 One route, one value (`s`, 0..1) for the camera, the guide and the discovery moments, so forwards and backwards tell
@@ -99,7 +113,7 @@ Real phones, tablets, low-end GPUs; real trackpad and touch screen (emulated eve
 (none, by choice). The reference images mentioned in the brief of this round were not attached to the message, so they
 were not compared.
 
-## Cinematic round (branch `design/cinematic-zihnim-ai`, from `main` at `297e619`; preview only, not merged)
+## Cinematic round (branch `design/cinematic-zihnim-ai`, from `main` at `297e619`; on `origin`, merged into `main`)
 Supersedes the notes above where they differ.
 - Opening frame: three-quarter view (`route[0]`, `route[1]`), the brain fills the frame. Lobes moved closer
   (`brain.hemiX` 40), wider folds, dark patches in the surface (`patch` noise in `worldGeometry.ts`).
@@ -124,7 +138,7 @@ Supersedes the notes above where they differ.
   blur pass. The main reference (pendereckisgarden.pl) was seen only up to its entry screen; the particle reference
   images were not attached. Real phones, Safari, Firefox, real trackpad: not tried.
 
-## Isik Yolu, first stretch (branch `design/isik-yolu`, from `design/cinematic-zihnim-ai` at `b1a2681`; local only, not pushed)
+## Isik Yolu, first stretch (branch `design/isik-yolu`, from `design/cinematic-zihnim-ai` at `b1a2681`; on `origin`, merged into `main`)
 Direction: the inside of the mind is dark; a picture exists only where light falls; every point is unfinished work
 that light and nearness resolve. The brain is a door: the worlds are far apart, outside it.
 Done in this round: outside of the brain -> fissure -> tunnel -> the opening of Gorsel Hafiza (a hall). Kurgu Masasi,
@@ -168,7 +182,7 @@ the hall to them. That link is temporary.
   are still inside the brain and built at start. Not tried: real phones, Safari, Firefox, a real trackpad.
   pendereckisgarden.pl could not be entered (its cookie notice offers only "Accept"); no reference images were given.
 
-## Isik Yolu, final brief of the first stretch (branch `design/isik-yolu`; local only, not pushed)
+## Isik Yolu, final brief of the first stretch (branch `design/isik-yolu`; on `origin`, merged into `main`)
 This section replaces the one above where they differ.
 
 ### Direction, story, the square
@@ -244,7 +258,7 @@ The far cover reads as a warm glow more than a crisp square until the camera is 
 `hallSeen` layout does not follow a rotation of the phone; og image for /zihnim missing; the brain still builds Kurgu
 and Deney at start; 60-90 s for the whole journey was not timed. Not tried: real phones, Safari, Firefox, real trackpad.
 
-## Görev A: every chapter as cinematic as the tunnel (branch `design/isik-yolu`; local only, not pushed)
+## Görev A: every chapter as cinematic as the tunnel (branch `design/isik-yolu`; on `origin`, merged into `main`)
 This section replaces the ones above where they differ. Done in this round: the card system (all chapters), 01 with the
 real cover, 02 with its hero frame and camera move, the quote of 05 and the card of 06. NOT done: 03 outside the brain
 with the shutter, the prism room of 04, the climb of 05, the single screen of 06, the Grafik Tasarım filter on the home
@@ -309,7 +323,7 @@ list of brands. Camera: `light.hallMove` (look up 46 units, 7 higher, both gone 
 GPU, two runs: median 6.9-7.0 ms, p95 7.1 ms in both versions. Software WebGL, one run: cold start 34.7 / 34.8 ms
 median (p95 69.4 / 90.3), trip 34.7 / 34.7, pointer 34.7 / 34.7, phone trip 20.8 / 13.9 (old / new).
 
-## Transitions round (branch `design/isik-yolu`; local only, not pushed)
+## Transitions round (branch `design/isik-yolu`; on `origin`, merged into `main`)
 This section replaces the ones above where they differ.
 
 ### Eray's answers, applied
@@ -360,7 +374,7 @@ the single screen of 06 and the light that turns to the camera; 05 -> 06 is the 
 ### Next round
 Görev B: /hakkimda as an album inner sleeve (see the brief), on a new branch from the last commit here.
 
-## The rest of the route (branch `design/isik-yolu`; local only, not pushed)
+## The rest of the route (branch `design/isik-yolu`; on `origin`, merged into `main`)
 This section replaces the ones above where they differ. The whole journey is now one continuous camera path on the
 light path: no dark cut and no veil anywhere (the old cut times in `light.t` are parked beyond 1; the brain's inner
 route, `route` knots 7..10, is no longer travelled).
@@ -391,8 +405,8 @@ route, `route` knots 7..10, is no longer travelled).
 - `data/tools.ts`: the "Yapay zekâ" entry is text only (`ballTools` feeds the 3D stack of the home page).
 
 Point sets on a desktop (`data-points`): 193k at the start (brain 173k + tunnel 20k); the largest total is 263k at 02
-(brain + tunnel + hall + gallery); 258k at 03, 223k at 04, 199k at 05, 184k at 06. The brain stays in memory (hidden)
-for the whole journey after the way in; freeing it past the tunnel is open.
+(brain + tunnel + hall + gallery); 258k at 03, 223k at 04, 199k at 05, 184k at 06. The brain is built once at the
+start and stays in memory for the whole journey; after the way in it is only hidden. Freeing it past the tunnel is open.
 
 Measured against `b1a2681` (Chrome, Windows, RTX 4060, 144 Hz): GPU two runs, median 6.9-7.0 ms, p95 7.1 ms in both.
 Software WebGL one run: cold start 34.7 / 41.6 ms median, trip 34.7 / 27.8, pointer 34.7 / 27.9, phone trip 20.9 / 14.0
@@ -405,7 +419,7 @@ For it: Career data is still inside `Career.tsx` (to be moved to a data file), t
 `public/kapaklar` and `public/grafik` (webp + jpg), `utils/lang.ts`, `ViewMenu`, `utils/viewMode.ts` and the main menu of
 `Navbar.tsx` are ready to reuse; the old page is `OrbitPage.tsx`.
 
-## Polish round (branch `design/isik-yolu`; local only, not pushed)
+## Polish round (branch `design/isik-yolu`; on `origin`, merged into `main`)
 - 05 -> 06: points of the summit set (`STREAM`, `summit.streams`) carry the colours of the places to the screen
   (`uFlow`, `screen.flow`), then the screen lights up warm white with soft edges (`uFill`, `screen.turn`, `screen.light`).
   The final card has its own dark ground (93 %), and the screen is lower behind it.
@@ -416,8 +430,11 @@ For it: Career data is still inside `Career.tsx` (to be moved to a data file), t
 - First notches: `wheel.startGain` 1.3 over `startReach` 0.06 (forward only); `routePx` 15950. First 100 px notch moves
   the route by 0.018. Scripted journey (0.3 s per notch, 3.5 s rest at six chapters): 63 s.
 - Phones: the fan of 04 is upright and tighter (`roomFrames`, `isPortrait`). Card of 04 links to /ai-isler#web-sitesi.
-- NOT done: freeing the brain after the tunnel. Rebuilding 173k points on the way back is one synchronous step
-  (`buildWorld`); doing it in pieces needs a rewrite of the builder, and it was not tried.
+- NOT done: freeing the brain after the tunnel. Checked in the code of `c8c02d0`: `buildWorld` runs once, at start
+  (`ZihnimScene.ts`, before the renderer is made); the brain is never freed during the journey, only hidden
+  (`points.visible = brainK > 0.001`), and it is freed only when the page is left (`dispose`). So nothing is rebuilt
+  on the way back. If the brain were freed after the tunnel, going back would have to rebuild 173k points in one
+  synchronous step (`buildWorld`); doing that in pieces needs a rewrite of the builder, and it was not tried.
 - Points on a desktop: 193k at the start; 239k at 01, 263k at 02 (largest), 258k at 03, 234k at 04, 210k at 05, 195k at 06.
 - Measured against `b1a2681`: GPU two runs, median 6.9-7.0 ms, p95 7.1-7.2 ms in both. Software WebGL one run:
   cold start 41.6 / 34.6 ms median, trip 34.7 / 27.8, pointer 34.7 / 27.8, phone trip 20.9 / 13.9 (old / new).

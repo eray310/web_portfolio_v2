@@ -49,6 +49,42 @@ export const brandVideos: Record<string, BrandVideo[]> = {
       preview: "portfolio/previews/Allvex_Reels4.mp4",
       video: "portfolio/web/Allvex_Reels4.mp4",
     },
+    {
+      title: "Allvex | O mu? Bu mu?",
+      poster: "portfolio/allvex-omu-bumu.jpg",
+      preview: "portfolio/previews/allvex-omu-bumu.mp4",
+      video: "portfolio/web/allvex-omu-bumu.mp4",
+    },
+  ],
+  "MAB Turkey": [
+    {
+      title: "MAB Turkey | Proje Tanıtımı",
+      poster: "portfolio/mab-turkey-reels.jpg",
+      preview: "portfolio/previews/mab-turkey-reels.mp4",
+      video: "portfolio/web/mab-turkey-reels.mp4",
+    },
+    {
+      title: "MAB Turkey | Dakka, Bangladeş",
+      poster: "portfolio/mab-turkey-banglades.jpg",
+      preview: "portfolio/previews/mab-turkey-banglades.mp4",
+      video: "portfolio/web/mab-turkey-banglades.mp4",
+    },
+  ],
+  "Dağ Holding": [
+    {
+      title: "Dağ Holding | Tual Projeleri",
+      poster: "portfolio/dag-holding.jpg",
+      preview: "portfolio/previews/dag-holding.mp4",
+      video: "portfolio/web/dag-holding.mp4",
+    },
+  ],
+  Elaris: [
+    {
+      title: "Elaris | Ücretsiz Şarj İstasyonu Kurulumu",
+      poster: "portfolio/elaris-sarj.jpg",
+      preview: "portfolio/previews/elaris-sarj.mp4",
+      video: "portfolio/web/elaris-sarj.mp4",
+    },
   ],
   Allesta: [
     {

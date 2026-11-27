@@ -383,16 +383,16 @@ export const worldConfig = {
     [0.115, 0.155], //  01: the way in
     [0.38, 0.52], //    02: the tunnel and the hall
     [0.54, 0.74], //    03: down to the row and sideways
-    [0.66, 0.84], //    the truck reaches the room of 04
-    [0.73, 0.87], //    04: the versions open
-    [0.785, 0.885], //  04: a calm stop in the room
-    [0.855, 0.935], //  the climb, slow at both ends
+    [0.645, 0.84], //    the truck reaches the room of 04
+    [0.715, 0.87], //    04: the versions open
+    [0.77, 0.885], //  04: a calm stop in the room
+    [0.84, 0.935], //  the climb, slow at both ends
     [0.91, 0.945], //   05: the quote, the camera almost still
     [0.965, 0.978], //  05 -> 06: the colours flow to the screen
     [0.985, 0.99], //   the light turns to the visitor
     [1, 1], //          06: the final rests
   ] as [number, number][],
-  wheel: { routePx: 21000, startGain: 1.3, startReach: 0.06, follow: 7.5, maxStep: 240, snapAfter: 260, snapReach: 0 },
+  wheel: { routePx: 22000, startGain: 1.3, startReach: 0.06, follow: 7.5, maxStep: 240, snapAfter: 260, snapReach: 0 },
   /** Phone: a vertical drag of this many screen heights runs the whole route. */
   touch: { routeScreens: 4.5 },
   /** A trip started by a button: seconds per whole route, and the limits. */

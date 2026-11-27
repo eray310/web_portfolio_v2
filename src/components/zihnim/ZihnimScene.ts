@@ -1001,6 +1001,9 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     { points: 0.4, waves: 2, res: 1, motion: 0.5 },
     { points: 0.4, waves: 1, res: 0.8, motion: 0 },
   ] as { points: number; waves: number; res: number; motion?: number }[];
+  /** The size the lens was last set for; a small change of height alone keeps that lens (see resize). */
+  let lensW = 0;
+  let lensH = 0;
   const applyQuality = () => {
     const q = Q[level];
     const base = Math.min(window.devicePixelRatio || 1, light ? 1.5 : 1.75);
@@ -1008,7 +1011,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     const dpr = Math.max(Math.min(floor, base), base * q.res);
     renderer.setPixelRatio(dpr);
     renderer.setSize(width, height, false);
-    const sc = height / (2 * Math.tan((camera.fov * Math.PI) / 360));
+    const sc = (lensH || height) / (2 * Math.tan((camera.fov * Math.PI) / 360));
     for (const m of [mat, gmat]) {
       m.uniforms.uPR.value = dpr;
       m.uniforms.uScale.value = sc * (light ? 1.4 : 1);
@@ -1022,12 +1025,22 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     width = Math.max(1, canvas.clientWidth);
     height = Math.max(1, canvas.clientHeight);
     camera.aspect = width / height;
-    // a narrow (portrait) screen gets a wider lens so the same part of the world fits across
-    camera.fov = W.fov * clamp(1.35 / camera.aspect, 1, 1.55);
-    // a portrait screen sees the overview from higher up: the brain's length then runs up the screen and fills it
-    const ov = camera.aspect < 0.8 ? W.overviewPortrait : LY.entry[0];
-    posCurve.points[0].set(...ov.pos);
-    tarCurve.points[0].set(...ov.target);
+    if (width !== lensW || Math.abs(height - lensH) > lensH * 0.25) {
+      lensW = width;
+      lensH = height;
+      // a narrow (portrait) screen gets a wider lens so the same part of the world fits across
+      camera.fov = W.fov * clamp(1.35 / camera.aspect, 1, 1.55);
+      camera.clearViewOffset();
+      // a portrait screen sees the overview from higher up: the brain's length then runs up the screen and fills it
+      const ov = camera.aspect < 0.8 ? W.overviewPortrait : LY.entry[0];
+      posCurve.points[0].set(...ov.pos);
+      tarCurve.points[0].set(...ov.target);
+    } else {
+      // only the height changed a little (a phone's address bar comes or goes at the bottom): the same lens, the view
+      // held at the top, so the world keeps its size and place and only a strip at the bottom appears or goes
+      camera.aspect = lensW / lensH;
+      camera.setViewOffset(lensW, lensH, 0, 0, width, height);
+    }
     camera.updateProjectionMatrix();
     mat.uniforms.uAspect.value = camera.aspect;
     applyQuality();
@@ -1431,15 +1444,26 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     raf = requestAnimationFrame(frame);
   };
   const look = new Vector3();
+  /** True while only the breathing of the world keeps the loop running (the camera and the route are still). */
+  let idleOnly = false;
+  /** A touch device (phone, tablet): only these slow down at rest; a desktop keeps its full rate. */
+  const touch = window.matchMedia("(pointer: coarse)").matches;
   const frame = (now: number) => {
     raf = 0;
     if (disposed || hold) return;
+    // a phone at rest draws every other frame (about 30 per second); any movement brings the full rate back at once
+    const still = idleOnly && !trip && !dragging && Math.abs(sTarget - s) <= 0.00002;
+    if (touch && still && last && now - last < 30) {
+      raf = requestAnimationFrame(frame);
+      return;
+    }
     const raw = last ? Math.min(100, now - last) : 16;
     const dt = raw / 1000;
     last = now;
     frames++;
-    // single hitches (a video starting, a texture upload) are clipped, so only a steadily slow device steps down
-    ema += (Math.min(raw, 45) - ema) * 0.06;
+    // single hitches (a video starting, a texture upload) are clipped, so only a steadily slow device steps down;
+    // the slower rest frames of a phone do not count
+    if (!(touch && still)) ema += (Math.min(raw, 45) - ema) * 0.06;
     // adaptive quality: two slow checks in a row step down; after a step the average starts again
     const limit = light ? 30 : 24;
     if (frames > 24 && frames % 16 === 0) {
@@ -1657,10 +1681,9 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     canvas.dataset.sets = `brain${tunnel ? "+tunnel" : ""}${hall ? "+hall" : ""}${gallery ? "+gallery" : ""}${room ? "+room" : ""}${summit ? "+summit" : ""}`;
     canvas.dataset.points = String(world.n + (tunnel?.n ?? 0) + (hall?.n ?? 0) + (gallery?.n ?? 0) + (room?.n ?? 0) + (summit?.n ?? 0));
 
-    const busy =
+    const moving =
       trip ||
       dragging ||
-      life > 0 ||
       Math.abs(sTarget - s) > 0.00002 ||
       pathWave > 0.01 ||
       pointerOn > 0.01 ||
@@ -1668,6 +1691,10 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       Math.abs(pitch - pitchT) > 0.0005 ||
       Math.abs(calmS - calm) > 0.01 ||
       fadeBusy;
+    // with a work open (calm = 1) the world settles and then stops drawing until the panel closes
+    const breathing = life > 0 && calm < 1;
+    const busy = moving || breathing;
+    idleOnly = !moving && breathing;
     if (busy && !document.hidden) raf = requestAnimationFrame(frame);
     else {
       last = 0;

@@ -75,6 +75,51 @@ const sstep = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 const v3 = (a: V3) => new Vector3(a[0], a[1], a[2]);
+/**
+ * A smooth, monotone curve through the tempo pairs (Fritsch-Carlson), so the speed changes softly at every chapter
+ * and never runs backwards; with its inverse (bisection). x: scroll position, y: route time.
+ */
+const makeTempo = (k: [number, number][]) => {
+  const n = k.length;
+  const dx = k.slice(1).map((p, i) => p[0] - k[i][0]);
+  const dl = k.slice(1).map((p, i) => (p[1] - k[i][1]) / dx[i]);
+  const m = k.map((_, i) => (i === 0 ? dl[0] : i === n - 1 ? dl[n - 2] : dl[i - 1] * dl[i] <= 0 ? 0 : (dl[i - 1] + dl[i]) / 2));
+  for (let i = 0; i < n - 1; i++) {
+    if (dl[i] === 0) {
+      m[i] = m[i + 1] = 0;
+      continue;
+    }
+    const a = m[i] / dl[i];
+    const b = m[i + 1] / dl[i];
+    const h = a * a + b * b;
+    if (h > 9) {
+      const t = 3 / Math.sqrt(h);
+      m[i] = t * a * dl[i];
+      m[i + 1] = t * b * dl[i];
+    }
+  }
+  const f = (x: number) => {
+    x = Math.min(1, Math.max(0, x));
+    let i = 0;
+    while (i < n - 2 && x > k[i + 1][0]) i++;
+    const h = dx[i];
+    const t = (x - k[i][0]) / h;
+    const t2 = t * t;
+    const t3 = t2 * t;
+    return (2 * t3 - 3 * t2 + 1) * k[i][1] + (t3 - 2 * t2 + t) * h * m[i] + (-2 * t3 + 3 * t2) * k[i + 1][1] + (t3 - t2) * h * m[i + 1];
+  };
+  const inv = (y: number) => {
+    let lo = 0;
+    let hi = 1;
+    for (let j = 0; j < 40; j++) {
+      const mid = (lo + hi) / 2;
+      if (f(mid) < y) lo = mid;
+      else hi = mid;
+    }
+    return (lo + hi) / 2;
+  };
+  return { f, inv };
+};
 const hash = (n: number) => {
   const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
@@ -784,14 +829,14 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       pos.lerp(gp, u);
       look.lerp(gq, u);
     } else if (x <= LT.crane0) {
-      roomCam(RO.arc[0] + (RO.arc[1] - RO.arc[0]) * sstep(LT.room, LT.crane0, x), pos, look);
+      roomCam(RO.arc[0] + (RO.arc[1] - RO.arc[0]) * sstep(LT.room, LY.after[1], x), pos, look);
     } else if (x <= LT.summit) {
       const u = ease((x - LT.crane0) / (LT.summit - LT.crane0));
       roomCam(RO.arc[1], pos, look);
       pos.lerp(sumP, u);
       look.lerp(sumL, Math.min(1, u * 1.25));
     } else {
-      const u = ease(sstep(LT.push0, 1, x));
+      const u = ease(sstep(LT.push0, LT.final, x));
       pos.copy(sumP).lerp(screenStop, u);
       look.copy(sumL).lerp(screenC, Math.min(1, u * 1.5));
     }
@@ -852,6 +897,9 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     }
   };
   const stopsT = [...stations.map((x) => x.t), ...calmStops].sort((a, b) => a - b);
+  const tempo = makeTempo(W.tempo);
+  /** Moves a route time by an even step of scrolling (the step is in scroll position). */
+  const scrollBy = (t: number, step: number) => tempo.f(clamp(tempo.inv(t) + step, 0, 1));
   const T = stations.map((x) => x.t);
   const tOf = (id: StationId) => stations.find((x) => x.id === id)!.t;
   const tG = tOf("gorsel-hafiza");
@@ -982,7 +1030,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       trip = null;
     }
     const gain = dy > 0 ? 1 + W.wheel.startGain * (1 - sstep(0, W.wheel.startReach, sTarget)) : 1;
-    sTarget = clamp(sTarget + (dy * gain) / W.wheel.routePx, 0, 1);
+    sTarget = scrollBy(sTarget, (dy * gain) / W.wheel.routePx);
     lastNav = performance.now();
     kick();
   };
@@ -1043,7 +1091,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
           sTarget = s;
           trip = null;
         }
-        sTarget = clamp(sTarget - (e.clientY - lastY) / (height * W.touch.routeScreens), 0, 1);
+        sTarget = scrollBy(sTarget, -(e.clientY - lastY) / (height * W.touch.routeScreens));
         lastNav = performance.now();
       }
       lastY = e.clientY;
@@ -1109,7 +1157,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
       sTarget = s;
       trip = null;
     }
-    sTarget = clamp(sTarget + step, 0, 1);
+    sTarget = scrollBy(sTarget, step);
     lastNav = performance.now();
     kick();
   };
@@ -1129,7 +1177,9 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     } else {
       const d = Math.abs(st.t - s);
       if (d < 0.0005) return;
-      trip = { from: s, to: st.t, t: 0, dur: clamp(W.trip.perRoute * d * 1.6, W.trip.min, W.trip.max) };
+      // a trip runs evenly in scroll position, so it lingers where the story does
+      const wd = Math.abs(tempo.inv(st.t) - tempo.inv(s));
+      trip = { from: tempo.inv(s), to: tempo.inv(st.t), t: 0, dur: clamp(W.trip.perRoute * Math.max(d, wd) * 1.6, W.trip.min, W.trip.max) };
     }
     yawT = 0;
     pitchT = 0;
@@ -1376,7 +1426,7 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     if (trip) {
       trip.t += dt / trip.dur;
       const k = clamp(trip.t, 0, 1);
-      s = sTarget = trip.from + (trip.to - trip.from) * ease(k);
+      s = sTarget = tempo.f(trip.from + (trip.to - trip.from) * ease(k));
       pathT = clamp(k * 1.15, 0, 1.2);
       if (k >= 1) trip = null;
     } else {
@@ -1540,7 +1590,8 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     // stations and progress for the page
     const settled = !trip && Math.abs(sTarget - s) < 0.003;
     const near = stations.find((st) => Math.abs(st.t - s) < W.stationReach);
-    const nowStation = settled && near ? near.id : null;
+    // the quote (05) and the final (06) stay on screen while the visitor scrolls slowly through them
+    const nowStation = near && (settled || near.id === "zirve" || near.id === "birlikte-uretelim") ? near.id : null;
     if (nowStation !== station) {
       station = nowStation;
       if (station && areaColor[station] && !reduced) {

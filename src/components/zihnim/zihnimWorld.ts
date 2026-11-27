@@ -87,7 +87,7 @@ const along = (d: number, x = 0, y = 0): V3 => [AX0[0] + AXD[0] * d + x, AX0[1] 
 export const light = {
   axis: { p: AX0, d: AXD, up: AXU, len: TUNNEL_LEN },
   /** Route times: the opening frame, the fissure, the tunnel (from, to), the hall's viewing spot, the end of the look-around, the cut (from, to). */
-  t: { swing: 0.06, fissure: 0.11, inside: 0.155, tunnel0: 0.19, tunnel1: 0.4, hall: 0.52, hallEnd: 0.6, gal0: 0.675, gal1: 0.74, room: 0.84, crane0: 0.885, summit: 0.935, push0: 0.945, cut0: 2, cut1: 2.1 },
+  t: { swing: 0.06, fissure: 0.11, inside: 0.155, tunnel0: 0.19, tunnel1: 0.4, hall: 0.52, hallEnd: 0.6, gal0: 0.675, gal1: 0.74, room: 0.84, crane0: 0.885, summit: 0.935, push0: 0.945, final: 0.99, cut0: 2, cut1: 2.1 },
   /** Camera on the way in: positions and look targets at t = 0, swing, fissure, inside, tunnel0. */
   entry: [
     { pos: [-62, 70, 132] as V3, target: [8, -8, 2] as V3 },
@@ -140,7 +140,7 @@ export const light = {
    * pushes in and stops `stop` in front of it.
    */
   summit: { count: { desktop: 22000, light: 9000 }, up: 210, beyond: 380, side: 60, lookAt: 300, streams: 0.16, dawn: 0.24 },
-  screen: { dist: 150, w: 34, h: 19, stop: 40, light: 0.52, flow: [0.945, 0.985] as [number, number], turn: [0.968, 1] as [number, number] },
+  screen: { dist: 150, w: 34, h: 19, stop: 40, light: 0.52, flow: [0.945, 0.978] as [number, number], turn: [0.962, 0.99] as [number, number] },
   /** The tunnel: point count (desktop / phone), half size of the beam's section, radius of the faint outer streaks. */
   tunnel: { count: { desktop: 20000, light: 8000 }, beam: [6, 6] as [number, number], outer: 26, streaks: 30, wrap: 240, farDim: [60, 210, 0.1] as V3 },
   /**
@@ -372,9 +372,29 @@ export const worldConfig = {
   count: { desktop: 173000, light: 60000 },
   /** Wheel: pixels of wheel for the whole route; the follow rate (1/s) once the wheel stops; largest step of one event. */
   /** snapReach 0: the camera stays exactly where the visitor stops (no pull onto a station). */
-  wheel: { routePx: 15950, startGain: 1.3, startReach: 0.06, follow: 7.5, maxStep: 240, snapAfter: 260, snapReach: 0 },
+  /**
+   * Tempo: pairs of [scroll position, route time], both 0..1. The wheel, a drag and the keys move the scroll position
+   * evenly; a smooth monotone curve through these pairs turns it into the route time the story runs on. Where route
+   * time grows slowly the story lingers (the room of 04, the quote of 05, the final screen). The stations and moments
+   * keep their route times; only how much scrolling each stretch takes changes.
+   */
+  tempo: [
+    [0, 0],
+    [0.115, 0.155], //  01: the way in
+    [0.38, 0.52], //    02: the tunnel and the hall
+    [0.54, 0.74], //    03: down to the row and sideways
+    [0.66, 0.84], //    the truck reaches the room of 04
+    [0.73, 0.87], //    04: the versions open
+    [0.785, 0.885], //  04: a calm stop in the room
+    [0.855, 0.935], //  the climb, slow at both ends
+    [0.91, 0.945], //   05: the quote, the camera almost still
+    [0.965, 0.978], //  05 -> 06: the colours flow to the screen
+    [0.985, 0.99], //   the light turns to the visitor
+    [1, 1], //          06: the final rests
+  ] as [number, number][],
+  wheel: { routePx: 21000, startGain: 1.3, startReach: 0.06, follow: 7.5, maxStep: 240, snapAfter: 260, snapReach: 0 },
   /** Phone: a vertical drag of this many screen heights runs the whole route. */
-  touch: { routeScreens: 3.4 },
+  touch: { routeScreens: 4.5 },
   /** A trip started by a button: seconds per whole route, and the limits. */
   trip: { perRoute: 3.4, min: 1.6, max: 4.2 },
   /** Limited look-around by dragging (desktop) or sideways (phone), radians. */

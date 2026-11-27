@@ -37,7 +37,7 @@ import {
   Vector4,
   WebGLRenderer,
 } from "three";
-import { calmStops, coverAt, galAt, galX, galleryStart, guideSpots, roomX, summitLook, summitPos, light as LY, readyAreas, route, stations, worldConfig as W, works, type StationId, type V3 } from "./zihnimWorld";
+import { calmStops, coverAt, galAt, galX, galleryStart, guideSpots, isPortrait, roomX, summitLook, summitPos, light as LY, readyAreas, route, stations, worldConfig as W, works, type StationId, type V3 } from "./zihnimWorld";
 import { BEACON, FRAME_BASE, LINE_BASE, STREAM, buildGallery, buildGuide, buildHall, buildRoom, buildSummit, buildTunnel, buildWorld, galleryFrames, hallFrames, roomFrames, sampleImage, type Samples, type World } from "./worldGeometry";
 
 export type SceneOptions = {
@@ -847,8 +847,11 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
   const gq = new Vector3();
   const RO = LY.room;
   const roomCam = (th: number, pos: Vector3, look: Vector3) => {
-    pos.set(...galAt(roomX() + Math.sin(th) * RO.dist, 1.2, Math.cos(th) * RO.dist));
-    look.set(...galAt(roomX(), 0.8, 0));
+    const tall = isPortrait();
+    const d = tall ? RO.tall.dist : RO.dist;
+    const y = tall ? -RO.tall.lift : 0;
+    pos.set(...galAt(roomX() + Math.sin(th) * d, 1.2 + y, Math.cos(th) * d));
+    look.set(...galAt(roomX(), 0.8 + y, 0));
   };
   const sumP = v3(summitPos);
   const sumL = v3(summitLook(400));

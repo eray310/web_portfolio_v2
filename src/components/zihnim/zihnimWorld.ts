@@ -132,7 +132,7 @@ export const light = {
    * prism (a sheet of points) stands before it and the frame opens into real frames of its making (`open`), in a
    * calm fan; the camera draws a small, slow arc (`arc`, radians). Its own point set.
    */
-  room: { count: { desktop: 15000, light: 6000 }, gap: 40, dist: 27, arc: [-0.34, 0.24] as [number, number], open: [0.782, 0.845] as [number, number] },
+  room: { count: { desktop: 15000, light: 6000 }, gap: 40, dist: 27, /** narrow screens: a step back and lower, so the whole fan stands above the chapter card */ tall: { dist: 31, lift: 7 }, arc: [-0.34, 0.24] as [number, number], open: [0.782, 0.845] as [number, number] },
   /**
    * 05 Zirve: the camera climbs high above the end of the road and looks back along it. Below lie light silhouettes of
    * every place (a few thousand points each, made only here): the brain far away, the tunnel, the hall, the gallery,

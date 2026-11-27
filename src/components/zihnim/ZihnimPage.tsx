@@ -288,6 +288,66 @@ const ZihnimPage = () => {
     };
   }, []);
 
+  // phones: a vertical swipe on the chapter card travels the route like a swipe on the scene. A short touch stays a
+  // tap; a sideways swipe does nothing here (the works row keeps its own sideways scroll); if the card itself can
+  // still scroll that way (an open list of works), the card scrolls first. The card is replaced when the route
+  // leaves a chapter, so the rest of the touch is followed on the element it started on (touch events stay with it).
+  useEffect(() => {
+    const root = ui.current;
+    if (!root) return;
+    let card: HTMLElement | null = null;
+    let x0 = 0;
+    let y0 = 0;
+    let lastY = 0;
+    let mode: "" | "route" | "native" = "";
+    let target: EventTarget | null = null;
+    const onStart = (e: TouchEvent) => {
+      card = e.touches.length === 1 ? (e.target as HTMLElement).closest?.(".zh-card") ?? null : null;
+      if (!card) return;
+      x0 = e.touches[0].clientX;
+      y0 = lastY = e.touches[0].clientY;
+      mode = "";
+      target = e.target;
+      target?.addEventListener("touchmove", onMove as EventListener, { passive: false });
+      target?.addEventListener("touchend", onEnd as EventListener);
+      target?.addEventListener("touchcancel", onEnd as EventListener);
+    };
+    const onMove = (e: TouchEvent) => {
+      if (!card || e.touches.length !== 1) return;
+      const t = e.touches[0];
+      if (!mode) {
+        const dx = t.clientX - x0;
+        const dy = t.clientY - y0;
+        if (Math.hypot(dx, dy) < 6) return;
+        const canScroll = /auto|scroll/.test(getComputedStyle(card).overflowY);
+        const scrollable = canScroll && (dy < 0 ? card.scrollTop + card.clientHeight < card.scrollHeight - 1 : card.scrollTop > 0);
+        mode = Math.abs(dx) > Math.abs(dy) || scrollable ? "native" : "route";
+        lastY = y0;
+      }
+      if (mode !== "route") return;
+      if (e.cancelable) e.preventDefault();
+      scene.current?.swipeBy(t.clientY - lastY);
+      lastY = t.clientY;
+    };
+    const onEnd = (e: TouchEvent) => {
+      if (card && mode === "route") scene.current?.swipeEnd((e.changedTouches[0]?.clientY ?? lastY) - y0);
+      card = null;
+      mode = "";
+      detach();
+    };
+    const detach = () => {
+      target?.removeEventListener("touchmove", onMove as EventListener);
+      target?.removeEventListener("touchend", onEnd as EventListener);
+      target?.removeEventListener("touchcancel", onEnd as EventListener);
+      target = null;
+    };
+    root.addEventListener("touchstart", onStart, { passive: true });
+    return () => {
+      root.removeEventListener("touchstart", onStart);
+      detach();
+    };
+  }, []);
+
   // a panel calms the world; the rest of the page cannot be reached while a panel or the brief is open
   useEffect(() => {
     scene.current?.setCalm(work ? 1 : 0);

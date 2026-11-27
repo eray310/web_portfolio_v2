@@ -64,6 +64,10 @@ export type SceneApi = {
   setCalm: (calm: number) => void;
   /** true: the brief is open; nothing moves or draws until it closes (the route position is kept). */
   setHold: (hold: boolean) => void;
+  /** A vertical swipe on the chapter card (phones): the finger moved by dy px since the last call; travels like a drag on the scene. */
+  swipeBy: (dy: number) => void;
+  /** The swipe on the card ended; total: its whole vertical travel in px (the calm view steps by it). */
+  swipeEnd: (total: number) => void;
   dispose: () => void;
 };
 
@@ -1733,6 +1737,22 @@ export async function createScene(o: SceneOptions): Promise<SceneApi> {
     },
     setCalm(c) {
       calm = clamp(c, 0, 1);
+      kick();
+    },
+    swipeBy(dy) {
+      if (hold || reduced) return;
+      if (trip) {
+        sTarget = s;
+        trip = null;
+      }
+      sTarget = scrollBy(sTarget, -dy / (height * W.touch.routeScreens));
+      lastNav = performance.now();
+      first();
+      kick();
+    },
+    swipeEnd(total) {
+      if (hold) return;
+      if (reduced && Math.abs(total) > 60) stepTo(total < 0 ? 1 : -1);
       kick();
     },
     setHold(h) {

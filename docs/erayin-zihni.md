@@ -438,3 +438,73 @@ For it: Career data is still inside `Career.tsx` (to be moved to a data file), t
 - Points on a desktop: 193k at the start; 239k at 01, 263k at 02 (largest), 258k at 03, 234k at 04, 210k at 05, 195k at 06.
 - Measured against `b1a2681`: GPU two runs, median 6.9-7.0 ms, p95 7.1-7.2 ms in both. Software WebGL one run:
   cold start 41.6 / 34.6 ms median, trip 34.7 / 27.8, pointer 34.7 / 27.8, phone trip 20.9 / 13.9 (old / new).
+
+## Hardening round (branch `design/zihnim-saglam`, from `main` at `92997ea`; local only, not pushed)
+Kept as Eray made them: the role line of 06 ("Motion Designer · Art Director · AI Artist") and the data of Kurgu Masası
+(`byTitle` over `[...projects, ...otherWorks]`, "Allvex | Sosyal" in `kurguList`). Not changed by decision: the
+brightness of 06, the shutter of 02 -> 03, the landscape of 05, the brain staying in memory.
+
+### Tempo (`tempo`, `wheel.routePx` 22000, `touch.routeScreens` 4.5 in `zihnimWorld.ts`; `makeTempo` in `ZihnimScene.ts`)
+The wheel, a drag and the keys move an even "scroll position"; a monotone cubic curve (Fritsch-Carlson) through the
+`tempo` pairs turns it into route time. Stations and moments keep their route times. Trips run evenly in scroll
+position (`tempo.inv`), so they linger where the story does. The push to the screen ends at `light.t.final` (0.99),
+the arc of 04 ends at `after[1]`, then the camera rests in the room. The quote of 05 and the final card stay on screen
+while scrolling slowly (`nowStation`).
+
+Script tempo (one 100 px notch every 0.3 s, no rests), seconds, `92997ea` -> this branch:
+
+| stretch | route | before | after |
+| --- | --- | --- | --- |
+| 00 -> 01 | 15.5 % | 5.9 | 6.2 |
+| 01 -> tunnel start | 3.5 % | 1.6 | 1.3 |
+| tunnel | 21 % | 9.1 | 9.0 |
+| tunnel end -> 02 | 12 % | 5.0 | 5.0 |
+| 02 -> end of hall | 8 % | 3.3 | 3.3 |
+| end of hall -> 03 | 14 % | 5.9 | 6.0 |
+| 03 -> room of 04 | 10 % | 4.3 | 6.4 |
+| room -> 04 | 3 % | 1.0 | 4.0 |
+| 04 -> climb | 1.5 % | 0.7 | 3.4 |
+| climb -> 05 | 5 % | 2.3 | 4.0 |
+| 05 -> push to the screen | 1 % | 0.3 | 4.0 |
+| push -> 06 | 5.5 % | 2.4 | 5.4 |
+| travel / with 3.5 s rest at six chapters | | 42.0 / 63 | 57.9 / 79 |
+
+### 06 screen (`screenMat`)
+A surface of fine points (150 x 84 cells, a little irregular), soft edges as before. Until `turn` the points drift
+and carry the colours of the streams; then they settle in warm white (`uSettle`). At the turn the light gathers a
+little toward the middle (`uGlow`, 14 %, balanced by its mean 0.41 over the lit surface). The pattern divides by the
+points' cover, so the average is unchanged: mean brightness of the frame 47 -> 47 (upper part), 38 -> 37 (whole),
+140 -> 141 (middle of the screen), at s = 1, 1440 x 900. When a point would be smaller than a few pixels the texture
+fades to a plain surface (no shimmer). Final card contrast, text against the brightest pixel behind it (text hidden,
+real frame): lowest 9.88:1 (1440 and 390). Calm view: final frame still (0 frames drawn in 3 s).
+
+### Other
+- First paint: `theme-color` and `html,body{background:#0c0a0b}` inline in the five page heads (separate commit). In
+  Chrome under Slow 4G the first frame of the document was already dark before (the stylesheet blocks the first
+  paint); white is only the empty tab before the document arrives.
+- 04 on narrow (portrait) screens: the room camera steps back and lower (`room.tall`: dist 31, lift 7), so the whole
+  fan stands above the chapter card at 340 x 700 and 390 x 844.
+- Touch devices (`pointer: coarse`) draw every other frame while only the world breathes (also the light running
+  along the way in at the start); any movement brings the full rate back. Rest frames do not count for the quality
+  ladder. 10 s at rest, phone emulation, 144 Hz: 1441 -> 288 frames; desktop unchanged (1441).
+- Nothing is drawn while a work is open (the world settles, then stops), with the brief open (hold), or with the tab
+  hidden: 0 frames in 3 s each.
+- Address bar of a phone: a height change of up to 25 % keeps the lens and holds the view at the top
+  (`setViewOffset`), so the world does not jump. Band difference 844 -> 770 px: 29.2 before, 0.8 after.
+- Quality ladder: a sixth step (points 0.28, resolution 0.65, may go below the usual floor). Software WebGL journey:
+  median 41.7 ms at the old lowest step -> 27.8 ms at the new one.
+
+### Measured (Chrome, Windows, RTX 4060, 144 Hz; Playwright WebKit and Firefox headless)
+- GPU journey, desktop: median 6.9 ms, p90 7.1, p99 7.3 (before and after).
+- Phone emulation (390 x 844, DPR 3, touch drag): CPU 1x median 6.9 ms; CPU 4x median 7.1, p90 20.9, p99 55.6 (before
+  7.0 / 20.8 / 62.5); CPU 6x median 20.7, p90 41.7, p99 131.9 (before 20.9 / 48.6 / 208.4), one quality step. The long
+  frames are the building of the next place's points. The GPU is not throttled by this emulation.
+- Points (desktop / phone): 00 193k / 68k, 01 239k / 86k, 02 263k / 95k, 03 258k / 93k, 04 234k / 84k, 05 210k / 75k,
+  06 195k / 69k.
+- WebKit and Firefox: door, journey to 06, keys 0-6, calm view, no-WebGL fallback, no console errors, no overflow.
+  Playwright's Windows WebKit does not apply the weight axis of the variable Geist font (titles look regular); this
+  is that build, not the site (a plain test page shows the same).
+
+### Not tested
+Real iPhone/Android: Safari's address bar, touch, the GPU of a phone. Swiping on the chapter card (lower half on a
+phone) does not move the route; only the scene does.

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <!-- EÖ monogram on the site's dark ground; drawn on a 16 px grid so it stays sharp at 16 and 32 px. -->
+  <rect width="16" height="16" rx="3" fill="#0a0e17"/>
+  <g fill="#5eead4">
+    <!-- E -->
+    <path d="M2 6h4v2H4v1h2v2H4v1h2v2H2z"/>
+    <!-- O, a rounded ring -->
+    <path fill-rule="evenodd" d="M10.5 6h1A2.5 2.5 0 0 1 14 8.5v3a2.5 2.5 0 0 1-2.5 2.5h-1A2.5 2.5 0 0 1 8 11.5v-3A2.5 2.5 0 0 1 10.5 6zM10 8.5v3a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5z"/>
+    <!-- the two dots of Ö -->
+    <rect x="8" y="3" width="2" height="2" rx=".4"/>
+    <rect x="12" y="3" width="2" height="2" rx=".4"/>
+  </g>
+</svg>

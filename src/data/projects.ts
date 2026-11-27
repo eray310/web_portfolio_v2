@@ -26,7 +26,25 @@ export type Project = {
    * only when ALL THREE are filled in (nothing is guessed, no half-finished text is shown).
    */
   story?: { focus: string; did: string; delivered: string };
+  /**
+   * Facts for the small table in the detail panel (Müşteri · Süre · Format · Yıl). Leave a field out
+   * when it is not known: its row is then not shown. Süre and format come from the "Teslim" line or
+   * from the video file itself; nothing is guessed.
+   */
+  client?: string;
+  duration?: string;
+  format?: string;
+  year?: string;
+  /**
+   * Stills inside `public/portfolio/` (frames/<slug>-1..4.webp), taken at FRAME_POINTS of the video.
+   * Shown under the table; a click moves the video to that moment.
+   */
+  frames?: string[];
 };
+
+/** Where the four stills of a work are taken, as a share of the video length. */
+export const FRAME_POINTS = [0.15, 0.4, 0.65, 0.85] as const;
+const framesOf = (slug: string) => FRAME_POINTS.map((_, i) => `frames/${slug}-${i + 1}.webp`);
 
 /** The story block of a project, or null while it is not complete. */
 export const completeStory = (p: Project) => {
@@ -55,6 +73,10 @@ export const projects: Project[] = [
     poster: "next-telekom.jpg",
     preview: "next-telekom.mp4",
     categories: ["Motion Graphics", "Kurgu"],
+    client: "Next Telekom",
+    duration: "30 sn",
+    format: "9:16 dikey",
+    frames: framesOf("next-telekom"),
     story: {
       focus: "İnternet hızını, simetrik hızı, uydu interneti seçeneğini ve dijital sözleşmeyle hızlı başvuruyu anlatmak.",
       did: "Videoyu ben yaptım. Her mesaja ayrı bir görsel dünya kurguladım: neon bir açılış, kod ekranında hız yazıları, uzayda uydu interneti, roketli başvuru çağrısı. Yazıları hareketlendirip “Next Telekom’a gel” çağrısıyla kapattım.",
@@ -69,6 +91,10 @@ export const projects: Project[] = [
     poster: "motosan.jpg",
     preview: "motosan.mp4",
     categories: ["Motion Graphics"],
+    client: "Mototaş",
+    duration: "15 sn",
+    format: "9:16 dikey",
+    frames: framesOf("motosan"),
     story: {
       focus: "Mototaş için bir kaskı, yapısı ve öne çıkan özellikleriyle tanıtmak.",
       did: "Videoyu ben yaptım. Kaskı parçalara ayrılıp yeniden birleşen bir akışa dönüştürdüm; “Aerodinamik Full-Face Tasarım”, “Geniş Vizör Açısı” gibi özellikleri oklu yazılarla gösterdim ve Mototaş logosu ile web adresiyle bitirdim.",
@@ -83,6 +109,10 @@ export const projects: Project[] = [
     poster: "fidan-properties.jpg",
     preview: "fidan-properties.mp4",
     categories: ["Motion Graphics", "Kurgu"],
+    client: "Fidan Properties",
+    duration: "53 sn",
+    format: "9:16 dikey",
+    frames: framesOf("fidan-properties"),
     story: {
       focus: "Fidan Properties'in bölgelerini ve konumlarını uydu görüntüsü üzerinde göstermek.",
       did: "Videoyu ben yaptım. Türkiye haritasından bölge haritasına yaklaşan akışı kurdum, bölgeleri renkli alanlarla ayırdım, konum işaretlerini ve etiketlerini hareketlendirdim, kapanışta marka yazısını getirdim.",
@@ -97,6 +127,10 @@ export const projects: Project[] = [
     preview: "Allesta_YZReklam.mp4",
     poster: "Allesta_YZReklam.jpg",
     categories: ["Yapay Zekâ", "Motion Graphics", "Kurgu"],
+    client: "Allesta",
+    duration: "30 sn",
+    format: "9:16 dikey",
+    frames: framesOf("allesta"),
     contribution: [
       "Yapay zekâ destekli görselleri video akışında bir araya getirdim.",
       "Kurguyu ve hareketli grafikleri hazırladım.",
@@ -110,6 +144,10 @@ export const projects: Project[] = [
     poster: "voop-karikatur.jpg",
     preview: "voop-karikatur.mp4",
     categories: ["Yapay Zekâ", "Kurgu"],
+    client: "Voop",
+    duration: "26 sn",
+    format: "9:16 dikey",
+    frames: framesOf("voop-karikatur"),
     story: {
       focus: "Voop ürünlerini ve evcil dostlara yönelik yaklaşımını, karikatür tarzı bir karakterin anlatımıyla tanıtmak.",
       did: "Videoyu baştan sona ben yaptım. Karakteri ve mağaza, depo, bahçe sahnelerini yapay zekâ destekli görsellerle kurdum, kurguyu yaptım, altyazıları konuşmayı kelime kelime takip edecek şekilde işledim.",
@@ -124,6 +162,10 @@ export const projects: Project[] = [
     preview: "Res__360.mp4",
     poster: "Res__360.jpg",
     categories: ["Motion Graphics"],
+    client: "RES360",
+    duration: "29 sn",
+    format: "9:16 dikey",
+    frames: framesOf("res360"),
     contribution: ["Proje kartlarını ve ekran geçişlerini hareketli grafik olarak hazırladım."],
   },
   {
@@ -134,6 +176,10 @@ export const projects: Project[] = [
     poster: "paypal.jpg",
     preview: "paypal.mp4",
     categories: ["Motion Graphics"],
+    client: "PayPal",
+    duration: "11 sn",
+    format: "9:16 dikey",
+    frames: framesOf("paypal"),
     contribution: ["Videodaki hareketli grafikleri ve metin animasyonlarını hazırladım."],
   },
   {
@@ -144,6 +190,9 @@ export const projects: Project[] = [
     poster: "lays.jpg",
     preview: "lays.mp4",
     categories: ["Motion Graphics"],
+    duration: "11 sn",
+    format: "9:16 dikey",
+    frames: framesOf("lays"),
     contribution: ["Ürün animasyonlarını ve geçişleri içeren video çalışmasını hazırladım."],
   },
   {
@@ -154,6 +203,9 @@ export const projects: Project[] = [
     poster: "uber-motion.jpg",
     preview: "uber-motion.mp4",
     categories: ["Motion Graphics"],
+    duration: "13 sn",
+    format: "9:16 dikey",
+    frames: framesOf("uber-motion"),
     contribution: ["Ekran içi metinleri, simgeleri ve geçişleri hareketli grafik olarak hazırladım."],
   },
   {
@@ -164,6 +216,10 @@ export const projects: Project[] = [
     poster: "siux.jpg",
     preview: "siux.mp4",
     categories: ["Motion Graphics", "Kurgu"],
+    client: "Siux",
+    duration: "15 sn",
+    format: "9:16 dikey",
+    frames: framesOf("siux"),
     contribution: ["Ürün planlarını kurguladım ve kapanıştaki yazı animasyonunu hazırladım."],
   },
   {
@@ -174,6 +230,10 @@ export const projects: Project[] = [
     poster: "allvex-omu-bumu.jpg",
     preview: "allvex-omu-bumu.mp4",
     categories: ["Motion Graphics"],
+    client: "Allvex",
+    duration: "12 sn",
+    format: "9:16 dikey",
+    frames: framesOf("allvex-omu-bumu"),
   },
 ];
 

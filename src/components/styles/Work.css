@@ -351,13 +351,15 @@
   background: rgba(0, 0, 0, 0.78);
 }
 
+/* Wide screens: the video side takes 56 % of the panel and its full height; the text side
+   scrolls on its own, so a short text never leaves a gap under the video. */
 .project-panel {
   position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  width: min(1040px, 100%);
-  max-height: calc(var(--vh, 100vh) - 32px);
-  overflow-y: auto;
+  grid-template-columns: minmax(0, 56fr) minmax(0, 44fr);
+  width: min(1280px, 100%);
+  height: min(calc(var(--vh, 100vh) - 32px), 880px);
+  overflow: hidden;
   overscroll-behavior: contain;
   background: #0a0e17;
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -388,15 +390,21 @@
   background: rgba(255, 255, 255, 0.28);
 }
 
-/* The video keeps its own ratio: as tall as the screen allows, never wider than the panel. */
+/* The video keeps its own ratio inside the area; the space beside it is filled with a dark,
+   blurred copy of the cover instead of empty bars. */
 .project-panel-player {
-  --max-h: min(calc(var(--vh, 100vh) - 32px), 760px);
   position: relative;
-  align-self: start;
-  width: min(46vw, calc(var(--max-h) * var(--ratio)));
-  aspect-ratio: var(--ratio);
+  min-height: 0;
   background: #05080f;
   overflow: hidden;
+}
+
+.project-panel-player::before {
+  content: "";
+  position: absolute;
+  inset: -40px;
+  background: var(--poster) center / cover no-repeat;
+  filter: blur(32px) brightness(0.32) saturate(1.2);
 }
 
 .project-panel-player video {
@@ -405,7 +413,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background: #05080f;
+  background: transparent;
 }
 
 /* Shown only when the browser blocks autoplay. */
@@ -432,7 +440,107 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-height: 0;
   padding: 28px 28px 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The text side scrolls instead of squeezing its blocks. */
+.project-panel-body > * {
+  flex-shrink: 0;
+}
+
+/* Müşteri · Süre · Format · Yıl: only the known ones, in one row of small cells. */
+.project-panel-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 1px;
+  margin: 0;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.project-panel-facts > div {
+  padding: 10px 12px;
+  background: #0a0e17;
+}
+
+.project-panel-facts dt {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(234, 229, 236, 0.55);
+}
+
+.project-panel-facts dd {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #eae5ec;
+}
+
+/* Four stills of the video, 2 x 2; a click plays the video from that moment. */
+.project-panel-body .project-panel-frames {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: min(100%, 400px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-panel-frames button {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  padding: 0;
+  overflow: hidden;
+  background: #05080f;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.project-panel-frames img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  opacity: 0.85;
+}
+
+.project-panel-frames button:hover img,
+.project-panel-frames button:focus-visible img {
+  transform: scale(1.04);
+  opacity: 1;
+}
+
+.project-panel-frame-time {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: #eae5ec;
+  background: rgba(10, 14, 23, 0.75);
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-panel-frames img {
+    transition: none;
+  }
+  .project-panel-frames button:hover img,
+  .project-panel-frames button:focus-visible img {
+    transform: none;
+  }
 }
 
 .project-panel-meta {
@@ -533,19 +641,27 @@
   outline-offset: 3px;
 }
 
+/* Phones: video on top across the full width, the facts below; the whole panel scrolls. */
 @media only screen and (max-width: 767px) {
   .project-panel {
     grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    max-height: calc(var(--vh, 100vh) - 32px);
+    overflow-y: auto;
   }
 
   .project-panel-player {
-    --max-h: min(calc(var(--vh, 100vh) * 0.62), 620px);
-    width: min(100%, calc(var(--max-h) * var(--ratio)));
-    justify-self: center;
+    width: 100%;
+    height: min(calc(var(--vh, 100vh) * 0.66), 640px);
   }
 
   .project-panel-body {
     padding: 20px 18px 18px;
+    overflow: visible;
+  }
+
+  .project-panel-body .project-panel-frames {
+    width: 100%;
   }
 
   .project-panel-body h3 {

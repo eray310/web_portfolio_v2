@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MdClose, MdPlayArrow, MdArrowBack, MdArrowForward } from "react-icons/md";
-import { completeStory, fileUrl, type Project } from "../data/projects";
+import { completeStory, fileUrl, FRAME_POINTS, type Project } from "../data/projects";
 import { projectInteractions } from "../data/interactive";
 import type { CreativeRequest } from "./creative/CreativeHost";
 import { lockScroll, unlockScroll } from "./utils/scrollLock";
@@ -20,6 +20,7 @@ interface Props {
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
+const clock = (s: number) => `${Math.floor(s / 60)}:${pad(Math.floor(s % 60))}`;
 
 const ProjectPanel = ({
   project,
@@ -31,7 +32,10 @@ const ProjectPanel = ({
   onClose,
 }: Props) => {
   const sheet = useRef<HTMLDivElement>(null);
+  const body = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
+  // Length of the video in seconds, once the file has told it (for the times on the stills).
+  const [length, setLength] = useState(0);
   // Width / height of the video; vertical until the file says otherwise.
   const [ratio, setRatio] = useState(9 / 16);
   // True while the browser has not let the video start by itself.
@@ -74,13 +78,37 @@ const ProjectPanel = ({
   // A new project starts at the top of the panel and tries to play at once.
   useEffect(() => {
     sheet.current?.scrollTo(0, 0);
+    body.current?.scrollTo(0, 0);
     setNeedsPlay(false);
+    setLength(0);
     const v = video.current;
     if (!v) return;
     v.play().catch(() => setNeedsPlay(true));
   }, [project]);
 
   const poster = project.poster && fileUrl(project.poster);
+
+  // Only the facts that are known; an empty one has no row.
+  const facts = (
+    [
+      ["Müşteri", project.client],
+      ["Süre", project.duration],
+      ["Format", project.format],
+      ["Yıl", project.year],
+    ] as const
+  ).filter(([, value]) => value && value.trim());
+
+  // A still was clicked: the video jumps to that moment and plays from there.
+  const seek = (share: number) => {
+    const v = video.current;
+    if (!v) return;
+    const go = () => {
+      v.currentTime = v.duration * share;
+      v.play().catch(() => setNeedsPlay(true));
+    };
+    if (Number.isFinite(v.duration) && v.duration > 0) go();
+    else v.addEventListener("loadedmetadata", go, { once: true });
+  };
 
   return createPortal(
     <div className="project-panel-backdrop" onClick={onClose}>
@@ -122,8 +150,9 @@ const ProjectPanel = ({
             preload="auto"
             controlsList="nodownload"
             onLoadedMetadata={(e) => {
-              const { videoWidth: w, videoHeight: h } = e.currentTarget;
+              const { videoWidth: w, videoHeight: h, duration } = e.currentTarget;
               if (w && h) setRatio(w / h);
+              if (Number.isFinite(duration)) setLength(duration);
             }}
             onPlay={() => setNeedsPlay(false)}
           />
@@ -140,11 +169,48 @@ const ProjectPanel = ({
           )}
         </div>
 
-        <div className="project-panel-body">
+        <div className="project-panel-body" ref={body}>
           <p className="project-panel-meta">
             {pad(position)} / {pad(total)} · {project.categories.join(" · ")}
           </p>
           <h3 id="project-panel-title">{project.title}</h3>
+
+          {facts.length > 0 && (
+            <dl className="project-panel-facts">
+              {facts.map(([label, value]) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+
+          {project.frames && project.frames.length > 0 && (
+            <ul className="project-panel-frames" aria-label="Videodan kareler">
+              {project.frames.map((frame, i) => {
+                const share = FRAME_POINTS[i] ?? 0;
+                const at = length ? clock(length * share) : null;
+                return (
+                  <li key={frame}>
+                    <button
+                      type="button"
+                      onClick={() => seek(share)}
+                      aria-label={at ? `Videoyu ${at} anından oynat` : `Videoyu ${i + 1}. kareden oynat`}
+                      data-cursor="disable"
+                    >
+                      <img src={fileUrl(frame)} alt="" loading="lazy" decoding="async" draggable={false} />
+                      {at && (
+                        <span className="project-panel-frame-time" aria-hidden="true">
+                          {at}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 
           <section>
             <h4>Proje Özeti</h4>
